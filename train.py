@@ -43,7 +43,7 @@ def main():
     """
     # How to sample minerl data is document here:
     # http://minerl.io/docs/tutorials/data_sampling.html
-    #data = minerl.data.make(MINERL_GYM_ENV, data_dir=MINERL_DATA_ROOT)
+    data = minerl.data.make(MINERL_GYM_ENV, data_dir=MINERL_DATA_ROOT)
 
     # Sample code for illustration, add your training code below
     env = gym.make(MINERL_GYM_ENV)
@@ -55,7 +55,7 @@ def main():
         done = False
         netr = 0
         # Limiting our code to 1024 steps in this example, you can do "while not done" to run till end
-        for _ in range(10):
+        for _ in range(1024):
             action = env.action_space.sample()
             obs, reward, done, _ = env.step(action)
             # print(obs, reward, done)
