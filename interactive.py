@@ -6,7 +6,7 @@ env = gym.make('MineRLTreechop-v0')
 
 # set the environment to allow interactive connections on port 6666
 # and slow the tick speed to 6666.
-env.make_interactive(port=6666, realtime=True)
+# env.make_interactive(port=6666, realtime=True)
 
 # reset the env
 env.reset()
@@ -19,7 +19,7 @@ while True:
     for k,v in obs.items():
         print(k, ' shape: ', v.shape)
     sleep(2)
-    if ini-time() > 120:
+    if time()-ini > 10:
         break
 
 env.close()
