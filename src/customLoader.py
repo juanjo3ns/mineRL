@@ -15,10 +15,10 @@ from IPython import embed
 
 
 class MinecraftData(Dataset):
-    def __init__(self, env, split, extra, transform=None) -> None:
+    def __init__(self, env, mode, split, extra, transform=None) -> None:
         self.environment = env
-        self.train_split = split
-        self.val_split = 1 - split
+        self.mode = mode
+        self.split = split
         self.extra = extra
         self.dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
         self.data = self.loadData()
@@ -26,12 +26,20 @@ class MinecraftData(Dataset):
         self.transform = transform
 
     def loadData(self) -> list:
-        print('Loading data...')
-
-        path = Path('../data')
         data = []
 
-        for vid in os.listdir(path / self.environment):
+        print('Loading data...')
+        path = Path('../data')
+
+        num_vids = len(os.listdir(path / self.environment))
+        video_list = os.listdir(path / self.environment)
+
+        if self.mode == 'train':
+            video_list = video_list[:int(self.split*num_vids)]
+        else:
+            video_list = video_list[int(self.split*num_vids):]
+
+        for vid in video_list:
             if self.extra:
                 other_info = np.load(path / self.environment / vid / 'rendered.npz')
 
@@ -41,7 +49,7 @@ class MinecraftData(Dataset):
             fc = 0
             while(frames.isOpened() and ret):
                 ret, frame = frames.read()
-                if ret and fc % 3 == 0:
+                if ret and fc % 2 == 0:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     data.append(frame)
                 fc += 1
@@ -64,7 +72,7 @@ if __name__ == '__main__':
                               transforms.ToTensor(),
                               transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
                             ])
-    mrl = MinecraftData('MineRLNavigate-v0', 0.7, False, transform=transform)
+    mrl = MinecraftData('MineRLNavigate-v0', 'train', 0.7, False, transform=transform)
     embed()
     # img = mrl[10]
     # plt.imshow(img)

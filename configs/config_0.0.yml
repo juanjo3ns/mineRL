@@ -1,9 +1,9 @@
-
+experiment: 'test_2'
 environment: 'MineRLNavigate-v0'
 batch_size: 256
-num_training_updates: 15000
+num_training_updates: 25000
 learning_rate: 0.001
-
+split: 0.9
 vqvae:
   num_hiddens: 128
   num_residual_hiddens: 32

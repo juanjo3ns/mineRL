@@ -15,6 +15,7 @@ from customLoader import MinecraftData
 from pprint import pprint
 from os.path import join
 from pathlib import Path
+
 from scipy.signal import savgol_filter
 from torchvision.utils import make_grid
 from torchvision.transforms import transforms
@@ -34,9 +35,12 @@ transform = transforms.Compose([
                           transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
                         ])
 
-mrl = MinecraftData(conf['environment'], 0.7, False, transform=transform)
 
-training_loader = DataLoader(mrl, batch_size=conf['batch_size'], shuffle=True)
+mrl_train = MinecraftData(conf['environment'], 'train', conf['split'], False, transform=transform)
+mrl_val = MinecraftData(conf['environment'], 'val', conf['split'], False, transform=transform)
+
+training_loader = DataLoader(mrl_train, batch_size=conf['batch_size'], shuffle=True)
+validation_loader = DataLoader(mrl_val, batch_size=32, shuffle=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -51,17 +55,20 @@ model.train()
 train_res_recon_error = []
 train_res_perplexity = []
 
-writer = SummaryWriter(log_dir='../tensorboard/test_1/')
+writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
 
-def saveModel(model, optim):
-	path = Path('../weights/last_iteration.pt')
+if not os.path.exists(join('../weights', conf['experiment'])):
+    os.mkdir(join('../weights', conf['experiment']))
+
+def saveModel(model, optim, iter):
+	path = Path(f"../weights/{conf['experiment']}/{iter}.pt")
 	torch.save({
         'state_dict': model.state_dict(),
 		'optimizer': optim},
 		path)
 
 
-valid_originals = next(iter(training_loader))
+valid_originals = next(iter(validation_loader))
 valid_originals = valid_originals.to(device)
 
 
@@ -86,7 +93,7 @@ for i in range(conf['num_training_updates']):
     writer.add_scalar('Reconstruction Error', recon_error.item(), i)
     writer.add_scalar('Perplexity', perplexity.item(), i)
 
-    if (i+1) % 100 == 0:
+    if (i+1) % 200 == 0:
         print('%d iterations' % (i+1))
         print('recon_error: %.3f' % np.mean(train_res_recon_error[-100:]))
         print('perplexity: %.3f' % np.mean(train_res_perplexity[-100:]))
@@ -97,24 +104,5 @@ for i in range(conf['num_training_updates']):
         valid_reconstructions = model._decoder(valid_quantize)
         grid = make_grid(valid_reconstructions.cpu().data)+0.5
         writer.add_image('images', grid, i)
+        saveModel(model, optimizer, i)
         model.train()
-
-train_res_recon_error_smooth = savgol_filter(train_res_recon_error, 201, 7)
-train_res_perplexity_smooth = savgol_filter(train_res_perplexity, 201, 7)
-
-for i, (r,p) in enumerate(zip(train_res_recon_error_smooth, train_res_perplexity_smooth)):
-    writer.add_scalar('savgol/Reconstruction Error', r, i)
-    writer.add_scalar('savgol/Perplexity', p, i)
-
-saveModel(model, optimizer)
-# f = plt.figure(figsize=(16,8))
-# ax = f.add_subplot(1,2,1)
-# ax.plot(train_res_recon_error_smooth)
-# ax.set_yscale('log')
-# ax.set_title('Smoothed NMSE.')
-# ax.set_xlabel('iteration')
-#
-# ax = f.add_subplot(1,2,2)
-# ax.plot(train_res_perplexity_smooth)
-# ax.set_title('Smoothed Average codebook usage (perplexity).')
-# ax.set_xlabel('iteration')
