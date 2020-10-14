@@ -3,6 +3,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from scipy.signal import savgol_filter
+from IPython import embed
 
 class VectorQuantizer(nn.Module):
     def __init__(self, num_embeddings, embedding_dim, commitment_cost):
@@ -67,25 +68,32 @@ class VectorQuantizerEMA(nn.Module):
         self._epsilon = epsilon
 
     def forward(self, inputs):
+        # Comments on the right correspond to example for one image
         # convert inputs from BCHW -> BHWC
-        inputs = inputs.permute(0, 2, 3, 1).contiguous()
+
+        # inputs shape [1,64,16,16]
+        inputs = inputs.permute(0, 2, 3, 1).contiguous() # [1,16,16,64]
         input_shape = inputs.shape
 
         # Flatten input
-        flat_input = inputs.view(-1, self._embedding_dim)
+        flat_input = inputs.view(-1, self._embedding_dim) # [256,64]
 
         # Calculate distances
         distances = (torch.sum(flat_input**2, dim=1, keepdim=True)
                     + torch.sum(self._embedding.weight**2, dim=1)
                     - 2 * torch.matmul(flat_input, self._embedding.weight.t()))
+        # distances shape [256,512]
 
         # Encoding
-        encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1)
+        encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1) # [256,1]
+        # For 1 image, the indices are all the same
+
         encodings = torch.zeros(encoding_indices.shape[0], self._num_embeddings, device=inputs.device)
-        encodings.scatter_(1, encoding_indices, 1)
+        encodings.scatter_(1, encoding_indices, 1) # [256,512]
 
         # Quantize and unflatten
-        quantized = torch.matmul(encodings, self._embedding.weight).view(input_shape)
+        quantized = torch.matmul(encodings, self._embedding.weight) # [256,64]
+        quantized = quantized.view(input_shape) # [1,16,16,64]
 
         # Use EMA to update the embedding vectors
         if self.training:
@@ -111,7 +119,7 @@ class VectorQuantizerEMA(nn.Module):
         quantized = inputs + (quantized - inputs).detach()
         avg_probs = torch.mean(encodings, dim=0)
         perplexity = torch.exp(-torch.sum(avg_probs * torch.log(avg_probs + 1e-10)))
-
+        # embed()
         # convert quantized from BHWC -> BCHW
         return loss, quantized.permute(0, 3, 1, 2).contiguous(), perplexity, encodings
 
@@ -240,3 +248,11 @@ class Model(nn.Module):
         x_recon = self._decoder(quantized)
 
         return loss, x_recon, perplexity
+
+    def get_centroids(self, idx):
+        z_idx = torch.LongTensor(idx).cuda()
+        embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
+        embeddings = embeddings.view((1,16,16,64))
+        embeddings = embeddings.permute(0, 3, 1, 2).contiguous()
+
+        return self._decoder(embeddings)
