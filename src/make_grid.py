@@ -54,10 +54,11 @@ valid_originals = valid_originals.to(device)
 
 for i in os.listdir(f"../weights/{conf['experiment']}"):
     if int(i.split('.')[0]) < 11000:
+        print(f"Loading model {i}...")
         weights = torch.load(f"../weights/{conf['experiment']}/{i}")['state_dict']
         model.load_state_dict(weights)
         vq_output_eval = model._pre_vq_conv(model._encoder(valid_originals))
         _, valid_quantize, _, _ = model._vq_vae(vq_output_eval)
         valid_reconstructions = model._decoder(valid_quantize)
-        grid = make_grid(valid_reconstructions.cpu().data)+0.5
-        plt.imsave(f"{i.split('.')[0]}.png", grid.permute(1,2,0))
+        grid = make_grid(valid_reconstructions.cpu().data, normalize=True)
+        plt.imsave(f"../images/{i.split('.')[0]}.png", grid.permute(1,2,0).numpy())
