@@ -12,3 +12,7 @@ vqvae:
   num_embeddings: 512
   commitment_cost: 0.25
   decay: 0.99
+pixelcnn:
+  num_hiddens: 64
+  num_layers: 15
+  

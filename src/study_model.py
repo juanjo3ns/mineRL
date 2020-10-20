@@ -9,7 +9,8 @@ import matplotlib.pylab as plt
 import torch.optim as optim
 import torch.nn.functional as F
 
-from model import Model
+from VQVAE import VQVAE
+from GatedPixelCNN import GatedPixelCNN
 from config import setSeed, getConfig
 from customLoader import MinecraftData
 
@@ -45,7 +46,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 a = torch.load('../weights/test_2/24999.pt')['state_dict']
 
-model = Model(**conf['vqvae']).to(device)
+model = VQVAE(**conf['vqvae']).to(device)
 
 model.load_state_dict(a)
 

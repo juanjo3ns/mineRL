@@ -16,6 +16,8 @@ class VectorQuantizer(nn.Module):
         self._embedding.weight.data.uniform_(-1/self._num_embeddings, 1/self._num_embeddings)
         self._commitment_cost = commitment_cost
 
+        self.emb_indexes = []
+
     def forward(self, inputs):
         # convert inputs from BCHW -> BHWC
         inputs = inputs.permute(0, 2, 3, 1).contiguous()
@@ -31,6 +33,9 @@ class VectorQuantizer(nn.Module):
 
         # Encoding
         encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1)
+
+        self.emb_indexes.extend(encoding_indices.cpu().detach().numpy()[0])
+
         encodings = torch.zeros(encoding_indices.shape[0], self._num_embeddings, device=inputs.device)
         encodings.scatter_(1, encoding_indices, 1)
 
@@ -218,7 +223,7 @@ class Decoder(nn.Module):
 
         return self._conv_trans_2(x)
 
-class Model(nn.Module):
+class VQVAE(nn.Module):
     def __init__(self, num_hiddens, num_residual_layers, num_residual_hiddens,
                  num_embeddings, embedding_dim, commitment_cost, decay=0):
         super(Model, self).__init__()
