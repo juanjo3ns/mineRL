@@ -4,6 +4,8 @@ import torch.nn.functional as F
 from torch.distributions.normal import Normal
 from torch.distributions import kl_divergence
 
+from IPython import embed
+
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:

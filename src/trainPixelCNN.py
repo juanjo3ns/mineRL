@@ -41,7 +41,7 @@ test_loader = DataLoader(mrl_test, batch_size=conf['pixelcnn']['batch_size'], sh
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = GatedPixelCNN(conf['vqvae']['embedding_dim'], conf['pixelcnn']['img_dim']**2).to(device)
+model = GatedPixelCNN(conf['vqvae']['num_embeddings'], conf['pixelcnn']['img_dim']**2).to(device)
 
 pprint(conf)
 
@@ -81,19 +81,18 @@ def train():
         start_time = time.time()
         x = x.squeeze().to(device)
         label = label.to(device)
-
         # Train PixelCNN with images
         logits = model(x, label)
         logits = logits.permute(0, 2, 3, 1).contiguous()
 
         loss = criterion(
-            logits.view(-1, conf['vqvae']['embedding_dim']),
+            logits.view(-1, conf['vqvae']['num_embeddings']),
             x.view(-1)
         )
 
-        opt.zero_grad()
+        optimizer.zero_grad()
         loss.backward()
-        opt.step()
+        optimizer.step()
 
         train_loss.append(loss.item())
 
@@ -117,10 +116,9 @@ def test():
 
             logits = model(x, label)
 
-
             logits = logits.permute(0, 2, 3, 1).contiguous()
             loss = criterion(
-                logits.view(-1, conf['vqvae']['embedding_dim']),
+                logits.view(-1, conf['vqvae']['num_embeddings']),
                 x.view(-1)
             )
 

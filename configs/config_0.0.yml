@@ -21,4 +21,4 @@ pixelcnn:
   batch_size: 32
   num_hiddens: 64
   num_layers: 15
-  gen_samples: yes
+  gen_samples: no
