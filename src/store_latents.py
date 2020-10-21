@@ -57,14 +57,15 @@ if not os.path.exists(join('../data', 'latent_blocks')):
     os.mkdir(join('../data', 'latent_blocks'))
 
 def saveLatents(file, data):
-    with open(file, 'wb') as f:
-        np.save(f"../data/latent_blocks/{file}.npy", data)
+    with open(f"../data/latent_blocks/{file}.npy", 'wb') as f:
+        np.save(f, data)
 
 
 
 for i, loader in enumerate([training_loader, validation_loader]):
     batch = iter(loader)
     encodings = []
+    print("Storing latent vectors...")
     for b in batch:
         data = b.to(device)
         encoding_indices = model.save_encoding_indices(data)

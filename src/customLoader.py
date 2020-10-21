@@ -62,9 +62,31 @@ class MinecraftData(Dataset):
     def __getitem__(self, index):
         img = self.data[index]
         # img = torch.from_numpy(img).type(self.dtype)
-        img = self.transform(img)
+        if self.transform is not None:
+            img = self.transform(img)
         return img
 
+class LatentBlockDataset(Dataset):
+    """
+    Loads latent block dataset
+    """
+
+    def __init__(self, file_path, train=True, shape=16, transform=None):
+        print('Loading latent block data')
+        self.data = np.load(file_path, allow_pickle=True)
+        self.transform = transform
+        self.shape = shape
+
+    def __getitem__(self, index):
+        img = self.data[index]
+        img = img.reshape((self.shape, self.shape))
+        if self.transform is not None:
+            img = self.transform(img)
+        label = 0
+        return img, label
+
+    def __len__(self):
+        return len(self.data)
 
 
 if __name__ == '__main__':

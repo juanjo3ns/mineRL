@@ -4,6 +4,16 @@ import torch.nn.functional as F
 from torch.distributions.normal import Normal
 from torch.distributions import kl_divergence
 
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        try:
+            nn.init.xavier_uniform_(m.weight.data)
+            m.bias.data.fill_(0)
+        except AttributeError:
+            print("Skipping initialization of ", classname)
+
+
 class GatedActivation(nn.Module):
     def __init__(self):
         super().__init__()
@@ -111,7 +121,7 @@ class GatedPixelCNN(nn.Module):
 
         return self.output_conv(x_h)
 
-    def generate(self, label, shape=(8, 8), batch_size=64):
+    def generate(self, label, shape=(16, 16), batch_size=64):
         param = next(self.parameters())
         x = torch.zeros(
             (batch_size, *shape),
