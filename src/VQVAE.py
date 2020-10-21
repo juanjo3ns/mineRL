@@ -91,7 +91,6 @@ class VectorQuantizerEMA(nn.Module):
 
         # Encoding
         encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1) # [256,1]
-        # For 1 image, the indices are all the same
 
         encodings = torch.zeros(encoding_indices.shape[0], self._num_embeddings, device=inputs.device)
         encodings.scatter_(1, encoding_indices, 1) # [256,512]
@@ -126,7 +125,7 @@ class VectorQuantizerEMA(nn.Module):
         perplexity = torch.exp(-torch.sum(avg_probs * torch.log(avg_probs + 1e-10)))
         # embed()
         # convert quantized from BHWC -> BCHW
-        return loss, quantized.permute(0, 3, 1, 2).contiguous(), perplexity, encodings
+        return loss, quantized.permute(0, 3, 1, 2).contiguous(), perplexity, encoding_indices
 
 class Residual(nn.Module):
     def __init__(self, in_channels, num_hiddens, num_residual_hiddens):
@@ -226,7 +225,7 @@ class Decoder(nn.Module):
 class VQVAE(nn.Module):
     def __init__(self, num_hiddens, num_residual_layers, num_residual_hiddens,
                  num_embeddings, embedding_dim, commitment_cost, decay=0):
-        super(Model, self).__init__()
+        super(VQVAE, self).__init__()
 
         self._encoder = Encoder(3, num_hiddens,
                                 num_residual_layers,
@@ -261,3 +260,9 @@ class VQVAE(nn.Module):
         embeddings = embeddings.permute(0, 3, 1, 2).contiguous()
 
         return self._decoder(embeddings)
+
+    def save_encoding_indices(self, x):
+        z = self._encoder(x)
+        z = self._pre_vq_conv(z)
+        _, _, _, encoding_indices = self._vq_vae(z)
+        return encoding_indices

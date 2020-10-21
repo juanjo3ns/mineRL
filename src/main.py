@@ -45,7 +45,7 @@ validation_loader = DataLoader(mrl_val, batch_size=32, shuffle=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = Model(**conf['vqvae']).to(device)
+model = VQVAE(**conf['vqvae']).to(device)
 
 pprint(conf)
 

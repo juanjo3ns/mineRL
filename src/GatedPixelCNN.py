@@ -14,13 +14,15 @@ class GatedActivation(nn.Module):
 
 
 class GatedMaskedConv2d(nn.Module):
-    def __init__(self, mask_type, dim, kernel, residual=True):
+    def __init__(self, mask_type, dim, kernel, residual=True, n_classes=10):
         super().__init__()
         assert kernel % 2 == 1, print("Kernel size must be odd")
         self.mask_type = mask_type
         self.residual = residual
 
-
+        self.class_cond_embedding = nn.Embedding(
+            n_classes, 2 * dim
+        )
         kernel_shp = (kernel // 2 + 1, kernel)  # (ceil(n/2), n)
         padding_shp = (kernel // 2, kernel // 2)
         self.vert_stack = nn.Conv2d(
@@ -49,6 +51,7 @@ class GatedMaskedConv2d(nn.Module):
         if self.mask_type == 'A':
             self.make_causal()
 
+        h = self.class_cond_embedding(h)
         h_vert = self.vert_stack(x_v)
         h_vert = h_vert[:, :, :x_v.size(-1), :]
         out_v = self.gate(h_vert + h[:, :, None, None])
@@ -67,7 +70,7 @@ class GatedMaskedConv2d(nn.Module):
 
 
 class GatedPixelCNN(nn.Module):
-    def __init__(self, input_dim=256, dim=64, n_layers=15):
+    def __init__(self, input_dim=256, dim=64, n_layers=15, n_classes=10):
         super().__init__()
         self.dim = dim
 
@@ -85,7 +88,7 @@ class GatedPixelCNN(nn.Module):
             residual = False if i == 0 else True
 
             self.layers.append(
-                GatedMaskedConv2d(mask_type, dim, kernel, residual)
+                GatedMaskedConv2d(mask_type, dim, kernel, residual, n_classes)
             )
 
         # Add the output layer
