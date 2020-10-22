@@ -72,6 +72,18 @@ class VectorQuantizerEMA(nn.Module):
         self._decay = decay
         self._epsilon = epsilon
 
+    def indices2quantized(self, indices, batch):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        encoding_indices = indices.view(-1).unsqueeze(1)  # [B*256, 1]
+        encodings = torch.zeros(encoding_indices.shape[0], self._num_embeddings, device=device)
+        encodings.scatter_(1, encoding_indices, 1) # [B*256,512]
+
+        # Quantize and unflatten
+        quantized = torch.matmul(encodings, self._embedding.weight) # [256,64]
+        quantized = quantized.view((batch,16,16,64)) # [B,16,16,64]
+
+        return quantized.permute(0, 3, 1, 2).contiguous()
+
     def forward(self, inputs):
         # Comments on the right correspond to example for one image
         # convert inputs from BCHW -> BHWC
