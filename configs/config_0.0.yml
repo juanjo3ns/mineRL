@@ -22,3 +22,20 @@ pixelcnn:
   num_hiddens: 64
   num_layers: 15
   gen_samples: no
+pixelsnail:
+  epochs: 100
+  save: no
+  log_interval: 100
+  lr: 0.0003
+  img_dim: 16
+  batch_size: 32
+  channel: 256
+  n_res_block: 4
+  n_res_channel: 256
+  n_out_res_block: 0
+  n_cond_res_block: 3
+  dropout: 0.1
+  kernel_size: 5
+  n_block: 4
+  n_class: 512
+  sched: 'cycle'
