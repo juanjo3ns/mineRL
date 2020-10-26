@@ -29,22 +29,28 @@ from torch.utils.tensorboard import SummaryWriter
 from pixelsnail import PixelSNAIL
 from scheduler import CycleScheduler
 
+from IPython import embed
 
 def train(epoch, loader, model, optimizer, scheduler, device):
     loader = tqdm(loader)
 
     criterion = nn.CrossEntropyLoss()
+    train_loss = []
 
     for i, (top, label) in enumerate(loader):
         model.zero_grad()
 
         top = top.to(device)
-
+        top = top.squeeze()
         target = top
+
         out, _ = model(top)
 
         loss = criterion(out, target)
         loss.backward()
+
+        train_loss.append(loss.item())
+
 
         if scheduler is not None:
             scheduler.step()
@@ -62,6 +68,8 @@ def train(epoch, loader, model, optimizer, scheduler, device):
                 f'acc: {accuracy:.5f}; lr: {lr:.5f}'
             )
         )
+    return np.asarray(train_loss).mean(0)
+
 
 def saveModel(model, optim, iter):
 	path = Path(f"../weights/{conf['experiment']}/pixel_{str(iter + 1).zfill(3)}.pt")
@@ -121,6 +129,10 @@ if __name__ == '__main__':
             optimizer, conf['pixelsnail']['lr'], n_iter=len(train_loader) * conf['pixelsnail']['epochs'], momentum=None
         )
 
+    writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
+
     for i in range(conf['pixelsnail']['epochs']):
-        train(i, train_loader, model, optimizer, scheduler, device)
+        train_loss = train(i, train_loader, model, optimizer, scheduler, device)
+        writer.add_scalar('PixelSNAIL/Train Loss', train_loss, i)
+        
         saveModel(model, optimizer, i)

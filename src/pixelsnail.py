@@ -395,7 +395,6 @@ class PixelSNAIL(nn.Module):
         self.out = nn.Sequential(*out)
 
     def forward(self, input, condition=None, cache=None):
-        input = input.squeeze()
         if cache is None:
             cache = {}
         batch, height, width = input.shape
