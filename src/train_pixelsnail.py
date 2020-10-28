@@ -104,7 +104,8 @@ if __name__ == '__main__':
     train_loader = DataLoader(mrl_train, batch_size=conf['pixelsnail']['batch_size'], shuffle=True)
     test_loader = DataLoader(mrl_test, batch_size=conf['pixelsnail']['batch_size'], shuffle=True)
 
-
+    if not os.path.exists(join('../weights', conf['experiment'])):
+        os.mkdir(join('../weights', conf['experiment']))
 
     model = PixelSNAIL(
         [conf['pixelsnail']['img_dim'], conf['pixelsnail']['img_dim']],
