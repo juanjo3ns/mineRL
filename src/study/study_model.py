@@ -40,7 +40,7 @@ transform = transforms.Compose([
 
 mrl_val = MinecraftData(conf['environment'], 'val', conf['split'], False, transform=transform)
 
-validation_loader = DataLoader(mrl_val, batch_size=1, shuffle=True)
+validation_loader = DataLoader(mrl_val, batch_size=32, shuffle=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -54,8 +54,8 @@ for i in range(5):
     q = next(iter(validation_loader))
     _, img, _ = model(q.cuda())
     img = img[0].permute(1,2,0).cpu().detach().numpy()
-    plt.imshow(img+0.5)
-    plt.show()
+    # plt.imshow(img+0.5)
+    # plt.show()
 exit()
 
 model.eval()

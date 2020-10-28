@@ -26,7 +26,7 @@ from torchvision.transforms import transforms
 from torch.utils.tensorboard import SummaryWriter
 
 
-from models.pixelsnail import PixelSNAIL
+from models.PixelSNAIL import PixelSNAIL
 from scheduler import CycleScheduler
 
 from IPython import embed
