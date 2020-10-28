@@ -26,7 +26,7 @@ from torchvision.transforms import transforms
 from torch.utils.tensorboard import SummaryWriter
 
 
-from pixelsnail import models.PixelSNAIL
+from models.pixelsnail import PixelSNAIL
 from scheduler import CycleScheduler
 
 from IPython import embed
@@ -104,8 +104,10 @@ if __name__ == '__main__':
     train_loader = DataLoader(mrl_train, batch_size=conf['pixelsnail']['batch_size'], shuffle=True)
     test_loader = DataLoader(mrl_test, batch_size=conf['pixelsnail']['batch_size'], shuffle=True)
 
-    if not os.path.exists(join('../weights', conf['experiment'])):
-        os.mkdir(join('../weights', conf['experiment']))
+    path_weights = Path('../weights/')
+
+    if not os.path.exists(path_weights / conf['experiment']):
+        os.mkdir(path_weights / conf['experiment'])
 
     model = PixelSNAIL(
         [conf['pixelsnail']['img_dim'], conf['pixelsnail']['img_dim']],
@@ -120,7 +122,7 @@ if __name__ == '__main__':
     )
 
     if conf['pixelsnail']['load']:
-        weights = torch.load(f'../weights/{conf['experiment']}/{conf['pixelsnail']['name']}')['state_dict']
+        weights = torch.load(path_weights / conf['experiment'] / conf['pixelsnail']['name'])['state_dict']
         model.load_state_dict(weights)
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=conf['pixelsnail']['lr'])
