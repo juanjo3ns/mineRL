@@ -10,7 +10,7 @@ import torch.optim as optim
 import matplotlib.pylab as plt
 import torch.nn.functional as F
 
-from GatedPixelCNN import GatedPixelCNN
+from models.GatedPixelCNN import GatedPixelCNN
 from config import setSeed, getConfig
 from customLoader import LatentBlockDataset
 
@@ -26,7 +26,7 @@ from torchvision.transforms import transforms
 from torch.utils.tensorboard import SummaryWriter
 
 
-from pixelsnail import PixelSNAIL
+from pixelsnail import models.PixelSNAIL
 from scheduler import CycleScheduler
 
 from IPython import embed
@@ -118,7 +118,9 @@ if __name__ == '__main__':
         n_out_res_block=conf['pixelsnail']['n_out_res_block']
     )
 
-
+    if conf['pixelsnail']['load']:
+        weights = torch.load(f'../weights/{conf['experiment']}/{conf['pixelsnail']['name']}')['state_dict']
+        model.load_state_dict(weights)
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=conf['pixelsnail']['lr'])
     model = model.to(device)
@@ -131,8 +133,9 @@ if __name__ == '__main__':
 
     writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
 
+    bias = 13
     for i in range(conf['pixelsnail']['epochs']):
         train_loss = train(i, train_loader, model, optimizer, scheduler, device)
         writer.add_scalar('PixelSNAIL/Train Loss', train_loss, i)
-        
-        saveModel(model, optimizer, i)
+
+        saveModel(model, optimizer, i + bias)

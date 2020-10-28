@@ -10,7 +10,7 @@ import torch.optim as optim
 import matplotlib.pylab as plt
 import torch.nn.functional as F
 
-from GatedPixelCNN import GatedPixelCNN
+from models.GatedPixelCNN import GatedPixelCNN
 from config import setSeed, getConfig
 from customLoader import LatentBlockDataset
 

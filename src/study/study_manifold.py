@@ -9,8 +9,8 @@ import matplotlib.pylab as plt
 import torch.optim as optim
 import torch.nn.functional as F
 
-from VQVAE import VQVAE
-from GatedPixelCNN import GatedPixelCNN
+from models.VQVAE import VQVAE
+from models.GatedPixelCNN import GatedPixelCNN
 from config import setSeed, getConfig
 from customLoader import MinecraftData
 

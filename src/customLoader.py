@@ -15,7 +15,8 @@ from IPython import embed
 
 
 class MinecraftData(Dataset):
-    def __init__(self, env, mode, split, extra, transform=None) -> None:
+    def __init__(self, env, mode, split, extra, transform=None, path='../data') -> None:
+        self.path = path
         self.environment = env
         self.mode = mode
         self.split = split
@@ -29,7 +30,7 @@ class MinecraftData(Dataset):
         data = []
 
         print('Loading data...')
-        path = Path('../data')
+        path = Path(self.path)
 
         num_vids = len(os.listdir(path / self.environment))
         video_list = os.listdir(path / self.environment)

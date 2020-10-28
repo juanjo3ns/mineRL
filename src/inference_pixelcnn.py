@@ -8,8 +8,8 @@ import matplotlib.pylab as plt
 import torch.optim as optim
 import torch.nn.functional as F
 
-from VQVAE import VQVAE
-from GatedPixelCNN import GatedPixelCNN
+from models.VQVAE import VQVAE
+from models.GatedPixelCNN import GatedPixelCNN
 from config import setSeed, getConfig
 from customLoader import MinecraftData, LatentBlockDataset
 
@@ -67,7 +67,7 @@ for i in range(2):
     quantized = vqvae._vq_vae.indices2quantized(indices, batch)
     generated = vqvae._decoder(quantized)
     a.append(generated)
-    
+
 generated = torch.concat((a[0], a[1]), 0)
 grid = make_grid(generated.cpu().data, normalize=True)
 
