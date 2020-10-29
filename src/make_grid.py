@@ -38,7 +38,7 @@ transform = transforms.Compose([
 
 mrl_val = MinecraftData(conf['environment'], 'val', conf['split'], False, transform=transform)
 
-validation_loader = DataLoader(mrl_val, batch_size=32, shuffle=True)
+validation_loader = DataLoader(mrl_val, batch_size=16, shuffle=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -69,13 +69,15 @@ for i in sorted(os.listdir('../weights/vqvae2_0'), key=lambda x: int(x.split('.'
     print(f"Loading model {i}...")
     weights = torch.load(f"../weights/vqvae2_0/{i}")['state_dict']
     model.load_state_dict(weights)
-    _,_,_, id_t, id_b, _,_ = model.encode(input)
+    _,_,_, id_t, id_b, _,_ = model.encode(valid_originals)
     id_t = id_t.cpu().numpy()
     id_b = id_b.cpu().numpy()
     for indices, typ in zip([id_t, id_b],['top', 'bottom']):
         fig, ax = plt.subplots(2,8, figsize=(16,4))
-        for j,i in enumerate(indices):
-            ax[int(j/8), int(j%8)].imshow(i)
+        for j,ind in enumerate(indices):
+            ax[int(j/8), int(j%8)].imshow(ind)
             ax[int(j/8), int(j%8)].axis('off')
             ax[int(j/8), int(j%8)].axis("tight")
-        plt.imsave(path_imgs / typ / str(i.split('.')[0]) + '.png')
+        name = str(i.split('.')[0]) + '.png'
+        plt.savefig(path_imgs / typ / name)
+        plt.close()

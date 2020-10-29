@@ -1,7 +1,7 @@
-experiment: 'vqvae2_0'
+experiment: 'vqvae2_1'
 environment: 'MineRLNavigate-v0'
 batch_size: 256
-num_training_updates: 25000
+num_training_updates: 100000
 learning_rate: 0.0003
 split: 0.9
 vqvae2:
