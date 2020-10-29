@@ -43,7 +43,7 @@ validation_loader = DataLoader(mrl_val, batch_size=1, shuffle=True)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = VQVAE2().to(device)
-weights = torch.load(f"../weights/vqvae2_0/?????.pt")['state_dict']
+weights = torch.load(f"../weights/vqvae2_0/42397.pt")['state_dict']
 model.load_state_dict(weights)
 
 

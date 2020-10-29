@@ -1,4 +1,4 @@
-experiment: 'vqvae2_1'
+experiment: 'pixelsnail_1'
 environment: 'MineRLNavigate-v0'
 batch_size: 256
 num_training_updates: 100000
@@ -13,9 +13,9 @@ vqvae2:
   commitment_cost: 0.25
   decay: 0.99
 pixelsnail:
-  hier: 'top'
+  hier: 'bottom'
   epochs: 100
-  load: yes
+  load: no
   name: pixel_013.pt
   save: no
   log_interval: 100

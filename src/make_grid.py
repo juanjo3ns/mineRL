@@ -52,24 +52,28 @@ valid_originals = next(iter(validation_loader))
 valid_originals = valid_originals.to(device)
 
 path_imgs = Path('../images')
+weights = sorted(os.listdir('../weights/vqvae2_0'), key=lambda x: int(x.split('.')[0]))
 
-for i in sorted(os.listdir('../weights/vqvae2_0'), key=lambda x: int(x.split('.')[0])):
+num_imgs = len(weights)
+
+for count, i in enumerate(weights):
     print(f"Loading model {i}...")
     weights = torch.load(f"../weights/vqvae2_0/{i}")['state_dict']
     model.load_state_dict(weights)
     quant_t, quant_b,_, id_t, id_b, _,_ = model.encode(valid_originals)
-    valid_reconstructions = self.decode(quant_t, quant_b)
+    valid_reconstructions = model.decode(quant_t, quant_b)
 
     id_t = id_t.cpu().numpy()
     id_b = id_b.cpu().numpy()
     valid_reconstructions = valid_reconstructions.permute(0,2,3,1)
-    valid_reconstructions = valid_reconstructions.cpu().detach().numpy()
-    for imgs in [valid_reconstructions, id_b, id_t]:
-        fig, ax = plt.subplots(2,8, figsize=(16,4))
+    valid_reconstructions = valid_reconstructions.cpu().detach().numpy() + 0.5
+    fig, ax = plt.subplots(6,8, figsize=(16,10))
+    for q, imgs in enumerate([valid_reconstructions, id_b, id_t]):
         for j,img in enumerate(imgs):
-            ax[int(j/8), int(j%8)].imshow(img)
-            ax[int(j/8), int(j%8)].axis('off')
-            ax[int(j/8), int(j%8)].axis("tight")
-        name = str(i.split('.')[0]) + '.png'
-        plt.savefig(path_imgs / typ / name)
-        plt.close()
+            ax[int(j/8) + q*2, int(j%8)].imshow(img)
+            ax[int(j/8) + q*2, int(j%8)].axis('off')
+            ax[int(j/8) + q*2, int(j%8)].axis("tight")
+    name = str(i.split('.')[0]) + '.png'
+    plt.suptitle(f'{count}/{num_imgs}')
+    plt.savefig(path_imgs / name)
+    plt.close()

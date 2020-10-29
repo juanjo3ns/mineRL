@@ -10,9 +10,9 @@ import torch.optim as optim
 import matplotlib.pylab as plt
 import torch.nn.functional as F
 
-from models.GatedPixelCNN import GatedPixelCNN
+from models.PixelSNAIL import PixelSNAIL
 from config import setSeed, getConfig
-from customLoader import LatentBlockDataset
+from customLoader import LatentDataset
 
 from tqdm import tqdm
 from os.path import join
@@ -26,7 +26,6 @@ from torchvision.transforms import transforms
 from torch.utils.tensorboard import SummaryWriter
 
 
-from models.PixelSNAIL import PixelSNAIL
 from scheduler import CycleScheduler
 
 from IPython import embed
@@ -42,6 +41,7 @@ def train(hier, epoch, loader, model, optimizer, scheduler, device):
 
         top = top.to(device)
         top = top.squeeze()
+        bottom = bottom.squeeze()
 
         if hier == 'top':
             target = top
@@ -78,8 +78,8 @@ def train(hier, epoch, loader, model, optimizer, scheduler, device):
     return np.asarray(train_loss).mean(0)
 
 
-def saveModel(model, optim, iter):
-	path = Path(f"../weights/{conf['experiment']}/{str(iter).zfill(3)}.pt")
+def saveModel(hier, model, optim, iter):
+	path = Path(f"../weights/{conf['experiment']}/{hier}_{str(iter).zfill(3)}.pt")
 	torch.save({
         'state_dict': model.state_dict(),
 		'optimizer': optim},
@@ -141,7 +141,7 @@ if __name__ == '__main__':
             attention=False,
             dropout=conf['pixelsnail']['dropout'],
             n_cond_res_block=conf['pixelsnail']['n_cond_res_block'],
-            cond_res_channel=conf['pixelsnail']['cond_res_channel']
+            cond_res_channel=conf['pixelsnail']['n_res_channel']
         )
 
     if conf['pixelsnail']['load']:
@@ -157,10 +157,10 @@ if __name__ == '__main__':
             optimizer, conf['pixelsnail']['lr'], n_iter=len(train_loader) * conf['pixelsnail']['epochs'], momentum=None
         )
 
-    writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
+    writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}_{hier}/")
 
     for i in range(conf['pixelsnail']['epochs']):
         train_loss = train(hier, i, train_loader, model, optimizer, scheduler, device)
         writer.add_scalar('PixelSNAIL/Train Loss', train_loss, i)
 
-        saveModel(model, optimizer, i)
+        saveModel(hier, model, optimizer, i)

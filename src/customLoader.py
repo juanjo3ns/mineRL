@@ -75,10 +75,12 @@ class LatentDataset(Dataset):
     def __init__(self, file_name, transform=None):
         print('Loading latent block data')
         p = Path('../data')
-        self.data_t = np.load(p / 'latent_blocks' / file_name + '_t', allow_pickle=True)
-        self.data_b = np.load(p / 'latent_blocks' / file_name + '_b', allow_pickle=True)
+        self.fname= file_name
+        file_name = self.fname + '_t.npy'
+        self.data_t = np.load(p / 'latent_blocks' / file_name, allow_pickle=True)
+        file_name = self.fname + '_b.npy'
+        self.data_b = np.load(p / 'latent_blocks' / file_name, allow_pickle=True)
         self.transform = transform
-        self.shape = shape
 
     def __getitem__(self, index):
         top = self.data_t[index]
