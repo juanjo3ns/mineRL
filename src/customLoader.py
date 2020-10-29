@@ -67,6 +67,31 @@ class MinecraftData(Dataset):
             img = self.transform(img)
         return img
 
+class LatentDataset(Dataset):
+    """
+    Loads latent block dataset
+    """
+
+    def __init__(self, file_name, transform=None):
+        print('Loading latent block data')
+        p = Path('../data')
+        self.data_t = np.load(p / 'latent_blocks' / file_name + '_t', allow_pickle=True)
+        self.data_b = np.load(p / 'latent_blocks' / file_name + '_b', allow_pickle=True)
+        self.transform = transform
+        self.shape = shape
+
+    def __getitem__(self, index):
+        top = self.data_t[index]
+        bottom = self.data_b[index]
+        if self.transform is not None:
+            top = self.transform(top)
+            bottom = self.transform(bottom)
+        label = 0
+        return top, bottom, label
+
+    def __len__(self):
+        return len(self.data_t)
+
 class LatentBlockDataset(Dataset):
     """
     Loads latent block dataset

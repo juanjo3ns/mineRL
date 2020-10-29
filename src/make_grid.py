@@ -51,11 +51,31 @@ pprint(conf)
 valid_originals = next(iter(validation_loader))
 valid_originals = valid_originals.to(device)
 
+path_imgs = Path('../images')
+if not os.path.exists(path_imgs / 'top'):
+    os.mkdir(path_imgs / 'top')
+if not os.path.exists(path_imgs / 'bottom'):
+    os.mkdir(path_imgs / 'bottom')
+
+# for i in sorted(os.listdir('../weights/vqvae2_0'), key=lambda x: int(x.split('.')[0])):
+#     print(f"Loading model {i}...")
+#     weights = torch.load(f"../weights/vqvae2_0/{i}")['state_dict']
+#     model.load_state_dict(weights)
+#     _, valid_reconstructions, _, _ = model(valid_originals)
+#     grid = make_grid(valid_reconstructions.cpu().data, normalize=True)
+#     plt.imsave(f"../images/{i.split('.')[0]}.png", grid.permute(1,2,0).numpy())
 
 for i in sorted(os.listdir('../weights/vqvae2_0'), key=lambda x: int(x.split('.')[0])):
     print(f"Loading model {i}...")
     weights = torch.load(f"../weights/vqvae2_0/{i}")['state_dict']
     model.load_state_dict(weights)
-    _, valid_reconstructions, _, _ = model(valid_originals)
-    grid = make_grid(valid_reconstructions.cpu().data, normalize=True)
-    plt.imsave(f"../images/{i.split('.')[0]}.png", grid.permute(1,2,0).numpy())
+    _,_,_, id_t, id_b, _,_ = model.encode(input)
+    id_t = id_t.cpu().numpy()
+    id_b = id_b.cpu().numpy()
+    for indices, typ in zip([id_t, id_b],['top', 'bottom']):
+        fig, ax = plt.subplots(2,8, figsize=(16,4))
+        for j,i in enumerate(indices):
+            ax[int(j/8), int(j%8)].imshow(i)
+            ax[int(j/8), int(j%8)].axis('off')
+            ax[int(j/8), int(j%8)].axis("tight")
+        plt.imsave(path_imgs / typ / str(i.split('.')[0]) + '.png')

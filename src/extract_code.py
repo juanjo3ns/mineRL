@@ -67,7 +67,7 @@ for i, loader in enumerate([training_loader, validation_loader]):
     for b in batch:
         data = b.to(device)
         _, _, _, id_t, id_b, _, _ = model.encode(data)
-        id_t = id_T.squeeze().cpu().detach().numpy().tolist()
+        id_t = id_t.squeeze().cpu().detach().numpy().tolist()
         id_b = id_b.squeeze().cpu().detach().numpy().tolist()
         encodings_t.append(id_t)
         encodings_b.append(id_b)

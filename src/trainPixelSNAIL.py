@@ -79,7 +79,7 @@ def train(hier, epoch, loader, model, optimizer, scheduler, device):
 
 
 def saveModel(model, optim, iter):
-	path = Path(f"../weights/{conf['experiment']}/pixel_{str(iter + 1).zfill(3)}.pt")
+	path = Path(f"../weights/{conf['experiment']}/{str(iter).zfill(3)}.pt")
 	torch.save({
         'state_dict': model.state_dict(),
 		'optimizer': optim},
@@ -105,8 +105,8 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-    mrl_train = LatentBlockDataset('../data/latent_blocks/train.npy', True, conf['pixelsnail']['img_dim'], transform=transforms.ToTensor())
-    mrl_test = LatentBlockDataset('../data/latent_blocks/val.npy', False, conf['pixelsnail']['img_dim'], transform=transforms.ToTensor())
+    mrl_train = LatentDataset('train', transform=transforms.ToTensor())
+    mrl_test = LatentDataset('val', transform=transforms.ToTensor())
 
     train_loader = DataLoader(mrl_train, batch_size=conf['pixelsnail']['batch_size'], shuffle=True)
     test_loader = DataLoader(mrl_test, batch_size=conf['pixelsnail']['batch_size'], shuffle=True)
@@ -116,7 +116,8 @@ if __name__ == '__main__':
     if not os.path.exists(path_weights / conf['experiment']):
         os.mkdir(path_weights / conf['experiment'])
 
-    if conf['pixelsnail']['hier'] == 'top':
+    hier = conf['pixelsnail']['hier']
+    if hier == 'top':
         model = PixelSNAIL(
             [conf['pixelsnail']['top_dim'], conf['pixelsnail']['top_dim']],
             conf['pixelsnail']['n_class'],
@@ -128,7 +129,7 @@ if __name__ == '__main__':
             dropout=conf['pixelsnail']['dropout'],
             n_out_res_block=conf['pixelsnail']['n_out_res_block']
         )
-    elif conf['pixelsnail']['hier'] == 'bottom':
+    elif hier == 'bottom':
         model = PixelSNAIL(
             [conf['pixelsnail']['bottom_dim'], conf['pixelsnail']['bottom_dim']],
             conf['pixelsnail']['n_class'],
@@ -159,7 +160,7 @@ if __name__ == '__main__':
     writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
 
     for i in range(conf['pixelsnail']['epochs']):
-        train_loss = train(i, train_loader, model, optimizer, scheduler, device)
+        train_loss = train(hier, i, train_loader, model, optimizer, scheduler, device)
         writer.add_scalar('PixelSNAIL/Train Loss', train_loss, i)
 
         saveModel(model, optimizer, i)
