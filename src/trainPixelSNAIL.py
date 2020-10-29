@@ -31,20 +31,27 @@ from scheduler import CycleScheduler
 
 from IPython import embed
 
-def train(epoch, loader, model, optimizer, scheduler, device):
+def train(hier, epoch, loader, model, optimizer, scheduler, device):
     loader = tqdm(loader)
 
     criterion = nn.CrossEntropyLoss()
     train_loss = []
 
-    for i, (top, label) in enumerate(loader):
+    for i, (top, bottom, label) in enumerate(loader):
         model.zero_grad()
 
         top = top.to(device)
         top = top.squeeze()
-        target = top
 
-        out, _ = model(top)
+        if hier == 'top':
+            target = top
+            out, _ = model(top)
+
+        elif hier == 'bottom':
+            bottom = bottom.to(device)
+            target = bottom
+            out, _ = model(bottom, condition=top)
+
 
         loss = criterion(out, target)
         loss.backward()
@@ -109,17 +116,32 @@ if __name__ == '__main__':
     if not os.path.exists(path_weights / conf['experiment']):
         os.mkdir(path_weights / conf['experiment'])
 
-    model = PixelSNAIL(
-        [conf['pixelsnail']['img_dim'], conf['pixelsnail']['img_dim']],
-        conf['pixelsnail']['n_class'],
-        conf['pixelsnail']['channel'],
-        conf['pixelsnail']['kernel_size'],
-        conf['pixelsnail']['n_block'],
-        conf['pixelsnail']['n_res_block'],
-        conf['pixelsnail']['n_res_channel'],
-        dropout=conf['pixelsnail']['dropout'],
-        n_out_res_block=conf['pixelsnail']['n_out_res_block']
-    )
+    if conf['pixelsnail']['hier'] == 'top':
+        model = PixelSNAIL(
+            [conf['pixelsnail']['top_dim'], conf['pixelsnail']['top_dim']],
+            conf['pixelsnail']['n_class'],
+            conf['pixelsnail']['channel'],
+            conf['pixelsnail']['kernel_size'],
+            conf['pixelsnail']['n_block'],
+            conf['pixelsnail']['n_res_block'],
+            conf['pixelsnail']['n_res_channel'],
+            dropout=conf['pixelsnail']['dropout'],
+            n_out_res_block=conf['pixelsnail']['n_out_res_block']
+        )
+    elif conf['pixelsnail']['hier'] == 'bottom':
+        model = PixelSNAIL(
+            [conf['pixelsnail']['bottom_dim'], conf['pixelsnail']['bottom_dim']],
+            conf['pixelsnail']['n_class'],
+            conf['pixelsnail']['channel'],
+            conf['pixelsnail']['kernel_size'],
+            conf['pixelsnail']['n_block'],
+            conf['pixelsnail']['n_res_block'],
+            conf['pixelsnail']['n_res_channel'],
+            attention=False,
+            dropout=conf['pixelsnail']['dropout'],
+            n_cond_res_block=conf['pixelsnail']['n_cond_res_block'],
+            cond_res_channel=conf['pixelsnail']['cond_res_channel']
+        )
 
     if conf['pixelsnail']['load']:
         weights = torch.load(path_weights / conf['experiment'] / conf['pixelsnail']['name'])['state_dict']
@@ -136,9 +158,8 @@ if __name__ == '__main__':
 
     writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
 
-    bias = 13
     for i in range(conf['pixelsnail']['epochs']):
         train_loss = train(i, train_loader, model, optimizer, scheduler, device)
         writer.add_scalar('PixelSNAIL/Train Loss', train_loss, i)
 
-        saveModel(model, optimizer, i + bias)
+        saveModel(model, optimizer, i)

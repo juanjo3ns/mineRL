@@ -8,7 +8,7 @@ import matplotlib.pylab as plt
 import torch.optim as optim
 import torch.nn.functional as F
 
-from models.VQVAE import VQVAE
+from models.VQVAE2 import VQVAE2
 from config import setSeed, getConfig
 from customLoader import MinecraftData
 
@@ -42,7 +42,7 @@ validation_loader = DataLoader(mrl_val, batch_size=32, shuffle=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = VQVAE(**conf['vqvae']).to(device)
+model = VQVAE2().to(device)
 
 model.eval()
 
@@ -52,13 +52,10 @@ valid_originals = next(iter(validation_loader))
 valid_originals = valid_originals.to(device)
 
 
-for i in os.listdir(f"../weights/{conf['experiment']}"):
-    if int(i.split('.')[0]) < 11000:
-        print(f"Loading model {i}...")
-        weights = torch.load(f"../weights/{conf['experiment']}/{i}")['state_dict']
-        model.load_state_dict(weights)
-        vq_output_eval = model._pre_vq_conv(model._encoder(valid_originals))
-        _, valid_quantize, _, _ = model._vq_vae(vq_output_eval)
-        valid_reconstructions = model._decoder(valid_quantize)
-        grid = make_grid(valid_reconstructions.cpu().data, normalize=True)
-        plt.imsave(f"../images/{i.split('.')[0]}.png", grid.permute(1,2,0).numpy())
+for i in sorted(os.listdir('../weights/vqvae2_0'), key=lambda x: int(x.split('.')[0])):
+    print(f"Loading model {i}...")
+    weights = torch.load(f"../weights/vqvae2_0/{i}")['state_dict']
+    model.load_state_dict(weights)
+    _, valid_reconstructions, _, _ = model(valid_originals)
+    grid = make_grid(valid_reconstructions.cpu().data, normalize=True)
+    plt.imsave(f"../images/{i.split('.')[0]}.png", grid.permute(1,2,0).numpy())

@@ -47,6 +47,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = VQVAE2().to(device)
 
+weights = torch.load(f'../weights/vqvae2_0/18599.pt')['state_dict']
+model.load_state_dict(weights)
+
 pprint(conf)
 
 optimizer = optim.Adam(model.parameters(), lr=conf['learning_rate'], amsgrad=False)
@@ -57,7 +60,7 @@ train_res_recon_error = []
 train_res_perp_t = []
 train_res_perp_b = []
 
-writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
+writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}_/")
 
 if not os.path.exists(join('../weights', conf['experiment'])):
     os.mkdir(join('../weights', conf['experiment']))
@@ -107,5 +110,5 @@ for i in range(conf['num_training_updates']):
         _, valid_reconstructions, _, _ = model(valid_originals)
         grid = make_grid(valid_reconstructions.cpu().data)+0.5
         # writer.add_image('images', grid, i)
-        saveModel(model, optimizer, i)
+        saveModel(model, optimizer, i+18599)
         model.train()
