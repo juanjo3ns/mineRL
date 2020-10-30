@@ -77,10 +77,42 @@ def train(hier, epoch, loader, model, optimizer, scheduler, device):
         )
     return np.asarray(train_loss).mean(0)
 
+def test(hier, epoch, loader, model, device):
+    model.eval()
+    loader = tqdm(loader)
 
-def saveModel(hier, model, optim, iter):
-	path = Path(f"../weights/{conf['experiment']}/{hier}_{str(iter).zfill(3)}.pt")
-	torch.save({
+    criterion = nn.CrossEntropyLoss()
+    test_loss = []
+
+    for i, (top, bottom, label) in enumerate(loader):
+
+        top = top.to(device)
+        top = top.squeeze()
+        bottom = bottom.squeeze()
+
+        if hier == 'top':
+            target = top
+            out, _ = model(top)
+
+        elif hier == 'bottom':
+            bottom = bottom.to(device)
+            target = bottom
+            out, _ = model(bottom, condition=top)
+
+
+        loss = criterion(out, target)
+
+        test_loss.append(loss.item())
+
+    model.train()
+    return np.asarray(test_loss).mean(0)
+
+
+def saveModel(path_weights, hier, model, optim, iter):
+    file_name = hier + '_' + str(iter).zfill(3) + ".pt"
+    path = path_weights / conf['experiment'] / file_name
+	
+    torch.save({
         'state_dict': model.state_dict(),
 		'optimizer': optim},
 		path)
@@ -111,7 +143,7 @@ if __name__ == '__main__':
     train_loader = DataLoader(mrl_train, batch_size=conf['pixelsnail']['batch_size'], shuffle=True)
     test_loader = DataLoader(mrl_test, batch_size=conf['pixelsnail']['batch_size'], shuffle=True)
 
-    path_weights = Path('../weights/')
+    path_weights = Path('/mnt/gpid07/users/juan.jose.nieto/weights/')
 
     if not os.path.exists(path_weights / conf['experiment']):
         os.mkdir(path_weights / conf['experiment'])
@@ -129,6 +161,9 @@ if __name__ == '__main__':
             dropout=conf['pixelsnail']['dropout'],
             n_out_res_block=conf['pixelsnail']['n_out_res_block']
         )
+        if conf['pixelsnail']['load']:
+            weights = torch.load(path_weights / 'pixelsnail_1' / conf['pixelsnail']['name_top'])['state_dict']
+            model.load_state_dict(weights)
     elif hier == 'bottom':
         model = PixelSNAIL(
             [conf['pixelsnail']['bottom_dim'], conf['pixelsnail']['bottom_dim']],
@@ -143,13 +178,14 @@ if __name__ == '__main__':
             n_cond_res_block=conf['pixelsnail']['n_cond_res_block'],
             cond_res_channel=conf['pixelsnail']['n_res_channel']
         )
+        if conf['pixelsnail']['load']:
+            weights = torch.load(path_weights / 'pixelsnail_1' / conf['pixelsnail']['name_bottom'])['state_dict']
+            model.load_state_dict(weights)
 
-    if conf['pixelsnail']['load']:
-        weights = torch.load(path_weights / conf['experiment'] / conf['pixelsnail']['name'])['state_dict']
-        model.load_state_dict(weights)
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=conf['pixelsnail']['lr'])
-    model = model.to(device)
+
+    
 
     scheduler = None
     if conf['pixelsnail']['sched'] == 'cycle':
@@ -161,6 +197,8 @@ if __name__ == '__main__':
 
     for i in range(conf['pixelsnail']['epochs']):
         train_loss = train(hier, i, train_loader, model, optimizer, scheduler, device)
+        test_loss = test(hier, i, test_loader, model, device)
         writer.add_scalar('PixelSNAIL/Train Loss', train_loss, i)
+        writer.add_scalar('PixelSNAIL/Test Loss', test_loss, i)
 
-        saveModel(hier, model, optimizer, i)
+        saveModel(path_weights, hier, model, optimizer, i)

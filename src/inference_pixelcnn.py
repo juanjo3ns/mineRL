@@ -29,15 +29,6 @@ assert len(sys.argv) == 2, "Indicate a configuration file like 'config_0.0'"
 conf = getConfig(sys.argv[1])
 
 
-# transform = transforms.Compose([
-#                           transforms.ToTensor(),
-#                           transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
-#                         ])
-
-
-# mrl_val = MinecraftData(conf['environment'], 'val', conf['split'], False, transform=transform)
-
-# validation_loader = DataLoader(mrl_val, batch_size=32, shuffle=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -50,7 +41,7 @@ pixelcnn.eval()
 weights_vqvae = torch.load(f"../weights/{conf['experiment']}/24999.pt")['state_dict']
 vqvae.load_state_dict(weights_vqvae)
 
-weights_pixelcnn = torch.load(f"../weights/{conf['experiment']}/pixel_6.pt")['state_dict']
+weights_pixelcnn = torch.load(f"../weights/pixel/pixel_024.pt")['state_dict']
 pixelcnn.load_state_dict(weights_pixelcnn)
 
 pprint(conf)

@@ -1,4 +1,4 @@
-experiment: 'pixelcnn'
+experiment: 'vqvae_0'
 environment: 'MineRLNavigate-v0'
 batch_size: 256
 num_training_updates: 25000

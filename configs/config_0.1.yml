@@ -1,4 +1,4 @@
-experiment: 'pixelsnail_1'
+experiment: 'pixelsnail_1.1'
 environment: 'MineRLNavigate-v0'
 batch_size: 256
 num_training_updates: 100000
@@ -15,8 +15,9 @@ vqvae2:
 pixelsnail:
   hier: 'bottom'
   epochs: 100
-  load: no
-  name: pixel_013.pt
+  load: yes
+  name_top: 'top_015.pt'
+  name_bottom: 'bottom_005.pt'
   save: no
   log_interval: 100
   lr: 0.0003
