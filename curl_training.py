@@ -77,7 +77,27 @@ pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
 batch_size = 32
 curl = CURL(obs_shape, feature_dim, batch_size, pixel_encoder, pixel_encoder_target)
 
-for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=batch_size, num_epochs=1, seq_len=1)):
-    sample = current_state['pov']
-    embed()
-print(f"\ntotal time {time.time()-ini}")
+def save_image(j, i):
+    img = np.concatenate((j[0], j[-1]), axis=1)
+    fig, ax = plt.subplots()
+    plt.imsave(f'./images/curl_sampled/{i}.png',img)
+    plt.close()
+
+for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=batch_size, num_epochs=1, seq_len=10)):
+    batch = current_state['pov']
+
+    # z_a = CURL.encode(obs_anchor)
+    # z_pos = CURL.encode(obs_pos, ema=True)
+    #
+    # logits = CURL.compute_logits(z_a, z_pos)
+    # labels = torch.arange(logits.shape[0]).long().to(device)
+    # loss = self.cross_entropy_loss(logits, labels)
+    #
+    # encoder_optimizer.zero_grad()
+    # cpc_optimizer.zero_grad()
+    # loss.backward()
+    #
+    # encoder_optimizer.step()
+    # cpc_optimizer.step()
+    # if step % log_interval == 0:
+    #     L.log('train/curl_loss', loss, step)
