@@ -38,6 +38,7 @@ data = minerl.data.make(MINERL_GYM_ENV, data_dir=MINERL_DATA_ROOT, num_workers=1
 feature_dim = conf['curl']['embedding_dim']
 img_size = conf['curl']['img_size']
 obs_shape = (3, img_size, img_size)
+batch_size = conf['batch_size']
 
 if os.getenv('USER') == 'juanjo':
     path_weights = Path('../weights/')
@@ -46,38 +47,20 @@ elif os.getenv('USER') == 'juan.jose.nieto':
 else:
     raise Exception("Sorry user not identified!")
 
-if not os.path.exists(path_weights / conf['experiment']):
-	os.mkdir(path_weights / conf['experiment'])
 
 pixel_encoder = PixelEncoder(obs_shape, feature_dim)
 pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-batch_size = conf['batch_size']
-tau = conf['curl']['encoder_tau']
-
 curl = CURL(obs_shape, feature_dim, batch_size, pixel_encoder, pixel_encoder_target).to(device)
-optimizer = optim.Adam(curl.encoder.parameters(), lr=conf['learning_rate'], amsgrad=False)
-optimizer_full = optim.Adam(curl.parameters(), lr=conf['learning_rate'], amsgrad=False)
 
-writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
 
-curl.train()
+curl.eval()
 
-def soft_update_params(net, target_net, tau):
-    for param, target_param in zip(net.parameters(), target_net.parameters()):
-        target_param.data.copy_(
-            tau * param.data + (1 - tau) * target_param.data
-        )
-
-def saveModel(path, exp, model, optim, iter):
-	file_name = str(iter) + '.pt'
-	path = path / exp / file_name
-	torch.save({
-        'state_dict': model.state_dict(),
-		'optimizer': optim},
-		path)
+if conf['curl']['load']:
+    weights = torch.load(path_weights / conf['experiment'] / conf['curl']['epoch'])['state_dict']
+    curl.load_state_dict(weights)
 
 def save_image(j, i):
     img = np.concatenate((j[0], j[-1]), axis=1)
@@ -85,13 +68,14 @@ def save_image(j, i):
     plt.imsave(f'./images/curl_sampled/{i}.png',img)
     plt.close()
 
-for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=batch_size, num_epochs=conf['epochs'], seq_len=conf['seq_len'])):
+for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=1, num_epochs=1, seq_len=10)):
     batch = current_state['pov']
+
     obs_anchor = batch[:,0,:,:,:]
     obs_pos = batch[:,-1,:,:,:]
 
-    obs_anchor = torch.from_numpy(obs_anchor).float().squeeze().to(device)
-    obs_pos = torch.from_numpy(obs_pos).float().squeeze().to(device)
+    obs_anchor = torch.from_numpy(obs_anchor).float().to(device)
+    obs_pos = torch.from_numpy(obs_pos).float().to(device)
 
     obs_anchor = obs_anchor.permute(0,3,1,2)
     obs_pos = obs_pos.permute(0,3,1,2)
@@ -99,20 +83,5 @@ for i, (current_state, action, reward, next_state, done) in enumerate(data.batch
     z_a = curl.encode(obs_anchor)
     z_pos = curl.encode(obs_pos, ema=True)
 
-
     logits = curl.compute_logits(z_a, z_pos)
-    labels = torch.arange(logits.shape[0]).long().to(device)
-    loss = torch.nn.CrossEntropyLoss()(logits, labels)
-    optimizer.zero_grad()
-    optimizer_full.zero_grad()
-    loss.backward()
-
-    optimizer.step()
-    optimizer_full.step()
-    writer.add_scalar('CURL/Loss', loss.item(), i)
-
-    if i%2==0:
-        soft_update_params(curl.encoder, curl.encoder_target, tau)
-
-    if i%5000==0:
-        saveModel(path_weights, conf['experiment'], curl, optimizer, i)
+    embed()
