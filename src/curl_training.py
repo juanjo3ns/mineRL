@@ -32,13 +32,17 @@ conf = getConfig(sys.argv[1])
 
 MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLNavigate-v0')
 # MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLTreechop-v0')
-MINERL_DATA_ROOT = os.getenv('MINERL_DATA_ROOT', 'data/')
-data = minerl.data.make(MINERL_GYM_ENV, data_dir=MINERL_DATA_ROOT)
+MINERL_DATA_ROOT = os.getenv('MINERL_DATA_ROOT', '/home/usuaris/imatge/juan.jose.nieto/mineRL/data/')
+data = minerl.data.make(MINERL_GYM_ENV, data_dir=MINERL_DATA_ROOT, num_workers=1)
 
 feature_dim = conf['curl']['embedding_dim']
 img_size = conf['curl']['img_size']
 obs_shape = (3, img_size, img_size)
 
+path_weights = Path('/mnt/gpid07/users/juan.jose.nieto/weights/')
+
+if not os.path.exists(path_weights / conf['experiment']):
+	os.mkdir(path_weights / conf['experiment'])
 
 pixel_encoder = PixelEncoder(obs_shape, feature_dim)
 pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
@@ -61,8 +65,9 @@ def soft_update_params(net, target_net, tau):
             tau * param.data + (1 - tau) * target_param.data
         )
 
-def saveModel(model, optim, iter):
-	path = Path(f"../weights/{conf['experiment']}/{iter}.pt")
+def saveModel(path, exp, model, optim, iter):
+	file_name = str(iter) + '.pt'
+	path = path / exp / file_name
 	torch.save({
         'state_dict': model.state_dict(),
 		'optimizer': optim},
@@ -101,5 +106,5 @@ for i, (current_state, action, reward, next_state, done) in enumerate(data.batch
     if i%2==0:
         soft_update_params(curl.encoder, curl.encoder_target, tau)
 
-    if i%1000==0:
-        saveModel(curl, optimizer, i)
+    if i%5000==0:
+        saveModel(path_weights, conf['experiment'], curl, optimizer, i)
