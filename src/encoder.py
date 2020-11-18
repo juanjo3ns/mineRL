@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+from IPython import embed
 
 def tie_weights(src, trg):
     assert type(src) == type(trg)
@@ -53,7 +53,7 @@ class PixelEncoder(nn.Module):
             conv = torch.relu(self.convs[i](conv))
             self.outputs['conv%s' % (i + 1)] = conv
 
-        h = conv.view(conv.size(0), -1)
+        h = conv.contiguous().view(conv.size(0), -1)
         return h
 
     def forward(self, obs, detach=False):
