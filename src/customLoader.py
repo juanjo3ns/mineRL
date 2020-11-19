@@ -50,7 +50,7 @@ class MinecraftData(Dataset):
             fc = 0
             while(frames.isOpened() and ret):
                 ret, frame = frames.read()
-                if ret and fc % 2 == 0:
+                if ret and fc % 1 == 0:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     data.append(frame)
                 fc += 1
@@ -122,7 +122,7 @@ if __name__ == '__main__':
                               transforms.ToTensor(),
                               transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
                             ])
-    mrl = MinecraftData('MineRLNavigate-v0', 'train', 0.7, False, transform=transform)
+    mrl = MinecraftData('MineRLNavigate-v0', 'train', 1, False, transform=transform)
     embed()
     # img = mrl[10]
     # plt.imshow(img)

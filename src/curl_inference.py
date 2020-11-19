@@ -64,40 +64,43 @@ if conf['curl']['load']:
 
 def save_image(img, name):
     fig, ax = plt.subplots()
-    plt.imsave(f'../images/sequences_0/{name}.png',img)
+    plt.imsave(f'../images/inference_attention_2/{name}.png',img)
     plt.close()
 
 def save_fig(img, name):
     plt.imshow(img)
     plt.axis('off')
-    plt.savefig(f'../images/inference_attention_1/{name}.svg')
+    plt.savefig(f'../images/inference_attention_2/{name}.svg')
     plt.close()
 
-for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=1, num_epochs=1, seq_len=200)):
-    batch = current_state['pov']
+for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=1, num_epochs=3, seq_len=10)):
 
+    # batch = current_state['pov']
+    #
     # obs_anchor = batch[:,0,:,:,:]
     # obs_pos = batch[:,-1,:,:,:]
     #
     # obs_anchor = obs_anchor[5]
 
-    for j, b in enumerate(batch[0]):
-        if j%20==0:
-            save_image(b, j)
+    # part 0 (store image trajectories every x samples)
+    # for j, b in enumerate(batch[0]):
+    #     if j%20==0:
+    #         save_image(b, j)
+    # ---------------
 
     # save_image(obs_anchor, 'original_image')
     # obs_anchor = torch.from_numpy(obs_anchor).unsqueeze(dim=0).float().to(device)
     #
     # obs_anchor = obs_anchor.permute(0,3,1,2)
-    #
-    # # part 1
-    # # h, conv = curl.encoder.forward_conv(obs_anchor)
-    # # for j,c in enumerate(conv[0]):
-    # #     img = c.detach().cpu().numpy()
-    # #     save_image(img, j)
-    # # ---------
-    #
-    # # part 2
+
+    # part 1 store convolutional outputs
+    # h, conv = curl.encoder.forward_conv(obs_anchor)
+    # for j,c in enumerate(conv[0]):
+    #     img = c.detach().cpu().numpy()
+    #     save_image(img, j)
+    # ---------
+
+    # # part 2 store embeddings reshaped
     # z_a = curl.encode(obs_anchor)
     # z = z_a[0][:49].detach().cpu().numpy()
     # z = z.reshape(7,7)
@@ -108,9 +111,6 @@ for i, (current_state, action, reward, next_state, done) in enumerate(data.batch
     # zw = zw.reshape(7,7)
     # save_fig(zw, 'zxW')
     # -----------
-    # embed()
-    break
-    # z_pos = curl.encode(obs_pos, ema=True)
-    # embed()
 
-    # logits = curl.compute_logits(z_a, z_pos)
+    # break
+print('\n')

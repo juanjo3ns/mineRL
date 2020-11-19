@@ -11,7 +11,9 @@ import matplotlib.pyplot as plt
 from os.path import join
 from pathlib import Path
 from pprint import pprint
+
 from config import setSeed, getConfig
+from random_shift import random_shift
 
 import torch
 import torch.nn as nn
@@ -61,7 +63,7 @@ curl = CURL(obs_shape, feature_dim, batch_size, pixel_encoder, pixel_encoder_tar
 optimizer = optim.Adam(curl.encoder.parameters(), lr=conf['learning_rate'], amsgrad=False)
 optimizer_full = optim.Adam(curl.parameters(), lr=conf['learning_rate'], amsgrad=False)
 
-writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
+# writer = SummaryWriter(log_dir=f"../tensorboard/{conf['experiment']}/")
 
 curl.train()
 
@@ -90,6 +92,9 @@ for i, (current_state, action, reward, next_state, done) in enumerate(data.batch
     obs_anchor = batch[:,0,:,:,:]
     obs_pos = batch[:,-1,:,:,:]
 
+    obs_anchor = random_shift(obs_anchor, pad=4)
+    obs_pos = random_shift(obs_pos, pad=4)
+
     obs_anchor = torch.from_numpy(obs_anchor).float().squeeze().to(device)
     obs_pos = torch.from_numpy(obs_pos).float().squeeze().to(device)
 
@@ -109,10 +114,10 @@ for i, (current_state, action, reward, next_state, done) in enumerate(data.batch
 
     optimizer.step()
     optimizer_full.step()
-    writer.add_scalar('CURL/Loss', loss.item(), i)
+    # writer.add_scalar('CURL/Loss', loss.item(), i)
 
     if i%2==0:
         soft_update_params(curl.encoder, curl.encoder_target, tau)
 
-    if i%5000==0:
-        saveModel(path_weights, conf['experiment'], curl, optimizer, i)
+    # if i%5000==0:
+    #     saveModel(path_weights, conf['experiment'], curl, optimizer, i)
