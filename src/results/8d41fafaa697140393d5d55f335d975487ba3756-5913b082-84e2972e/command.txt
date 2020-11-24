@@ -1,0 +1,1 @@
+/home/juanjo/Documents/minecraft/mineRL/src/curl/train.py --env MineRLNavigateVectorObf-v0
