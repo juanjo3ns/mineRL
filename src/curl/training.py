@@ -23,8 +23,8 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from encoder import PixelEncoder
-from CURL import CURL
+from curl.encoder import PixelEncoder
+from curl.model import CURL
 
 from IPython import embed
 

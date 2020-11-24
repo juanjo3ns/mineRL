@@ -3,7 +3,7 @@ import logging
 import os
 
 # import aicrowd_helper
-from utility.parser import Parser
+from mod.parser import Parser
 
 import coloredlogs
 coloredlogs.install(logging.DEBUG)

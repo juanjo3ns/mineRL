@@ -9,9 +9,12 @@ import gym
 
 import pfrl
 
+from curl.encoder import PixelEncoder
+from curl.model import CURL
 
 # local modules
 import sys
+from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(__file__, os.pardir)))
 import utils
 from env_wrappers import wrap_env
@@ -195,6 +198,30 @@ def dqn_family(
     train_seed = seed  # noqa: never used in this script
     test_seed = 2 ** 31 - 1 - seed
 
+    # CURL stuff #####################################
+    if os.getenv('USER') == 'juanjo':
+        path_weights = Path('../weights/')
+    elif os.getenv('USER') == 'juan.jose.nieto':
+        path_weights = Path('/mnt/gpid07/users/juan.jose.nieto/weights/')
+    else:
+        raise Exception("Sorry user not identified!")
+
+    feature_dim = 50
+    img_size = 64
+    obs_shape = (3, img_size, img_size)
+
+    pixel_encoder = PixelEncoder(obs_shape, feature_dim)
+    pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    batch_size = 1
+
+    curl = CURL(obs_shape, feature_dim, batch_size, pixel_encoder, pixel_encoder_target).to(device)
+    weights = torch.load(path_weights / 'curl_0.1.1' / '65000.pt')['state_dict']
+    curl.load_state_dict(weights)
+    ######################################################
+
     # K-Means
     kmeans = cached_kmeans(
         cache_dir=os.environ.get('KMEANS_CACHE'),
@@ -211,7 +238,8 @@ def dqn_family(
             frame_skip=frame_skip,
             gray_scale=gray_scale, frame_stack=frame_stack,
             randomize_action=randomize_action, eval_epsilon=eval_epsilon,
-            action_choices=kmeans.cluster_centers_)
+            action_choices=kmeans.cluster_centers_,
+            encoder=curl, device=device)
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)

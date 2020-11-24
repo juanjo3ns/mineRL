@@ -26,7 +26,7 @@ from curl.model import CURL
 
 from IPython import embed
 
-setSeed(0)
+setSeed(2)
 assert len(sys.argv) == 2, "Indicate a configuration file like 'config_0.0'"
 conf = getConfig(sys.argv[1])
 
@@ -72,6 +72,9 @@ def save_fig(img, name):
     plt.axis('off')
     plt.savefig(f'../images/inference_attention_2/{name}.svg')
     plt.close()
+
+embed()
+exit()
 
 for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=32, num_epochs=1, seq_len=200)):
 

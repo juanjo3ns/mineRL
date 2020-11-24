@@ -1,3 +1,4 @@
+import torch
 import copy
 from logging import getLogger
 from collections import deque
@@ -20,7 +21,8 @@ def wrap_env(
         frame_skip,
         gray_scale, frame_stack,
         randomize_action, eval_epsilon,
-        action_choices):
+        action_choices,
+        encoder, device):
     # wrap env: time limit...
     # Don't use `ContinuingTimeLimit` for testing, in order to avoid unexpected behavior on submissions.
     # (Submission utility regards "done" as an episode end, which will result in endless evaluation)
@@ -43,11 +45,19 @@ def wrap_env(
         env = GrayScaleWrapper(env, dict_space_key='pov')
     env = ObtainPoVWrapper(env)
     env = MoveAxisWrapper(env, source=-1, destination=0)  # convert hwc -> chw as Pytorch requires.
-    env = ScaledFloatFrame(env)
+
+    # NEW
+    env = ObtainEmbeddingWrapper(env, encoder, device)
+
+    # Since we have our own encoder, we won't use scaling
+    # env = ScaledFloatFrame(env)
     if frame_stack is not None and frame_stack > 0:
         env = FrameStack(env, frame_stack, channel_order='chw')
 
     env = ClusteredActionWrapper(env, clusters=action_choices)
+
+    # NEW
+    env = TransformReward(env, encoder)
 
     if randomize_action:
         env = RandomizeAction(env, eval_epsilon)
@@ -137,6 +147,26 @@ class ObtainPoVWrapper(gym.ObservationWrapper):
 
     def observation(self, observation):
         return observation['pov']
+
+class ObtainEmbeddingWrapper(gym.ObservationWrapper):
+    """Obtain embedding vector corresponding to current observation."""
+    def __init__(self, env, encoder, device):
+        super().__init__(env)
+        self.curl = encoder
+        self.device = device
+        z_pos = np.load('../images/skills_0/skill_0_array.npy')
+        self.z_pos = torch.from_numpy(z_pos).float().to(self.device)
+        # Baseline computation: maximum reward we can get
+        self.baseline = self.curl.compute_logits_(self.z_pos, self.z_pos)
+
+
+    def observation(self, observation):
+        obs_anchor = torch.from_numpy(observation).float().unsqueeze(dim=0).to(self.device)
+        z_a = self.curl.encode(obs_anchor)
+        # Compute reward as distance similarity in the embedding space - baseline reward (max)
+        reward = self.curl.compute_logits_(z_a, self.z_pos) - self.baseline
+        self.curl.reward = reward.detach().cpu().numpy()
+        return z_a.detach().cpu().numpy()
 
 
 class UnifiedObservationWrapper(gym.ObservationWrapper):
@@ -350,12 +380,11 @@ class TransformReward(gym.RewardWrapper):
     """Transform the reward via an arbitrary function.
         Args:
             env (Env): environment
-            f (callable): a function that transforms the reward
     """
-    def __init__(self, env, f):
+    def __init__(self, env, encoder):
         super(TransformReward, self).__init__(env)
-        assert callable(f)
-        self.f = f
+
+        self.curl = encoder
 
     def reward(self, reward):
-        return self.f(reward)
+        return self.curl.reward

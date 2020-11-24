@@ -46,32 +46,39 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
         super().__init__()
         self.z_values = torch.linspace(v_min, v_max, n_atoms, dtype=torch.float32)
 
-        self.conv_layers = nn.ModuleList(
-            [
-                nn.Conv2d(n_input_channels, 32, 8, stride=4),
-                nn.Conv2d(32, 64, 4, stride=2),
-                nn.Conv2d(64, 64, 3, stride=1),
-            ]
-        )
+        # self.conv_layers = nn.ModuleList(
+        #     [
+        #         nn.Conv2d(n_input_channels, 32, 8, stride=4),
+        #         nn.Conv2d(32, 64, 4, stride=2),
+        #         nn.Conv2d(64, 64, 3, stride=1),
+        #     ]
+        # )
 
         # ここだけ変える必要があった
         # self.main_stream = nn.Linear(3136, 1024)
-        self.main_stream = nn.Linear(1024, 1024)
+
+        # before
+        # self.main_stream = nn.Linear(1024, 1024)
+        # new
+        self.main_stream_1 = nn.Linear(50, 512)
+        self.main_stream_2 = nn.Linear(512, 1024)
+
         self.a_stream = nn.Linear(512, n_actions * n_atoms)
         self.v_stream = nn.Linear(512, n_atoms)
 
         self.apply(init_chainer_default)
-        self.conv_layers.apply(constant_bias_initializer(bias=bias))
+        # self.conv_layers.apply(constant_bias_initializer(bias=bias))
 
     def forward(self, x):
-        h = x
-        for l in self.conv_layers:
-            h = self.activation(l(h))
+        # h = x
+        # for l in self.conv_layers:
+        #     h = self.activation(l(h))
 
         # Advantage
         batch_size = x.shape[0]
 
-        h = self.activation(self.main_stream(h.view(batch_size, -1)))
+        h = self.activation(self.main_stream_1(x.view(batch_size, -1)))
+        h = self.activation(self.main_stream_2(h))
         h_a, h_v = torch.chunk(h, 2, dim=1)
         ya = self.a_stream(h_a).reshape((batch_size, self.n_actions, self.n_atoms))
 
