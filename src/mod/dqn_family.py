@@ -21,6 +21,8 @@ from env_wrappers import wrap_env
 from q_functions import parse_arch
 from cached_kmeans import cached_kmeans
 
+from IPython import embed
+
 logger = logging.getLogger(__name__)
 
 
@@ -243,13 +245,14 @@ def dqn_family(
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
+    core_env.make_interactive(port=6666, realtime=True)
 
     core_env.seed(2)
     # core_env.make_interactive(port=6666, realtime=True)
 
     # training env
     env = wrap_env_partial(env=core_env, test=False)
-    # env.seed(int(train_seed))  # TODO: not supported yet
+    env.seed(int(train_seed))  # TODO: not supported yet
     # evaluation env
     eval_env = wrap_env_partial(env=core_env, test=True)
     # env.seed(int(test_seed))  # TODO: not supported yet (also requires `core_eval_env = gym.make(args.env)`)

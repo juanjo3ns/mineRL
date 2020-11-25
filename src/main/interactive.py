@@ -21,8 +21,8 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from curl.encoder import PixelEncoder
-from curl.model import CURL
+from main.encoder import PixelEncoder
+from main.model import CURL
 
 from IPython import embed
 
@@ -47,20 +47,20 @@ elif os.getenv('USER') == 'juan.jose.nieto':
 else:
     raise Exception("Sorry user not identified!")
 
-
-pixel_encoder = PixelEncoder(obs_shape, feature_dim)
-pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-curl = CURL(obs_shape, feature_dim, batch_size, pixel_encoder, pixel_encoder_target).to(device)
-
-
-curl.eval()
-
-if conf['curl']['load']:
-    weights = torch.load(path_weights / conf['experiment'] / conf['curl']['epoch'])['state_dict']
-    curl.load_state_dict(weights)
+#
+# pixel_encoder = PixelEncoder(obs_shape, feature_dim)
+# pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
+#
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#
+# curl = CURL(obs_shape, feature_dim, batch_size, pixel_encoder, pixel_encoder_target).to(device)
+#
+#
+# curl.eval()
+#
+# if conf['curl']['load']:
+#     weights = torch.load(path_weights / conf['experiment'] / conf['curl']['epoch'])['state_dict']
+#     curl.load_state_dict(weights)
 
 def save_image(img, name):
     fig, ax = plt.subplots()
@@ -79,15 +79,15 @@ env = gym.make('MineRLNavigateVectorObf-v0')
 env.make_interactive(port=6666, realtime=True)
 
 env.seed(2)
-env.reset()
 
 ini = time.time()
-while True:
-    action = env.action_space.sample()
-    obs, reward, done, _ = env.step(action)
-    print(obs['pov'].shape)
-    time.sleep(0.1)
-    if time.time()-ini > 200:
-        break
+for i in range(3):
+    env.reset()
+    while True:
+        action = env.action_space.sample()
+        obs, reward, done, _ = env.step(action)
+        time.sleep(0.1)
+        if time.time()-ini > 45:
+            break
 
 env.close()

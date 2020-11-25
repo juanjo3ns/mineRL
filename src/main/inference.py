@@ -73,21 +73,11 @@ def save_fig(img, name):
     plt.savefig(f'../images/inference_attention_2/{name}.svg')
     plt.close()
 
-embed()
-exit()
 
 for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=32, num_epochs=1, seq_len=200)):
 
     batch = current_state['pov']
-    #
-    # obs_anchor = batch[:,0,:,:,:]
-    # obs_pos = batch[:,-1,:,:,:]
-    embed()
 
-    for s in skills:
-        plt.imshow(s)
-        plt.show()
-        plt.close()
 
     obs_anchor = torch.from_numpy(state).float().unsqueeze(dim=0).to(device)
     obs_pos = torch.from_numpy(skills).float().squeeze().to(device)
@@ -103,37 +93,5 @@ for i, (current_state, action, reward, next_state, done) in enumerate(data.batch
     logits = curl.compute_logits_(z_a, z_pos)
     print(logits)
 
-    # obs_anchor = obs_anchor[5]
 
-    # part 0 (store image trajectories every x samples)
-    # for j, b in enumerate(batch[0]):
-    #     if j%20==0:
-    #         save_image(b, j)
-    # ---------------
-
-    # save_image(obs_anchor, 'original_image')
-    # obs_anchor = torch.from_numpy(obs_anchor).unsqueeze(dim=0).float().to(device)
-    #
-    # obs_anchor = obs_anchor.permute(0,3,1,2)
-
-    # part 1 store convolutional outputs
-    # h, conv = curl.encoder.forward_conv(obs_anchor)
-    # for j,c in enumerate(conv[0]):
-    #     img = c.detach().cpu().numpy()
-    #     save_image(img, j)
-    # ---------
-
-    # # part 2 store embeddings reshaped
-    # z_a = curl.encode(obs_anchor)
-    # z = z_a[0][:49].detach().cpu().numpy()
-    # z = z.reshape(7,7)
-    # save_fig(z, 'z_reshaped')
-    # zw = z_a*curl.W
-    # zw = zw.detach().cpu().numpy()
-    # zw = np.diag(zw)[:49]
-    # zw = zw.reshape(7,7)
-    # save_fig(zw, 'zxW')
-    # -----------
-
-    # break
 print('\n')

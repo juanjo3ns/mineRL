@@ -11,7 +11,7 @@ coloredlogs.install(logging.DEBUG)
 import sys
 sys.path.append(os.path.abspath(os.path.join(__file__, os.pardir, 'mod')))
 from mod.dqn_family import main as dqn_family_main
-
+from IPython import embed
 
 # All the evaluations will be evaluated on MineRLObtainDiamond-v0 environment
 # MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLObtainDiamondVectorObf-v0')

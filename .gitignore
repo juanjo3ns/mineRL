@@ -1,4 +1,5 @@
 images/
+src/results/
 weights/
 tensorboard/
 data/
@@ -131,4 +132,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
