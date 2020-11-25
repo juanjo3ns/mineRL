@@ -5,13 +5,89 @@ import torch
 import numpy as np
 import matplotlib.pylab as plt
 
-
+from random import choice, randint
 from os.path import join
 from pathlib import Path
 from torchvision import transforms
 from torch.utils.data import Dataset
 
 from IPython import embed
+
+class MultiMinecraftData(Dataset):
+    def __init__(self, env_list, mode, split, extra, transform=None, path='../data') -> None:
+        self.path = path
+        self.env_list = env_list
+        self.mode = mode
+        self.split = split
+        self.extra = extra
+        self.dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+        self.data = self.loadData()
+        # self.data_variance = np.var(self.data) / 255
+        self.transform = transform
+        self.k_std = 5
+        self.k_mean = 10
+
+    def loadData(self) -> list:
+        data = []
+
+        print('Loading data...')
+        path = Path(self.path)
+
+        self.num_vids = 0
+
+        for env in self.env_list:
+            print(f"\n\tLoading environment {env}")
+            self.num_vids += len(os.listdir(path / env))
+            video_list = os.listdir(path / env)
+
+            # if self.mode == 'train':
+            #     video_list = video_list[:int(self.split*num_vids)]
+            # else:
+            #     video_list = video_list[int(self.split*num_vids):]
+
+            for i, vid in enumerate(video_list):
+                print(f"\tVid: {i}", end ='\r')
+                video = []
+                if self.extra:
+                    other_info = np.load(path / env / vid / 'rendered.npz')
+
+                vid_path = path / env / vid / 'recording.mp4'
+                frames = cv2.VideoCapture(str(vid_path))
+                ret = True
+                fc = 0
+                while(frames.isOpened() and ret):
+                    ret, frame = frames.read()
+                    if ret and fc % 1 == 0:
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        video.append(frame)
+                    fc += 1
+
+                data.append(video)
+        print()
+        return data
+
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __getitem__(self, index):
+        # Pick trajectory
+        trajectory = self.data[index]
+        # Get query index uniformly
+        num_frames = len(trajectory)-1
+        query_idx = randint(0, num_frames)
+        # Pick frame from trajectory
+        query = trajectory[query_idx]
+        # Compute key index by adding a normal distribution
+        key_idx = query_idx + int(np.random.rand()*self.k_std + self.k_mean)
+        # Get key frame
+        key = trajectory[min(key_idx, num_frames)]
+        if self.transform is not None:
+            query = self.transform(query)
+            key = self.transform(key)
+
+        # Stack query and key to return [2,3,64,64]
+        return torch.stack((query, key))
 
 
 class MinecraftData(Dataset):
@@ -120,9 +196,9 @@ class LatentBlockDataset(Dataset):
 if __name__ == '__main__':
     transform = transforms.Compose([
                               transforms.ToTensor(),
-                              transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
                             ])
-    mrl = MinecraftData('MineRLNavigate-v0', 'train', 1, False, transform=transform)
+    env_list = ['MineRLNavigate-v0', 'MineRLNavigateVectorObf-v0']
+    mrl = MultiMinecraftData(env_list, 'train', 1, False, transform=transform)
     embed()
     # img = mrl[10]
     # plt.imshow(img)

@@ -9,8 +9,8 @@ import gym
 
 import pfrl
 
-from curl.encoder import PixelEncoder
-from curl.model import CURL
+from main.encoder import PixelEncoder
+from main.model import CURL
 
 # local modules
 import sys
