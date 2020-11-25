@@ -33,7 +33,9 @@ def cached_kmeans(cache_dir, env_id, n_clusters, random_state):
 
 def _do_kmeans(env_id, n_clusters, random_state):
     logger.debug(f'loading data...')
-    dat = minerl.data.make(env_id)
+    
+    MINERL_DATA_ROOT = os.getenv('MINERL_DATA_ROOT', '/home/usuaris/imatge/juan.jose.nieto/mineRL/data/')
+    dat = minerl.data.make(env_id, data_dir=MINERL_DATA_ROOT)
     act_vectors = []
     for _, act, _, _, _ in tqdm.tqdm(dat.batch_iter(batch_size=16, seq_len=32, num_epochs=1, preload_buffer_size=32, seed=random_state)):
         act_vectors.append(act['vector'])
