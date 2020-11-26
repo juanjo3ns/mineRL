@@ -154,7 +154,7 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         super().__init__(env)
         self.curl = encoder
         self.device = device
-        z_pos = np.load('../images/skills_0/skill_0_array.npy')
+        z_pos = np.load('../images/skills_1/242.npy')
         self.z_pos = torch.from_numpy(z_pos).float().to(self.device)
         # Baseline computation: maximum reward we can get
         self.baseline = self.curl.compute_logits_(self.z_pos, self.z_pos)
@@ -165,7 +165,7 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         z_a = self.curl.encode(obs_anchor)
         # Compute reward as distance similarity in the embedding space - baseline reward (max)
         reward = self.curl.compute_logits_(z_a, self.z_pos) - self.baseline
-        self.curl.reward = reward.detach().cpu().numpy()
+        self.curl.reward = reward.squeeze().detach().cpu().numpy()
         return z_a.detach().cpu().numpy()
 
 

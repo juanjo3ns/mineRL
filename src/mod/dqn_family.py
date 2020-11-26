@@ -245,14 +245,19 @@ def dqn_family(
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
-    core_env.make_interactive(port=6666, realtime=True)
+    # core_env.make_interactive(port=6666, realtime=True)
 
-    core_env.seed(2)
+    # This seed controls which environment will be rendered
+    core_env.seed(100)
     # core_env.make_interactive(port=6666, realtime=True)
 
     # training env
     env = wrap_env_partial(env=core_env, test=False)
-    env.seed(int(train_seed))  # TODO: not supported yet
+    # env.seed(int(train_seed))
+
+
+
+
     # evaluation env
     eval_env = wrap_env_partial(env=core_env, test=True)
     # env.seed(int(test_seed))  # TODO: not supported yet (also requires `core_eval_env = gym.make(args.env)`)

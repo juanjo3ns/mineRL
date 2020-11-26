@@ -4,12 +4,10 @@ import cv2
 import gym
 import json
 import time
+import copy
 import minerl
 import numpy as np
-
 import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
 
 from os.path import join
 from pathlib import Path
@@ -27,9 +25,10 @@ from torch.utils.tensorboard import SummaryWriter
 from main.encoder import PixelEncoder
 from main.model import CURL
 
+from collections import OrderedDict
 from IPython import embed
 
-setSeed(2)
+setSeed(0)
 assert len(sys.argv) == 2, "Indicate a configuration file like 'config_0.0'"
 conf = getConfig(sys.argv[1])
 
@@ -65,9 +64,9 @@ if conf['curl']['load']:
     weights = torch.load(path_weights / conf['experiment'] / conf['curl']['epoch'])['state_dict']
     curl.load_state_dict(weights)
 
-def save_image(img, name, type='goal_state_'):
+def save_image(img, name):
     fig, ax = plt.subplots()
-    plt.imsave(f'../images/reward_plots/{type}{name}.png',img)
+    plt.imsave(f'../images/skills_1/{name}.png',img)
     plt.close()
 
 def save_fig(img, name):
@@ -76,51 +75,70 @@ def save_fig(img, name):
     plt.savefig(f'../images/inference_attention_2/{name}.svg')
     plt.close()
 
-def store_random(batch, seq, step):
-    obs_pos = batch[seq,step,:,:,:]
-    save_image(obs_pos, '_'.join([str(seq), str(step)]), type='seq_step_')
+def encode(obs, name):
+    obs_anchor = torch.from_numpy(obs).float().unsqueeze(dim=0).to(device)
+    obs_anchor = obs_anchor.permute(0,3,1,2)
+    z_a = curl.encode(obs_anchor)
+    with open(f'../images/skills_1/{name}.npy', 'wb') as f:
+        np.save(f, z_a.detach().cpu().numpy())
 
+env = gym.make('MineRLNavigate-v0')
 
+# env.make_interactive(port=6666, realtime=True)
 
-final_step = 1000
-goal_states = [10, int(final_step/2), final_step-1]
+env.seed(100)
 
-for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=32, num_epochs=1, seq_len=final_step)):
+action = OrderedDict()
+action['attack'] = np.array(0)
+action['back'] = np.array(0)
+action['forward'] = np.array(1)
+action['jump'] = np.array(0)
+action['left'] = np.array(0)
+action['place'] = 'dirt'
+action['right'] = np.array(0)
+action['sneak'] = np.array(0)
+action['sprint'] = np.array(0)
+action['camera'] = np.array([0,0], dtype=np.float32)
 
-    batch = current_state['pov']
-    # store_random(batch, 2, 295)
-    # store_random(batch, 3, 295)
-    # store_random(batch, 2, 350)
-    # store_random(batch, 3, 350)
-    seq = 4
-    for goal in goal_states:
-        print(f"seq {seq} goal {goal}")
-        # obs_anchor = batch[:,0,:,:,:]
-        obs_pos = batch[seq,goal,:,:,:]
-        save_image(obs_pos, '_'.join([str(seq), str(goal)]))
-        obs_pos = torch.from_numpy(obs_pos).float().unsqueeze(dim=0).to(device)
-        obs_pos = obs_pos.permute(0,3,1,2)
-        z_pos = curl.encode(obs_pos, ema=True)
-        print("\tsaved goal state")
-        rewards = []
-        for b in batch[:5]:
-            aux = []
-            for img in b[0:final_step-1]:
-                obs_anchor = torch.from_numpy(img).float().unsqueeze(dim=0).to(device)
-                obs_anchor = obs_anchor.permute(0,3,1,2)
-                z_a = curl.encode(obs_anchor)
-                logits = curl.compute_logits_(z_a, z_pos)
-                aux.append(logits.detach().cpu().numpy().item())
-            rewards.append(aux)
-        print("\tcomputed rewards")
-        data = np.array(rewards).T
-        df = pd.DataFrame(data)
-        df = df.rolling(5).sum()
-        ax = df.plot.line()
-        ax.set_xlabel('step')
-        ax.set_ylabel('reward')
-        plt.axvline(goal, color='red')
-        plt.savefig(f"../images/reward_plots/{conf['experiment']}_{seq}_{goal}.png")
-        plt.close()
-        print("\tsaved fig")
-    break
+a1 = copy.deepcopy(action)
+a1['camera'] = np.array([0,180], dtype=np.float32)
+action_list = [a1]
+
+action_list.extend([action]*30)
+
+a2 = copy.deepcopy(action)
+a2['camera'] = np.array([0,45], dtype=np.float32)
+action_list.extend([a2])
+
+action_list.extend([action]*120)
+
+action_list.extend([a2])
+
+a3 = copy.deepcopy(action)
+a3['jump'] = np.array(1)
+action_list.extend([a3]*100)
+
+a4 = copy.deepcopy(action)
+a4['camera'] = np.array([0,45], dtype=np.float32)
+action_list.extend([a4])
+
+a5 = copy.deepcopy(action)
+a5['forward'] = np.array(0)
+action_list.extend([a5]*10)
+
+ini = time.time()
+env.reset()
+count = 0
+while True:
+    # action = env.action_space.sample()
+
+    action = action_list[count]
+    obs, reward, done, _ = env.step(action)
+    if count > 200:
+        save_image(obs['pov'], count)
+        encode(obs['pov'], count)
+    time.sleep(0.1)
+    if time.time()-ini > 200:
+        break
+    count += 1
+env.close()
