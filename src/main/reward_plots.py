@@ -82,13 +82,13 @@ for i, (current_state, action, reward, next_state, done) in enumerate(data.batch
     batch = current_state['pov']
     #
     # obs_anchor = batch[:,0,:,:,:]
-    obs_pos = batch[0,250,:,:,:]
+    obs_pos = batch[1,250,:,:,:]
     obs_pos = torch.from_numpy(obs_pos).float().unsqueeze(dim=0).to(device)
     obs_pos = obs_pos.permute(0,3,1,2)
     z_pos = curl.encode(obs_pos, ema=True)
 
     rewards = []
-    for b in batch[:10]:
+    for b in batch[:5]:
         aux = []
         for img in b[0:499]:
             obs_anchor = torch.from_numpy(img).float().unsqueeze(dim=0).to(device)

@@ -52,7 +52,7 @@ tau = conf['curl']['encoder_tau']
 # Dataloaders and so on
 transform = transforms.Compose([transforms.ToTensor()])
 env_list = ['MineRLNavigate-v0', 'MineRLNavigateVectorObf-v0']
-mrl_train = MultiMinecraftData(env_list, 'train', 1, False, transform=transform)
+mrl_train = MultiMinecraftData(env_list, 'train', 1, False, transform=transform, **conf['gauss_step'])
 training_loader = DataLoader(mrl_train, batch_size=batch_size, shuffle=True)
 
 

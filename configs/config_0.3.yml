@@ -1,12 +1,14 @@
-experiment: 'curl_0.2.0'
+experiment: 'curl_0.2.2'
 environment: 'MineRLNavigate-v0'
 batch_size: 64
 epochs: 60000
 learning_rate: 0.001
-seq_len: 10
 curl:
-  embedding_dim: 64
+  embedding_dim: 128
   img_size: 64
   encoder_tau: 0.005
   load: yes
-  epoch: '65000.pt'
+  epoch: '58000.pt'
+gauss_step:
+  k_std: 5
+  k_mean: 20

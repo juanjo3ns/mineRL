@@ -14,7 +14,7 @@ from torch.utils.data import Dataset
 from IPython import embed
 
 class MultiMinecraftData(Dataset):
-    def __init__(self, env_list, mode, split, extra, transform=None, path='../data') -> None:
+    def __init__(self, env_list, mode, split, extra, transform=None, path='../data', **kwargs) -> None:
         self.path = path
         self.env_list = env_list
         self.mode = mode
@@ -24,8 +24,8 @@ class MultiMinecraftData(Dataset):
         self.data = self.loadData()
         # self.data_variance = np.var(self.data) / 255
         self.transform = transform
-        self.k_std = 5
-        self.k_mean = 10
+        self.k_std = kwargs['k_std']
+        self.k_mean = kwargs['k_mean']
 
     def loadData(self) -> list:
         data = []
