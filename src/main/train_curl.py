@@ -14,7 +14,6 @@ from pprint import pprint
 
 from config import setSeed, getConfig
 from main.random_shift import random_shift
-from customLoader import MultiMinecraftData2
 
 import torch
 import torch.nn as nn
@@ -50,10 +49,10 @@ tau = conf['curl']['encoder_tau']
 
 
 # Dataloaders and so on
-transform = transforms.Compose([transforms.ToTensor()])
-env_list = ['MineRLNavigate-v0']
-mrl_train = MultiMinecraftData2(env_list, 'train', 1, False, transform=transform, **conf['gauss_step'])
-training_loader = DataLoader(mrl_train, batch_size=batch_size, shuffle=True)
+# transform = transforms.Compose([transforms.ToTensor()])
+# env_list = ['MineRLNavigate-v0']
+# mrl_train = MultiMinecraftData2(env_list, 'train', 1, False, transform=transform, **conf['gauss_step'])
+# training_loader = DataLoader(mrl_train, batch_size=batch_size, shuffle=True)
 
 
 # Weights path depending on execution server
@@ -110,48 +109,56 @@ def save_image(j, i):
 
 
 # Training loop
-for epoch in range(conf['epochs']):
-    loss_list = []
-    for b, batch in enumerate(training_loader):
+for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=batch_size, num_epochs=conf['epochs'], seq_len=conf['seq_len'])):
 
-        # Split queries and keys
-        query = batch[:,0,:,:,:]
-        key = batch[:,1,:,:,:]
+    if conf['sampling'] == 'uniform':
+        idx = np.random.randint(5,15)
+    elif conf['sampling'] == 'gaussian':
+        idx = min(int(np.random.randn()*conf['gauss_step']['k_std']+conf['gauss_step']['k_mean']), conf['seq_len']-1)
 
-        # Apply random shift
-        obs_anchor = random_shift(query, pad=4)
-        obs_pos = random_shift(key, pad=4)
 
-        # Put tensors in gpu if possible
-        obs_anchor = obs_anchor.to(device)
-        obs_pos = obs_pos.to(device)
 
-        # Forward tensors through encoder
-        z_a = curl.encode(obs_anchor)
-        z_pos = curl.encode(obs_pos, ema=True)
+    batch = current_state['pov']
+    # Split queries and keys
+    query = batch[:,0,:,:,:]
+    key = np.take(batch, idx, axis=1)
 
-        # Compute distance
-        logits = curl.compute_logits(z_a, z_pos)
-        labels = torch.arange(logits.shape[0]).long().to(device)
+    # Apply random shift
+    obs_anchor = random_shift(query, pad=4)
+    obs_pos = random_shift(key, pad=4)
 
-        # Compute loss
-        loss = torch.nn.CrossEntropyLoss()(logits, labels)
-        loss_list.append(loss.item())
+    # Put tensors in gpu if possible
+    obs_anchor = torch.from_numpy(obs_anchor).float().squeeze().to(device)
+    obs_pos = torch.from_numpy(obs_pos).float().squeeze().to(device)
 
-        optimizer.zero_grad()
-        optimizer_full.zero_grad()
-        loss.backward()
+    obs_anchor = obs_anchor.permute(0,3,1,2)
+    obs_pos = obs_pos.permute(0,3,1,2)
 
-        optimizer.step()
-        optimizer_full.step()
+    # Forward tensors through encoder
+    z_a = curl.encode(obs_anchor)
+    z_pos = curl.encode(obs_pos, ema=True)
 
-        if b%conf['soft_update']==0:
-            soft_update_params(curl.encoder, curl.encoder_target, tau)
+    # Compute distance
+    logits = curl.compute_logits(z_a, z_pos)
+    labels = torch.arange(logits.shape[0]).long().to(device)
 
-    if epoch%2000==0:
-        saveModel(path_weights, conf['experiment'], curl, optimizer, epoch)
+    # Compute loss
+    loss = torch.nn.CrossEntropyLoss()(logits, labels)
 
-    loss_e = np.mean(loss_list)
-    print(f"Epoch {epoch}/{conf['epochs']} loss: {loss_e}", end='\r')
-    writer.add_scalar('CURL/Loss', loss_e, epoch)
+    optimizer.zero_grad()
+    optimizer_full.zero_grad()
+    loss.backward()
+
+    optimizer.step()
+    optimizer_full.step()
+
+    if i%conf['soft_update']==0:
+        soft_update_params(curl.encoder, curl.encoder_target, tau)
+
+    if i%5000==0:
+        saveModel(path_weights, conf['experiment'], curl, optimizer, i)
+
+    loss = loss.detach().cpu().numpy()
+    print(f"Epoch {i}/{conf['epochs']} loss: {loss}", end='\r')
+    writer.add_scalar('CURL/Loss', loss, i)
 print()
