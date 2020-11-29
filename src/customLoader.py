@@ -73,7 +73,7 @@ class MultiMinecraftData2(Dataset):
 
     def __getitem__(self, index):
         # Pick query frame
-        frame = self.data[index]
+        query = self.data[index]
         traj_idx = self.indexes[index]
         max_traj_idx = np.where(self.indexes==traj_idx)[0][-1]
 
