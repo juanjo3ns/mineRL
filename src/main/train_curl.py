@@ -115,7 +115,8 @@ for i, (current_state, action, reward, next_state, done) in enumerate(data.batch
         idx = np.random.randint(5,15)
     elif conf['sampling'] == 'gaussian':
         idx = min(int(np.random.randn()*conf['gauss_step']['k_std']+conf['gauss_step']['k_mean']), conf['seq_len']-1)
-
+    else:
+        idx = conf['seq_len'] - 1
 
 
     batch = current_state['pov']
