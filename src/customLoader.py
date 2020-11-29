@@ -13,6 +13,87 @@ from torch.utils.data import Dataset
 
 from IPython import embed
 
+class MultiMinecraftData2(Dataset):
+    def __init__(self, env_list, mode, split, extra, transform=None, path='../data', **kwargs) -> None:
+        self.path = path
+        self.env_list = env_list
+        self.mode = mode
+        self.split = split
+        self.extra = extra
+        self.dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+        self.data, idxs = self.loadData()
+        self.indexes = np.array(idxs)
+        # self.data_variance = np.var(self.data) / 255
+        self.transform = transform
+        self.k_std = kwargs['k_std']
+        self.k_mean = kwargs['k_mean']
+
+    def loadData(self) -> list:
+        data = []
+        indexes = []
+
+        print('Loading data...')
+        path = Path(self.path)
+
+        self.num_vids = 0
+
+        for env in self.env_list:
+            print(f"\n\tLoading environment {env}")
+            self.num_vids += len(os.listdir(path / env))
+            video_list = os.listdir(path / env)
+
+            # if self.mode == 'train':
+            #     video_list = video_list[:int(self.split*num_vids)]
+            # else:
+            #     video_list = video_list[int(self.split*num_vids):]
+
+            for i, vid in enumerate(video_list):
+                print(f"\tVid: {i}", end ='\r')
+                if self.extra:
+                    other_info = np.load(path / env / vid / 'rendered.npz')
+
+                vid_path = path / env / vid / 'recording.mp4'
+                frames = cv2.VideoCapture(str(vid_path))
+                ret = True
+                fc = 0
+                while(frames.isOpened() and ret):
+                    ret, frame = frames.read()
+                    if ret and fc % 1 == 0:
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        data.append(frame)
+                        indexes.append(i)
+                    fc += 1
+
+        print()
+        return data, indexes
+
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __getitem__(self, index):
+        # Pick query frame
+        frame = self.data[index]
+        traj_idx = self.indexes[index]
+        max_traj_idx = np.where(self.indexes==traj_idx)[0][-1]
+
+        # Compute key index by adding a normal distribution
+        key_idx = index + int(np.random.rand()*self.k_std + self.k_mean)
+
+        final_key_idx = min(max_traj_idx, key_idx)
+
+        # Get key frame
+        key = self.data[final_key_idx]
+
+
+        if self.transform is not None:
+            query = self.transform(query)
+            key = self.transform(key)
+
+        # Stack query and key to return [2,3,64,64]
+        return torch.stack((query, key))
+
+
 class MultiMinecraftData(Dataset):
     def __init__(self, env_list, mode, split, extra, transform=None, path='../data', **kwargs) -> None:
         self.path = path

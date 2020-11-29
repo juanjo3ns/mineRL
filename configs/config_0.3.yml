@@ -1,8 +1,9 @@
-experiment: 'curl_0.2.2'
+experiment: 'curl_0.2.5'
 environment: 'MineRLNavigate-v0'
-batch_size: 64
+batch_size: 32
 epochs: 60000
 learning_rate: 0.001
+soft_update: 2
 curl:
   embedding_dim: 50
   img_size: 64
@@ -10,5 +11,5 @@ curl:
   load: yes
   epoch: '58000.pt'
 gauss_step:
-  k_std: 5
-  k_mean: 20
+  k_std: 0
+  k_mean: 10

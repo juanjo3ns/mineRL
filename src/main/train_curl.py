@@ -14,7 +14,7 @@ from pprint import pprint
 
 from config import setSeed, getConfig
 from main.random_shift import random_shift
-from customLoader import MultiMinecraftData
+from customLoader import MultiMinecraftData2
 
 import torch
 import torch.nn as nn
@@ -52,7 +52,7 @@ tau = conf['curl']['encoder_tau']
 # Dataloaders and so on
 transform = transforms.Compose([transforms.ToTensor()])
 env_list = ['MineRLNavigate-v0']
-mrl_train = MultiMinecraftData(env_list, 'train', 1, False, transform=transform, **conf['gauss_step'])
+mrl_train = MultiMinecraftData2(env_list, 'train', 1, False, transform=transform, **conf['gauss_step'])
 training_loader = DataLoader(mrl_train, batch_size=batch_size, shuffle=True)
 
 
@@ -145,7 +145,7 @@ for epoch in range(conf['epochs']):
         optimizer.step()
         optimizer_full.step()
 
-        if b%2==0:
+        if b%conf['soft_update']==0:
             soft_update_params(curl.encoder, curl.encoder_target, tau)
 
     if epoch%2000==0:

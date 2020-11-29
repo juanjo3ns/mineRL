@@ -245,7 +245,7 @@ def dqn_family(
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
-    # core_env.make_interactive(port=6666, realtime=True)
+    core_env.make_interactive(port=6666, realtime=True)
 
     # This seed controls which environment will be rendered
     core_env.seed(100)
@@ -287,6 +287,7 @@ def dqn_family(
 
     if load:
         agent.load(load)
+        print('agent loaded')
 
     # experiment
     if demo:
