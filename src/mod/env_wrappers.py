@@ -164,7 +164,7 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         obs_anchor = torch.from_numpy(observation).float().unsqueeze(dim=0).to(self.device)
         z_a = self.curl.encode(obs_anchor)
         # Compute reward as distance similarity in the embedding space - baseline reward (max)
-        reward = self.curl.compute_logits_(z_a, self.z_pos) - self.baseline
+        reward = (self.curl.compute_logits_(z_a, self.z_pos) - self.baseline)/self.baseline
         self.curl.reward = reward.squeeze().detach().cpu().numpy()
         return z_a.detach().cpu().numpy()
 

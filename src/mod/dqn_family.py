@@ -268,7 +268,7 @@ def dqn_family(
     maximum_frames = 8000000
     if frame_skip is None:
         steps = maximum_frames
-        eval_interval = 6000 * 100  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
+        eval_interval = 6000 * 10  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
     else:
         steps = maximum_frames // frame_skip
         eval_interval = 6000 * 100 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
@@ -298,7 +298,7 @@ def dqn_family(
         pfrl.experiments.train_agent_with_evaluation(
             agent=agent, env=env, steps=steps,
             eval_n_steps=None, eval_n_episodes=eval_n_runs, eval_interval=eval_interval,
-            outdir=outdir, eval_env=eval_env, save_best_so_far_agent=True,
+            outdir=outdir, eval_env=eval_env, save_best_so_far_agent=True, use_tensorboard=True
         )
 
     env.close()
