@@ -291,7 +291,7 @@ def dqn_family(
 
     # experiment
     if demo:
-        eval_stats = pfrl.experiments.eval_performance(env=eval_env, agent=agent, n_steps=None, n_episodes=eval_n_runs)
+        eval_stats = pfrl.experiments.eval_performance(env=eval_env, agent=agent, n_steps=None, max_episode_len=2000, n_episodes=eval_n_runs)
         logger.info('n_runs: {} mean: {} median: {} stdev {}'.format(
             eval_n_runs, eval_stats['mean'], eval_stats['median'], eval_stats['stdev']))
     else:

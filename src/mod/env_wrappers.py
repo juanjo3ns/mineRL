@@ -3,6 +3,7 @@ import copy
 from logging import getLogger
 from collections import deque
 import os
+import csv
 
 import gym
 import numpy as np
@@ -10,6 +11,8 @@ import cv2
 
 from pfrl.wrappers import ContinuingTimeLimit, RandomizeAction, Monitor
 from pfrl.wrappers.atari_wrappers import ScaledFloatFrame, LazyFrames
+
+from IPython import embed
 
 cv2.ocl.setUseOpenCL(False)
 logger = getLogger(__name__)
@@ -43,6 +46,9 @@ def wrap_env(
         env = FrameSkip(env, skip=frame_skip)
     if gray_scale:
         env = GrayScaleWrapper(env, dict_space_key='pov')
+
+    if test:
+        env = ObtainCoordWrapper(env, outdir)
     env = ObtainPoVWrapper(env)
     env = MoveAxisWrapper(env, source=-1, destination=0)  # convert hwc -> chw as Pytorch requires.
 
@@ -147,6 +153,23 @@ class ObtainPoVWrapper(gym.ObservationWrapper):
 
     def observation(self, observation):
         return observation['pov']
+
+class ObtainCoordWrapper(gym.ObservationWrapper):
+    """Obtain 'coord' value (coordinate values) of the original observation."""
+    def __init__(self, env, outdir):
+        super().__init__(env)
+        self.env = env
+        self.outdir = outdir
+
+
+    def observation(self, observation):
+
+        if 'coords' in observation:
+            csvfile = open(os.path.join(self.outdir, f"coords_{self.env.resets-1}.csv"), 'a')
+            csvwriter = csv.writer(csvfile, delimiter=',')
+            csvwriter.writerow(observation['coords'])
+            csvfile.close()
+        return observation
 
 class ObtainEmbeddingWrapper(gym.ObservationWrapper):
     """Obtain embedding vector corresponding to current observation."""
