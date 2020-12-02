@@ -230,7 +230,7 @@ def dqn_family(
     ).to(device)
 
     curl.compute_baselines()
-    
+
     weights = torch.load(path_weights / 'curl_0.1.1' / '65000.pt')['state_dict']
     curl.load_state_dict(weights)
     ######################################################
@@ -279,7 +279,7 @@ def dqn_family(
     maximum_frames = 8000000
     if frame_skip is None:
         steps = maximum_frames
-        eval_interval = 2000 * 50  # (approx.) every 100 episode (counts "1 episode = 2000 steps")
+        eval_interval = 2500 * 30  # (approx.) every 100 episode (counts "1 episode = 2000 steps")
     else:
         steps = maximum_frames // frame_skip
         eval_interval = 6000 * 100 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")

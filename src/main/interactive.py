@@ -88,7 +88,7 @@ env.make_interactive(port=6666, realtime=True)
 
 env.seed(100)
 env.reset()
-embed()
+
 ini = time.time()
 while True:
     action = env.action_space.sample()
