@@ -79,7 +79,7 @@ def encode(obs, name):
     obs_anchor = torch.from_numpy(obs).float().unsqueeze(dim=0).to(device)
     obs_anchor = obs_anchor.permute(0,3,1,2)
     z_a = curl.encode(obs_anchor)
-    with open(f'../images/skills_1/{name}.npy', 'wb') as f:
+    with open(f'./goal_states/{name}.npy', 'wb') as f:
         np.save(f, z_a.detach().cpu().numpy())
 
 env = gym.make('MineRLNavigate-v0')
@@ -87,14 +87,13 @@ env = gym.make('MineRLNavigate-v0')
 env.make_interactive(port=6666, realtime=True)
 
 env.seed(100)
-
+env.reset()
+embed()
 ini = time.time()
-
 while True:
     action = env.action_space.sample()
     obs, reward, done, _ = env.step(action)
     time.sleep(0.1)
-    if time.time()-ini > 200:
+    if time.time()-ini > 300:
         break
-    count += 1
 env.close()

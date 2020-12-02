@@ -60,7 +60,7 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
         # before
         # self.main_stream = nn.Linear(1024, 1024)
         # new
-        self.main_stream_1 = nn.Linear(50, 512)
+        self.main_stream_1 = nn.Linear(100, 512)
         self.main_stream_2 = nn.Linear(512, 1024)
 
         self.a_stream = nn.Linear(512, n_actions * n_atoms)

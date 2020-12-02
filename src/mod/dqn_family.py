@@ -219,7 +219,18 @@ def dqn_family(
 
     batch_size = 1
 
-    curl = CURL(obs_shape, feature_dim, batch_size, pixel_encoder, pixel_encoder_target).to(device)
+    curl = CURL(
+        obs_shape,
+        feature_dim,
+        batch_size,
+        pixel_encoder,
+        pixel_encoder_target,
+        load_goal_states=True,
+        device=device
+    ).to(device)
+
+    curl.compute_baselines()
+    
     weights = torch.load(path_weights / 'curl_0.1.1' / '65000.pt')['state_dict']
     curl.load_state_dict(weights)
     ######################################################
@@ -245,7 +256,7 @@ def dqn_family(
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
-    core_env.make_interactive(port=6666, realtime=True)
+    # core_env.make_interactive(port=6666, realtime=True)
 
     # This seed controls which environment will be rendered
     core_env.seed(100)
@@ -268,7 +279,7 @@ def dqn_family(
     maximum_frames = 8000000
     if frame_skip is None:
         steps = maximum_frames
-        eval_interval = 6000 * 10  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
+        eval_interval = 2000 * 50  # (approx.) every 100 episode (counts "1 episode = 2000 steps")
     else:
         steps = maximum_frames // frame_skip
         eval_interval = 6000 * 100 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")

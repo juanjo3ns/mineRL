@@ -38,6 +38,8 @@ def wrap_env(
     # wrap env: observation...
     # NOTE: wrapping order matters!
 
+    env = ResetWrapper(env, encoder)
+
     if test and monitor:
         env = Monitor(
             env, os.path.join(outdir, env.spec.id, 'monitor'),
@@ -54,6 +56,7 @@ def wrap_env(
 
     # NEW
     env = ObtainEmbeddingWrapper(env, encoder, device)
+    env = ConcatenateWrapper(env, encoder)
 
     # Since we have our own encoder, we won't use scaling
     # env = ScaledFloatFrame(env)
@@ -69,6 +72,23 @@ def wrap_env(
         env = RandomizeAction(env, eval_epsilon)
 
     return env
+
+
+class ResetWrapper(gym.Wrapper):
+    """
+    ResetWrapper
+    """
+    def __init__(self, env, encoder):
+        super().__init__(env)
+        self.curl = encoder
+
+    def reset(self):
+        ob = self.env.reset()
+        # Sample goal state
+        goal_state = self.curl.sample_goal_state()
+        self.env.goal_state = goal_state
+        return ob
+
 
 
 class FrameSkip(gym.Wrapper):
@@ -163,8 +183,8 @@ class ObtainCoordWrapper(gym.ObservationWrapper):
 
 
     def observation(self, observation):
-
         if 'coords' in observation:
+
             csvfile = open(os.path.join(self.outdir, f"coords_{self.env.resets-1}.csv"), 'a')
             csvwriter = csv.writer(csvfile, delimiter=',')
             csvwriter.writerow(observation['coords'])
@@ -177,19 +197,32 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         super().__init__(env)
         self.curl = encoder
         self.device = device
-        z_pos = np.load('../images/skills_1/242.npy')
-        self.z_pos = torch.from_numpy(z_pos).float().to(self.device)
-        # Baseline computation: maximum reward we can get
-        self.baseline = self.curl.compute_logits_(self.z_pos, self.z_pos)
-
 
     def observation(self, observation):
+
+        goal_state = self.curl.get_goal_state(self.env.goal_state)
+        goal_state = torch.from_numpy(goal_state).float().to(self.device)
+
+        baseline = self.curl.get_baseline(self.env.goal_state)
+        baseline = torch.from_numpy(baseline).float().to(self.device)
+
         obs_anchor = torch.from_numpy(observation).float().unsqueeze(dim=0).to(self.device)
         z_a = self.curl.encode(obs_anchor)
         # Compute reward as distance similarity in the embedding space - baseline reward (max)
-        reward = (self.curl.compute_logits_(z_a, self.z_pos) - self.baseline)/self.baseline
+        reward = (self.curl.compute_logits_(z_a, goal_state) - baseline)/baseline
         self.curl.reward = reward.squeeze().detach().cpu().numpy()
         return z_a.detach().cpu().numpy()
+
+class ConcatenateWrapper(gym.ObservationWrapper):
+    """Obtain embedding vector corresponding to current observation."""
+    def __init__(self, env, encoder):
+        super().__init__(env)
+        self.curl = encoder
+
+    def observation(self, observation):
+        goal_state = self.curl.get_goal_state(self.env.goal_state)
+        obs_gs = np.concatenate((observation[0], goal_state[0]))
+        return obs_gs.reshape(1,obs_gs.shape[0])
 
 
 class UnifiedObservationWrapper(gym.ObservationWrapper):
