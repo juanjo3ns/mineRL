@@ -38,7 +38,7 @@ def wrap_env(
     # wrap env: observation...
     # NOTE: wrapping order matters!
 
-    env = ResetWrapper(env, encoder)
+    env = ResetWrapper(env, encoder, test)
 
     if test and monitor:
         env = Monitor(
@@ -78,14 +78,20 @@ class ResetWrapper(gym.Wrapper):
     """
     ResetWrapper
     """
-    def __init__(self, env, encoder):
+    def __init__(self, env, encoder, test):
         super().__init__(env)
+        self.env = env
         self.curl = encoder
+        self.test = test
 
     def reset(self):
         ob = self.env.reset()
         # Sample goal state
-        goal_state = self.curl.sample_goal_state()
+        if self.test:
+            goal_state = (self.env.resets - 1) % len(self.curl.goal_states)
+        else:
+            goal_state = self.curl.sample_goal_state()
+
         self.env.goal_state = goal_state
         return ob
 
@@ -185,7 +191,7 @@ class ObtainCoordWrapper(gym.ObservationWrapper):
     def observation(self, observation):
         if 'coords' in observation:
 
-            csvfile = open(os.path.join(self.outdir, f"coords_{self.env.resets-1}.csv"), 'a')
+            csvfile = open(os.path.join(self.outdir, f"coords_{self.env.goal_state}.{self.env.resets-1}.csv"), 'a')
             csvwriter = csv.writer(csvfile, delimiter=',')
             csvwriter.writerow(observation['coords'])
             csvfile.close()
