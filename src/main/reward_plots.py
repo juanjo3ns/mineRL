@@ -85,25 +85,31 @@ def store_random(batch, seq, step):
 final_step = 1000
 goal_states = [10, int(final_step/2), final_step-1]
 
-for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=32, num_epochs=1, seq_len=final_step)):
+for i, (current_state, action, reward, next_state, done) in enumerate(data.batch_iter(batch_size=64, num_epochs=1, seq_len=final_step)):
 
     batch = current_state['pov']
-    # store_random(batch, 2, 295)
-    # store_random(batch, 3, 295)
-    # store_random(batch, 2, 350)
+    # store_random(batch, 2, 600)
+    # store_random(batch, 3, 850)
+    # store_random(batch, 1, 780)
+    # store_random(batch, 1, 785)
+    # store_random(batch, 1, 790)
     # store_random(batch, 3, 350)
-    seq = 4
+    seq = 60
     for goal in goal_states:
         print(f"seq {seq} goal {goal}")
         # obs_anchor = batch[:,0,:,:,:]
         obs_pos = batch[seq,goal,:,:,:]
-        save_image(obs_pos, '_'.join([str(seq), str(goal)]))
+        # save_image(obs_pos, '_'.join([str(seq), str(goal)]))
         obs_pos = torch.from_numpy(obs_pos).float().unsqueeze(dim=0).to(device)
         obs_pos = obs_pos.permute(0,3,1,2)
         z_pos = curl.encode(obs_pos, ema=True)
         print("\tsaved goal state")
         rewards = []
-        for b in batch[:5]:
+        a = batch[:5]
+        b = batch[60]
+        b = b[None, ...]
+        asd = np.vstack((a,b))
+        for b in asd:
             aux = []
             for img in b[0:final_step-1]:
                 obs_anchor = torch.from_numpy(img).float().unsqueeze(dim=0).to(device)

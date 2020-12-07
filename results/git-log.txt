@@ -1,0 +1,325 @@
+commit 95beb1e0807db3d2c4245102d25ec67f23477167
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Dec 3 10:06:52 2020 +0100
+
+    Super jupyter for plotting trajectories. Reset wrapper for test ready
+
+commit ed8c06ff3eb433f78f31b4c41b5101571c510aa2
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Dec 2 12:07:34 2020 +0100
+
+    episode length 2500
+
+commit 594d467936889d31cc14cbc97c2f77616d7b5865
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Dec 2 11:54:23 2020 +0100
+
+    Reset and concatenate wrappers. Added PFRL to repo. CURL model new functionalities
+
+commit 64e6f7632ef352ad0bfa1413979626de111b8464
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Tue Dec 1 12:19:28 2020 +0100
+
+    3d trajectories, store coords in evaluation
+
+commit 86b8a6a6e4cba3b5867fd4035d1643618a8427a8
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Mon Nov 30 10:10:12 2020 +0100
+
+    improved shaped reward, use tensorboard rainbow
+
+commit 7916edba1803db9582d278c69f8eab03bcd9bc08
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Sun Nov 29 23:34:50 2020 +0100
+
+    added option to pick last frame of seq as key
+
+commit ee28cf80a8954f18293958490480dca57b8d8bc0
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Sun Nov 29 23:25:41 2020 +0100
+
+    come back to minerl dataloader but sampling seq_len
+
+commit 22b7a1ff8bc503c025543df211abadb4928b66ae
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Sun Nov 29 01:18:09 2020 +0100
+
+    fix minor issue
+
+commit 61b61b80074bc62bbee94b91c7c3e26d2e7ce16b
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Sun Nov 29 01:11:11 2020 +0100
+
+    New dataloader. Try CURL again
+
+commit e934f9f65cf33d85819019e5b143f3ab90538fd0
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Nov 26 23:56:07 2020 +0100
+
+    Fixed reward problem. Improved reward_plot script. Minor things
+
+commit 2f154bad88b9c80eb3579785af0cdcaa2b0bd29d
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Nov 26 09:27:52 2020 +0100
+
+    only one env, obf has the same trajectories..
+
+commit 0cc5e95cc68b7fdfd907b46b401615601a010a85
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Nov 26 09:16:17 2020 +0100
+
+    Parametrized gaussian steps. Increased embed dim
+
+commit d5f1ac8b308767ab7bbbffee8211bedfafb17705
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Nov 25 19:17:40 2020 +0100
+
+    Reward plots script
+
+commit 61e84fec2433aaa7f574263828622fb3ba1145b1
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Nov 25 10:47:02 2020 +0100
+
+    server envs
+
+commit ddfebd3f60985aedc3d8abbb6c6b46f4fcaca510
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Nov 25 10:43:05 2020 +0100
+
+    New curl training, with 2 envs and other new stuff
+
+commit cfe8c939db66cd2e5e083b6c31ceda4f815b4b2a
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Tue Nov 24 16:46:17 2020 +0100
+
+    Rainbow working with our representations
+
+commit 8d5845804216d1f49c112890be32c6ea3431116e
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Tue Nov 24 11:49:44 2020 +0100
+
+    Re-structured repo. Added script from PFRL Rainbow for training
+
+commit 8d41fafaa697140393d5d55f335d975487ba3756
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Fri Nov 20 08:53:32 2020 +0100
+
+    forgot to uncomment some stuff..
+
+commit 230fd822eaddb3fbff6cca084a3b964ca063f358
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Nov 19 23:48:48 2020 +0100
+
+    added random shift to training
+
+commit c1142756eaed970f7046592d68ab1ff688cc7402
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Nov 19 17:34:13 2020 +0100
+
+    train with seq_len 20
+
+commit a10d8a3826d30a98d729b263b5785f4d0f6f8758
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Nov 18 21:07:00 2020 +0100
+
+    inference script and added optimizer for all params
+
+commit 34940cbfd91458832f8b0a3a9ce4d11e398cc4e7
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Nov 18 15:58:52 2020 +0000
+
+    fix server issues
+
+commit 0a3d9e42e1a8e371bff6396355bf27c865505fd1
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Nov 18 09:30:03 2020 +0100
+
+    CURL adaptation working
+
+commit 9c0c98ecee56f0dad980e096b142c2383208f7f1
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Tue Nov 17 20:57:36 2020 +0100
+
+    save positive pairs
+
+commit 99875fa3ae748220ef70aa38c06481ca779e1696
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Tue Nov 17 18:14:22 2020 +0100
+
+    CURL and ATC approach adaptation
+
+commit 8e59f43e9cf0ff9b49b1b2452ac40385c9e68910
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Fri Oct 30 10:14:19 2020 +0000
+
+    Add sampling from PixelSNAIL script and continue training
+
+commit aa61cc7baecf333429a5d4e01e3917f9200dbec6
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Oct 29 16:59:43 2020 +0000
+
+    Training pixelSNAIL top and bottom priors
+
+commit eae85c837210a4203d291e0259011ef3c83646db
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Oct 29 16:30:16 2020 +0100
+
+    Make grid redefined
+
+commit dd9f82afee2d382389e741dcc2ba7df89cbda352
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Oct 29 15:22:22 2020 +0000
+
+    Fix minor things
+
+commit 3cf8c65000dcd05bdf710b342ff9661c4bab7e5d
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Oct 29 12:48:21 2020 +0100
+
+    Ready for extracting codes and training pixelSNAIL
+
+commit 521bddb440f317d4517604f0642af4930965ce73
+Merge: 168313d 476ab1e
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Oct 29 11:00:06 2020 +0100
+
+    Merge branch 'master' of github.com:juanjo3ns/mineRL
+
+commit 168313d94f7774a78c0d1133b107661eb0fa96a5
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Oct 29 10:59:52 2020 +0100
+
+    VQVAE2 notebook updated
+
+commit 476ab1eec2d6a956ceb44ca4a50cf5550f796d3f
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Oct 29 09:58:40 2020 +0000
+
+    Updated extract_code and trainPixelSNAIL
+
+commit 08cbe9e478c9abe8331147f5efb5fa495bd090b4
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 28 23:04:38 2020 +0100
+
+    VQVAE2 training
+
+commit 453b7894a8c0734dbbdf4a9f7d418d1d358330d5
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 28 15:30:18 2020 +0100
+
+    Fix minor issue
+
+commit a37ff274e966cf836c8e2a77b7ebd8909a5b3193
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 28 15:17:59 2020 +0100
+
+    Fix minor issue
+
+commit d8e6f3e60f794b00a6646ce46403087ca4f44e9e
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 28 15:15:58 2020 +0100
+
+    Continue training. Small refactor. Added jupyters for showing images.
+
+commit 74b25ccc2f3ae1e36a3dfdb0d5f455e2b510a0f6
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Mon Oct 26 19:24:20 2020 +0000
+
+    PixelSNAIL training...
+
+commit 7f446985cdce0a1837516d0b4352ade46f1afe10
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Mon Oct 26 20:00:22 2020 +0100
+
+    Trying VQVAE2 implementation
+
+commit bea76587e5d4967fd80080f76d1dcfd9091dad89
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Oct 22 10:52:37 2020 +0100
+
+    Script for sampling from pixelcnn learned distribution
+
+commit d313a91f4a1c51adc25d6206f2bbe0b0a6053a3d
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 21 11:21:55 2020 +0200
+
+    GatedPixelCNN training working
+
+commit e1058bc4c12aec6b325d78eb2c03f4d34b59831d
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 21 09:48:08 2020 +0100
+
+    Testing code for training GatedPixelCNN
+
+commit f50869d4ad56ac75c0d9e2a69739ed231462a67b
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 21 09:32:40 2020 +0200
+
+    Implemented storing latent vectors for each image in the dataset
+
+commit bf29acb006417eb48182fefe39d14eb788c0c276
+Merge: 3d88b8a 299d9e5
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Tue Oct 20 10:37:09 2020 +0200
+
+    Merge branch 'master' of github.com:juanjo3ns/mineRL
+
+commit 3d88b8aa819de5f4e51a7dd4d12ea7aa55185ad7
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Tue Oct 20 10:35:58 2020 +0200
+
+    Added GatedPixelCNN and sanity check in process
+
+commit 299d9e5636273a1bfd169e45087277f513292404
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 14 11:25:11 2020 +0100
+
+    Fix make grid script and resulting images
+
+commit 09b85b8432b01339b75a559eab50bd8e6d3997a1
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 14 12:00:24 2020 +0200
+
+    Study model and manifold. Also script for saving batches of images to create gif
+
+commit 4ceaae876ebeffe7fd278deb5bc31bdcc4dee8ac
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Mon Oct 12 18:28:20 2020 +0100
+
+    Added train/val split. Training completed succesfully
+
+commit 2e8520cbbf266e7346764cc5d2fb1f56f77687e1
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Sun Oct 11 10:20:10 2020 +0100
+
+    Fix errors and added tensorboard
+
+commit dfd3622ee5a79e77f53ba22af73de5db05bee489
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Sat Oct 10 18:01:58 2020 +0200
+
+    VQ-VAE first iteration
+
+commit 42b668683bdebfbbea827835781e7c5c07d9ec68
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 7 10:37:45 2020 +0200
+
+    update requirements
+
+commit f1d2a7bc8988d85f4980e9341d456055825fefde
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 7 10:25:58 2020 +0200
+
+    Added requirements
+
+commit 10570ac8d6bdfa7a423fc904f4ac47ecded55cd5
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Wed Oct 7 10:20:06 2020 +0200
+
+    Interactive script
+
+commit a5be9ded3188570fc3a607d2cfe4573077c56d9a
+Author: Juan José Nieto <juanjo.3ns@gmail.com>
+Date:   Thu Sep 10 12:43:07 2020 +0200
+
+    Initial commit

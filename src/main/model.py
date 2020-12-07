@@ -27,6 +27,7 @@ class CURL(nn.Module):
             self.device = device
             self.goal_states = self.load_goal_states()
 
+
     def encode(self, x, detach=False, ema=False):
         """
         Encoder: z_t = e(x_t)

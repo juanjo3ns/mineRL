@@ -49,13 +49,12 @@ def wrap_env(
     if gray_scale:
         env = GrayScaleWrapper(env, dict_space_key='pov')
 
-    if test:
-        env = ObtainCoordWrapper(env, outdir)
+    env = ObtainCoordWrapper(env, outdir)
     env = ObtainPoVWrapper(env)
     env = MoveAxisWrapper(env, source=-1, destination=0)  # convert hwc -> chw as Pytorch requires.
 
     # NEW
-    env = ObtainEmbeddingWrapper(env, encoder, device)
+    env = ObtainEmbeddingWrapper(env, encoder, device, test)
     env = ConcatenateWrapper(env, encoder)
 
     # Since we have our own encoder, we won't use scaling
@@ -199,10 +198,11 @@ class ObtainCoordWrapper(gym.ObservationWrapper):
 
 class ObtainEmbeddingWrapper(gym.ObservationWrapper):
     """Obtain embedding vector corresponding to current observation."""
-    def __init__(self, env, encoder, device):
+    def __init__(self, env, encoder, device, test):
         super().__init__(env)
         self.curl = encoder
         self.device = device
+        self.test = test
 
     def observation(self, observation):
 
@@ -217,6 +217,12 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         # Compute reward as distance similarity in the embedding space - baseline reward (max)
         reward = (self.curl.compute_logits_(z_a, goal_state) - baseline)/baseline
         self.curl.reward = reward.squeeze().detach().cpu().numpy()
+        if self.test:
+            csvfile = open(os.path.join(self.outdir, f"rewards_{self.env.goal_state}.{self.env.resets-1}.csv"), 'a')
+            csvwriter = csv.writer(csvfile, delimiter=',')
+            csvwriter.writerow([self.curl.reward.item()])
+            csvfile.close()
+
         return z_a.detach().cpu().numpy()
 
 class ConcatenateWrapper(gym.ObservationWrapper):

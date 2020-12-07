@@ -1,4 +1,4 @@
-experiment: 'curl_0.3.0'
+experiment: 'curl_0.3.5'
 environment: 'MineRLNavigate-v0'
 batch_size: 32
 epochs: 60000
@@ -11,7 +11,7 @@ curl:
   img_size: 64
   encoder_tau: 0.005
   load: yes
-  epoch: '58000.pt'
+  epoch: '70000.pt'
 gauss_step:
   k_std: 5
   k_mean: 10
