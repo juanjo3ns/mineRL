@@ -47,7 +47,7 @@ def _run_episodes(
     reset = True
     while not terminate:
         if reset:
-            env.seed(100)
+            env.seed(0)
             obs = env.reset()
             done = False
             test_r = 0

@@ -432,12 +432,13 @@ class ClusteredActionWrapper(gym.ActionWrapper):
     def __init__(self, env, clusters):
         super().__init__(env)
         self._clusters = clusters
-
+        self.env = env
         self._np_random = np.random.RandomState()
 
         self.action_space = gym.spaces.Discrete(len(clusters))
 
     def action(self, action):
+        action = self.env.resets-1
         return {'vector': self._clusters[action]}
 
     def seed(self, seed):

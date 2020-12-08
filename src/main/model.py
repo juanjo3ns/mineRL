@@ -23,7 +23,7 @@ class CURL(nn.Module):
         self.output_type = output_type
 
         if load_goal_states:
-            self.path_gs = './goal_states'
+            self.path_gs = './goal_states_flat_biome'
             self.device = device
             self.goal_states = self.load_goal_states()
 
@@ -71,8 +71,9 @@ class CURL(nn.Module):
 
     def load_goal_states(self):
         goal_states = []
-        for gs in os.listdir(self.path_gs):
-            goal_states.append(np.load(os.path.join(self.path_gs, gs)))
+        for gs in sorted(os.listdir(self.path_gs)):
+            if 'npy' in gs:
+                goal_states.append(np.load(os.path.join(self.path_gs, gs)))
         return goal_states
 
     def compute_baselines(self):

@@ -31,7 +31,7 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
 
         self.instructions = instructions
         self.f_ox, self.fo_y = SZ, SZ
-        self.window.set_caption("{}: {}".format(environment, stream_name))
+        self.window.set_caption("{}: {}".format('Validation trajectories', stream_name))
         self.rewards = rewards
         self.coords = coords
         self.reward_height = int(SZ*5*0.8)
