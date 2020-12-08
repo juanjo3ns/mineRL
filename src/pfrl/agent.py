@@ -11,7 +11,6 @@ from typing import Tuple
 
 import torch
 
-
 class Agent(object, metaclass=ABCMeta):
     """Abstract agent class."""
 

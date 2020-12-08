@@ -11,9 +11,8 @@ class CURL(nn.Module):
     CURL
     """
 
-    def __init__(self, obs_shape, z_dim, batch_size, encoder, encoder_target, output_type="continuous", load_goal_states=False, device=None):
+    def __init__(self, obs_shape, z_dim, encoder, encoder_target, output_type="continuous", load_goal_states=False, device=None):
         super(CURL, self).__init__()
-        self.batch_size = batch_size
 
         self.encoder = encoder
 

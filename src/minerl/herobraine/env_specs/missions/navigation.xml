@@ -54,7 +54,7 @@
     <AgentSection mode="Survival">
         <Name>MineRLAgent</Name>
         <AgentStart>
-            <Placement pitch="0" x="0" y="4.0" z="0"/>
+            <Placement pitch="0" x="0" y="4.0" z="0" yaw="0"/>
             <Inventory>
                     <InventoryObject slot="0" type="compass" quantity="1"/>
             </Inventory>

@@ -217,12 +217,9 @@ def dqn_family(
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    batch_size = 1
-
     curl = CURL(
         obs_shape,
         feature_dim,
-        batch_size,
         pixel_encoder,
         pixel_encoder_target,
         load_goal_states=True,

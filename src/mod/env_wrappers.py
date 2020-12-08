@@ -49,7 +49,8 @@ def wrap_env(
     if gray_scale:
         env = GrayScaleWrapper(env, dict_space_key='pov')
 
-    env = ObtainCoordWrapper(env, outdir)
+    if test:
+        env = ObtainCoordWrapper(env, outdir)
     env = ObtainPoVWrapper(env)
     env = MoveAxisWrapper(env, source=-1, destination=0)  # convert hwc -> chw as Pytorch requires.
 
@@ -435,7 +436,6 @@ class ClusteredActionWrapper(gym.ActionWrapper):
         self.action_space = gym.spaces.Discrete(len(clusters))
 
     def action(self, action):
-        action = self.env.resets-1
         return {'vector': self._clusters[action]}
 
     def seed(self, seed):

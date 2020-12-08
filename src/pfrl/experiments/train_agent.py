@@ -43,7 +43,7 @@ def train_agent(
     episode_idx = 0
 
     # o_0, r_0
-    env.seed(0)
+    # env.seed(0)
     obs = env.reset()
 
     t = step_offset
@@ -89,7 +89,7 @@ def train_agent(
                 episode_r = 0
                 episode_idx += 1
                 episode_len = 0
-                env.seed(0)
+                # env.seed(0)
                 obs = env.reset()
             if checkpoint_freq and t % checkpoint_freq == 0:
                 save_agent(agent, t, outdir, logger, suffix="_checkpoint")
