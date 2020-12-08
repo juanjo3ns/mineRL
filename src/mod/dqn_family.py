@@ -93,12 +93,12 @@ def main():
 
     # experience replay buffer related settings
     parser.add_argument('--replay-capacity', type=int, default=10 ** 6, help='Maximum capacity for replay buffer.')
-    parser.add_argument('--replay-start-size', type=int, default=5 * 10 ** 4,
+    parser.add_argument('--replay-start-size', type=int, default=3 * 10 ** 4,
                         help='Minimum replay buffer size before performing gradient updates.')
-    parser.add_argument('--prioritized', action='store_true', default=False, help='Use prioritized experience replay.')
+    parser.add_argument('--prioritized', action='store_true', default=True, help='Use prioritized experience replay.')
 
     # target network related settings
-    parser.add_argument('--target-update-interval', type=int, default=3 * 10 ** 4,
+    parser.add_argument('--target-update-interval', type=int, default=2 * 10 ** 4,
                         help='Frequency (in timesteps) at which the target network is updated.')
 
     # K-means related settings
@@ -229,9 +229,9 @@ def dqn_family(
         device=device
     ).to(device)
 
-    curl.compute_baselines()
+    # curl.compute_baselines()
 
-    weights = torch.load(path_weights / 'curl_0.1.1' / '65000.pt')['state_dict']
+    weights = torch.load(path_weights / 'curl_0.3.5' / '70000.pt')['state_dict']
     curl.load_state_dict(weights)
     ######################################################
 
@@ -259,7 +259,7 @@ def dqn_family(
     # core_env.make_interactive(port=6666, realtime=True)
 
     # This seed controls which environment will be rendered
-    core_env.seed(100)
+    core_env.seed(0)
     # core_env.make_interactive(port=6666, realtime=True)
 
     # training env
@@ -279,7 +279,7 @@ def dqn_family(
     maximum_frames = 8000000
     if frame_skip is None:
         steps = maximum_frames
-        eval_interval = 2500 * 30  # (approx.) every 100 episode (counts "1 episode = 2000 steps")
+        eval_interval = 1000 * 30  # (approx.) every 30 episode (counts "1 episode = 1000 steps")
     else:
         steps = maximum_frames // frame_skip
         eval_interval = 6000 * 100 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
