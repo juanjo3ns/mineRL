@@ -22,8 +22,8 @@ class CURL(nn.Module):
         self.output_type = output_type
 
         if load_goal_states:
-            self.threshold = 18
-            self.path_gs = './goal_states_flat_biome'
+            self.threshold = 20
+            self.path_gs = './goal_states_single'
             self.device = device
             self.goal_states = self.load_goal_states()
 

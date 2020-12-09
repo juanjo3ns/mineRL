@@ -276,7 +276,7 @@ def dqn_family(
     maximum_frames = 8000000
     if frame_skip is None:
         steps = maximum_frames
-        eval_interval = 1000 * 30  # (approx.) every 30 episode (counts "1 episode = 1000 steps")
+        eval_interval = 3000 * 30  # (approx.) every 30 episode (counts "1 episode = 1000 steps")
     else:
         steps = maximum_frames // frame_skip
         eval_interval = 6000 * 100 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
