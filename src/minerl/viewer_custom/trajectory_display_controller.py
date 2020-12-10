@@ -46,7 +46,7 @@ class TrajectoryDisplayController(object):
         self.data_frames = data_frames
         self.rewards = rewards
         self.goal_state = goal_state
-        self.goal_state_pov = self.data_frames[0][0]['pov']
+        self.goal_state_pov = goal_state_pov
         self.coords = coords
         self.position = 0
         self.speed = 1
@@ -90,7 +90,7 @@ class TrajectoryDisplayController(object):
             self.position = new_position
 
             # Display video viewer
-            obs, action, rew, next_obs, done, meta = self.data_frames[self.position]
+            obs, action, rew, next_obs, done = self.data_frames[self.position]
             rew = self.rewards[self.position]
 
             self.display.render(obs,rew, done,action, self.position, file_len, self.goal_state_pov)
@@ -122,7 +122,7 @@ class TrajectoryDisplayController(object):
     def render(self, out_directory):
         buffs = []
         for i in tqdm.tqdm(range(len(self.data_frames))):
-            obs, action, rew, next_obs, done, meta = self.data_frames[i]
+            obs, action, rew, next_obs, done = self.data_frames[i]
             self.display.render(obs,rew, done,action, i, len(self.data_frames))
 
             pyglet.image.get_buffer_manager().get_color_buffer().save(

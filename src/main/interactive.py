@@ -55,7 +55,7 @@ pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-curl = CURL(obs_shape, feature_dim, batch_size, pixel_encoder, pixel_encoder_target).to(device)
+curl = CURL(obs_shape, feature_dim, pixel_encoder, pixel_encoder_target).to(device)
 
 
 curl.eval()
@@ -87,13 +87,29 @@ env = gym.make('MineRLNavigate-v0')
 env.make_interactive(port=6666, realtime=True)
 
 env.seed(0)
-env.reset()
+obs = env.reset()
+
+def custom_steps(obs, action):
+    action['forward'] = np.array(1)
+    action['sprint'] = np.array(1)
+
+    for i in range(3000):
+        if obs['coords'][1] < 4.0:
+            action['jump'] = np.array(1)
+        else:
+            action['jump'] = np.array(0)
+
+        action['camera'] = np.array([0,12-(i/250)], dtype=np.float32)
+        obs, reward, done, _ = env.step(action)
+        time.sleep(0.001)
+
 
 ini = time.time()
-while True:
-    action = env.action_space.sample()
-    obs, reward, done, _ = env.step(action)
-    time.sleep(0.1)
-    if time.time()-ini > 300:
-        break
+action = env.action_space.sample()
+embed()
+# while True:
+#     obs, reward, done, _ = env.step(action)
+#     time.sleep(0.1)
+#     # if time.time()-ini > 300:
+    #     break
 env.close()

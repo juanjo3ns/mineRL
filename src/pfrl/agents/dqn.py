@@ -24,6 +24,7 @@ from pfrl.utils.recurrent import pack_and_forward
 from pfrl.utils.recurrent import recurrent_state_as_numpy
 
 
+
 def _mean_or_nan(xs):
     """Return its mean a non-empty sequence, numpy.nan for a empty one."""
     return np.mean(xs) if xs else np.nan

@@ -3,6 +3,7 @@ import torch
 from pfrl.agents import dqn
 from pfrl.utils.recurrent import pack_and_forward
 
+from IPython import embed
 
 def _apply_categorical_projection(y, y_probs, z):
     """Apply categorical projection.
@@ -169,7 +170,7 @@ class CategoricalDQN(dqn.DQN):
 
         batch_q_scalars = qout.evaluate_actions(batch_actions)
         self.q_record.extend(batch_q_scalars.detach().cpu().numpy().ravel())
-        
+
         return batch_q, batch_q_target
 
     def _compute_loss(self, exp_batch, errors_out=None):
@@ -178,6 +179,7 @@ class CategoricalDQN(dqn.DQN):
         # Minimize the cross entropy
         # y is clipped to avoid log(0)
         eltwise_loss = -t * torch.log(torch.clamp(y, 1e-10, 1.0))
+
 
         if errors_out is not None:
             del errors_out[:]

@@ -37,10 +37,20 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         self.reward_height = int(SZ*5*0.8)
 
         self.cum_rewards = np.cumsum([x for x in self.rewards])
+        # self.goal_states = [
+        #     [28.94, 79.0, -21.95],
+        #     [49.76, 96.85, 36.43],
+        #     [-45.50, 108, 1.45],
+        # ]
         self.goal_states = [
-            [28.94, 79.0, -21.95],
-            [49.76, 96.85, 36.43],
-            [-45.50, 108, 1.45],
+            [0,20],
+            [20,20],
+            [20,0],
+            [20,-20],
+            [0,-20],
+            [-20,-20],
+            [-20,0],
+            [-20,20],
         ]
         self.goal_state = goal_state
 
@@ -99,7 +109,7 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         ax.spines['bottom'].set_visible(False)
         ax.spines['left'].set_visible(False)
 
-        for i,(x,_,y) in enumerate(self.goal_states):
+        for i,(x,y) in enumerate(self.goal_states):
             if self.goal_state == i:
                 plt.plot(x, y, marker='o', color='blue', markersize=13)
             else:

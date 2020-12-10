@@ -1,1 +1,0 @@
-/mnt/gpid07/imatge/juan.jose.nieto/mineRL/src/main/train_rainbow.py --env MineRLNavigateVectorObf-v0 --load=results/ed8c06ff3eb433f78f31b4c41b5101571c510aa2-00000000-a621848d/best/
