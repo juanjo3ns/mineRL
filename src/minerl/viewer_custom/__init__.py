@@ -19,6 +19,8 @@ def get_parser():
 
     parser.add_argument("goal_state", type=int, default=0,
                         help="The goal state to visualize. e.g. 0")
+    parser.add_argument("trajectory", type=int, default=0,
+                        help="The trajectory to visualize. e.g. 0")
 
     parser.add_argument("stream_name", type=str, nargs='?', default=None,
                         help="(optional) The name of the trajectory to visualize. "

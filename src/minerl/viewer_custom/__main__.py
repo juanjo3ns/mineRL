@@ -50,15 +50,14 @@ def main(opts):
     gs = opts.goal_state
     files = [x for x in os.listdir(f"../data/MineRLTreechop-v0/{opts.stream_name}") if f"{gs}.mp4" in x]
     name = files[0]
-    print(name)
-
     data_frames = list(data.load_data(opts.stream_name, include_metadata=False, video_name=name))
     meta = data_frames[0][-1]
     logger.info("Data loading complete!".format(opts.stream_name))
     logger.info("META DATA: {}".format(meta))
 
     # load rewards
-    csv_path_rewards = os.path.join(data.data_dir, opts.stream_name, f"rewards_{gs}.{gs}.csv")
+    tr = opts.trajectory
+    csv_path_rewards = os.path.join(data.data_dir, opts.stream_name, f"rewards_{gs}.{tr}.csv")
 
     rewards = load_csv(csv_path_rewards)
 
@@ -68,7 +67,7 @@ def main(opts):
     goal_state_pov = goal_state_pov[:,:,:3]
 
     # load coords
-    csv_path_coords = os.path.join(data.data_dir, opts.stream_name, f"coords_{gs}.{gs}.csv")
+    csv_path_coords = os.path.join(data.data_dir, opts.stream_name, f"coords_{gs}.{tr}.csv")
     coords = load_csv(csv_path_coords, type='coords')
 
     trajectory_display_controller = TrajectoryDisplayController(

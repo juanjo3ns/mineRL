@@ -11,7 +11,17 @@ class CURL(nn.Module):
     CURL
     """
 
-    def __init__(self, obs_shape, z_dim, encoder, encoder_target, output_type="continuous", load_goal_states=False, device=None):
+    def __init__(self,
+            obs_shape,
+            z_dim,
+            encoder,
+            encoder_target,
+            output_type="continuous",
+            load_goal_states=False,
+            device=None,
+            threshold=18,
+            path_goal_states=None
+            ):
         super(CURL, self).__init__()
 
         self.encoder = encoder
@@ -22,8 +32,8 @@ class CURL(nn.Module):
         self.output_type = output_type
 
         if load_goal_states:
-            self.threshold = 20
-            self.path_gs = './goal_states_single'
+            self.threshold = threshold
+            self.path_gs = path_goal_states
             self.device = device
             self.goal_states = self.load_goal_states()
 

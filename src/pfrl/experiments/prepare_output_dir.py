@@ -1,4 +1,3 @@
-import argparse
 from binascii import crc32
 import datetime
 import json
@@ -140,10 +139,8 @@ def prepare_output_dir(
         timestamp = datetime.datetime.now().strftime("%Y%m%dT%H%M%S.%f")
         f.write("{}\n".format(timestamp))
 
-    # Save all the arguments
+    # # Save all the arguments
     with open(os.path.join(outdir, "args.txt"), "w") as f:
-        if isinstance(args, argparse.Namespace):
-            args = vars(args)
         f.write(json.dumps(args))
 
     # Save all the environment variables

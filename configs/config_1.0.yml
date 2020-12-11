@@ -7,35 +7,37 @@ gpu: 0
 
 demo: no
 monitor: no
-load: None
+load: null
 eval_n_runs: 3
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
 update_interval: 4
-frame_skip: None
+frame_skip: null
 gamma: 0.99
-no_clip_delta: yes
+clip_delta: yes
 num_step_return: 1
 lr: 2.5e-4
-adam_eps: 1e-8
+adam_eps: 1.e-8
 
 batch_accumulator: 'sum'
 gray_scale: no
 frame_stack: no
 
-final_exploration_frames: 10e6
+final_exploration_frames: 10.e+6
 final_epsilon: 0.01
 eval_epsilon: 0.001
-noisy_net_sigma: None
-replay_capacity: 10e6
-replay_start_size: 3e4
+noisy_net_sigma: null
+replay_capacity: 10.e+6
+replay_start_size: 3.e+4
 prioritized: yes
-target_update_interval: 2e4
+target_update_interval: 2.e+4
 kmeans_n_clusters: 30
 
 encoder_version: 'curl_0.3.5'
 load_epoch: '70000.pt'
 embedding_dim: 50
 img_size: 64
+threshold: 18
+path_goal_states: './goal_states_single_1'
