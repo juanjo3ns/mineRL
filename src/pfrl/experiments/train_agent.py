@@ -1,5 +1,6 @@
 import logging
 import os
+import wandb
 
 from pfrl.experiments.evaluator import Evaluator
 from pfrl.experiments.evaluator import save_agent
@@ -76,6 +77,7 @@ def train_agent(
                     episode_r,
                 )
                 logger.info("statistics:%s", agent.get_statistics())
+                wandb.log({'train_reward': episode_r})
                 if evaluator is not None:
                     evaluator.evaluate_if_necessary(t=t, episodes=episode_idx + 1)
                     if (

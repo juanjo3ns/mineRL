@@ -5,6 +5,8 @@ import torch
 import minerl  # noqa: register MineRL envs as Gym envs.
 import gym
 
+import wandb
+
 import pfrl
 
 from main.encoder import PixelEncoder
@@ -18,7 +20,6 @@ import utils
 from config import setSeed, getConfig
 from env_wrappers import wrap_env
 from q_functions import parse_arch
-from cached_kmeans import cached_kmeans
 
 from IPython import embed
 
@@ -26,85 +27,14 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    # parser = argparse.ArgumentParser()
-    #
-    # env_choices = [
-    #     # basic envs
-    #     'MineRLTreechop-v0',
-    #     'MineRLNavigate-v0', 'MineRLNavigateDense-v0', 'MineRLNavigateExtreme-v0', 'MineRLNavigateExtremeDense-v0',
-    #     'MineRLObtainIronPickaxe-v0', 'MineRLObtainIronPickaxeDense-v0',
-    #     'MineRLObtainDiamond-v0', 'MineRLObtainDiamondDense-v0',
-    #     # obfuscated envs
-    #     'MineRLTreechopVectorObf-v0',
-    #     'MineRLNavigateVectorObf-v0', 'MineRLNavigateExtremeVectorObf-v0',
-    #     # MineRL data pipeline fails for these envs: https://github.com/minerllabs/minerl/issues/364
-    #     # 'MineRLNavigateDenseVectorObf-v0', 'MineRLNavigateExtremeDenseVectorObf-v0',
-    #     'MineRLObtainDiamondVectorObf-v0', 'MineRLObtainDiamondDenseVectorObf-v0',
-    #     'MineRLObtainIronPickaxeVectorObf-v0', 'MineRLObtainIronPickaxeDenseVectorObf-v0',
-    #     # for debugging
-    #     'MineRLNavigateDenseFixed-v0', 'MineRLObtainTest-v0',
-    # ]
-    # parser.add_argument('--env', type=str, choices=env_choices, required=True,
-    #                     help='MineRL environment identifier.')
-    #
-    # # meta settings
-    # parser.add_argument('--outdir', type=str, default='results',
-    #                     help='Directory path to save output files. If it does not exist, it will be created.')
-    # parser.add_argument('--seed', type=int, default=0, help='Random seed [0, 2 ** 31)')
-    # parser.add_argument('--gpu', type=int, default=0, help='GPU to use, set to -1 if no GPU.')
-    # parser.add_argument('--demo', action='store_true', default=False)
-    # parser.add_argument('--load', type=str, default=None)
-    # parser.add_argument('--logging-level', type=int, default=20, help='Logging level. 10:DEBUG, 20:INFO etc.')
-    # parser.add_argument('--eval-n-runs', type=int, default=3)
-    # parser.add_argument('--monitor', action='store_true', default=False,
-    #                     help='Monitor env. Videos and additional information are saved as output files when evaluation.')
-    #
-    # # training scheme (agent)
-    # parser.add_argument('--agent', type=str, default='CategoricalDoubleDQN', choices=['DQN', 'DoubleDQN', 'PAL', 'CategoricalDoubleDQN'])
-    #
-    # # network architecture
-    # parser.add_argument('--arch', type=str, default='distributed_dueling', choices=['dueling', 'distributed_dueling'],
-    #                     help='Network architecture to use.')
-    #
-    # # update rule settings
-    # parser.add_argument('--update-interval', type=int, default=4, help='Frequency (in timesteps) of network updates.')
-    # parser.add_argument('--frame-skip', type=int, default=None, help='Number of frames skipped (None for disable).')
-    # parser.add_argument('--gamma', type=float, default=0.99, help='Discount rate.')
-    # parser.add_argument('--no-clip-delta', dest='clip_delta', action='store_false')
-    # parser.set_defaults(clip_delta=True)
-    # parser.add_argument('--num-step-return', type=int, default=1)
-    # parser.add_argument('--lr', type=float, default=2.5e-4, help='Learning rate.')
-    # parser.add_argument('--adam-eps', type=float, default=1e-8, help='Epsilon for Adam.')
-    # parser.add_argument('--batch-accumulator', type=str, default='sum', choices=['sum', 'mean'], help='accumulator for batch loss.')
-    #
-    # # observation conversion related settings
-    # parser.add_argument('--gray-scale', action='store_true', default=False, help='Convert pov into gray scaled image.')
-    # parser.add_argument('--frame-stack', type=int, default=None, help='Number of frames stacked (None for disable).')
-    #
-    # # exploration related settings
-    # parser.add_argument('--final-exploration-frames', type=int, default=10 ** 6,
-    #                     help='Timesteps after which we stop annealing exploration rate')
-    # parser.add_argument('--final-epsilon', type=float, default=0.01, help='Final value of epsilon during training.')
-    # parser.add_argument('--eval-epsilon', type=float, default=0.001, help='Exploration epsilon used during eval episodes.')
-    # parser.add_argument('--noisy-net-sigma', type=float, default=None,
-    #                     help='NoisyNet explorer switch. This disables following options: '
-    #                     '--final-exploration-frames, --final-epsilon, --eval-epsilon')
-    #
-    # # experience replay buffer related settings
-    # parser.add_argument('--replay-capacity', type=int, default=10 ** 6, help='Maximum capacity for replay buffer.')
-    # parser.add_argument('--replay-start-size', type=int, default=3 * 10 ** 4,
-    #                     help='Minimum replay buffer size before performing gradient updates.')
-    # parser.add_argument('--prioritized', action='store_true', default=True, help='Use prioritized experience replay.')
-    #
-    # # target network related settings
-    # parser.add_argument('--target-update-interval', type=int, default=2 * 10 ** 4,
-    #                     help='Frequency (in timesteps) at which the target network is updated.')
-    #
-    # # K-means related settings
-    # parser.add_argument('--kmeans-n-clusters', type=int, default=30, help='#clusters for K-means')
-    #
-    # args = parser.parse_args()
     conf = getConfig(sys.argv[1])
+    wandb.init(
+        project="mineRL",
+        config=conf
+    )
+    wandb.run.name = conf['outdir']
+    wandb.run.save()
+
     exp_id = 'eval_' if conf['demo'] else 'train_'
     exp_id += conf['outdir']
     args = str(conf)
@@ -118,8 +48,6 @@ def main():
     logging.getLogger('').addHandler(console_handler)  # add hander to the root logger
 
     logger.info('Output files will be saved in {}'.format(outdir))
-
-    utils.log_versions()
 
     try:
         dqn_family(conf, outdir)
@@ -163,7 +91,6 @@ def dqn_family(conf, outdir):
     replay_start_size = conf['replay_start_size']
     prioritized = conf['prioritized']
     target_update_interval = conf['target_update_interval']
-    kmeans_n_clusters = conf['kmeans_n_clusters']
 
     encoder_version = conf['encoder_version']
     load_epoch = conf['load_epoch']
@@ -207,18 +134,11 @@ def dqn_family(conf, outdir):
         path_goal_states=path_goal_states
     ).to(device)
 
-    # curl.compute_baselines()
 
     weights = torch.load(path_weights / encoder_version / load_epoch)['state_dict']
     curl.load_state_dict(weights)
     ######################################################
 
-    # K-Means
-    kmeans = cached_kmeans(
-        cache_dir=os.environ.get('KMEANS_CACHE'),
-        env_id=env_id,
-        n_clusters=kmeans_n_clusters,
-        random_state=seed)
 
     # create & wrap env
     def wrap_env_partial(env, test):
@@ -229,7 +149,6 @@ def dqn_family(conf, outdir):
             frame_skip=frame_skip,
             gray_scale=gray_scale, frame_stack=frame_stack,
             randomize_action=randomize_action, eval_epsilon=eval_epsilon,
-            action_choices=kmeans.cluster_centers_,
             encoder=curl, device=device)
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
@@ -238,7 +157,6 @@ def dqn_family(conf, outdir):
 
     # This seed controls which environment will be rendered
     core_env.seed(0)
-    # core_env.make_interactive(port=6666, realtime=True)
 
     # training env
     env = wrap_env_partial(env=core_env, test=False)
@@ -257,13 +175,13 @@ def dqn_family(conf, outdir):
     maximum_frames = 8000000
     if frame_skip is None:
         steps = maximum_frames
-        eval_interval = 2000 * 20  # (approx.) every 20 episode (counts "1 episode = 2000 steps")
+        eval_interval = 3000 * 20  # (approx.) every 20 episode (counts "1 episode = 2000 steps")
     else:
         steps = maximum_frames // frame_skip
-        eval_interval = 2000 * 20 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
+        eval_interval = 3000 * 3 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
 
     agent = get_agent(
-        n_actions=env.action_space.n, arch=arch, n_input_channels=env.observation_space.shape[0],
+        n_actions=4, arch=arch, n_input_channels=env.observation_space.shape[0],
         noisy_net_sigma=noisy_net_sigma, final_epsilon=final_epsilon,
         final_exploration_frames=final_exploration_frames, explorer_sample_func=env.action_space.sample,
         lr=lr, adam_eps=adam_eps,

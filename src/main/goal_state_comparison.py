@@ -53,7 +53,7 @@ pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-curl = CURL(obs_shape, feature_dim, batch_size, pixel_encoder, pixel_encoder_target, load_goal_states=True).to(device)
+curl = CURL(obs_shape, feature_dim, pixel_encoder, pixel_encoder_target, load_goal_states=True, path_goal_states='./goal_states_flat_biome').to(device)
 
 
 curl.eval()
@@ -79,14 +79,20 @@ threshold = 18
 print("Starting comparison...")
 with torch.no_grad():
     matrix_logits = np.zeros((10,10))
-    for i in range(10):
-        gs = curl.get_goal_state(i)
-        gs = torch.from_numpy(gs).to(device)
-        for j in range(10):
-            gs_comp = curl.get_goal_state(j)
-            gs_comp = torch.from_numpy(gs_comp).to(device)
+    stack = []
+    for i in range(8):
+        stack.append(curl.get_goal_state(i))
+    embed()
 
-            matrix_logits[i,j] = curl.compute_logits_(gs, gs_comp) > threshold
+
+    # for i in range(10):
+    #     gs = curl.get_goal_state(i)
+    #     gs = torch.from_numpy(gs).to(device)
+    #     for j in range(10):
+    #         gs_comp = curl.get_goal_state(j)
+    #         gs_comp = torch.from_numpy(gs_comp).to(device)
+    #         embed()
+    #         matrix_logits[i,j] = curl.compute_logits_(gs, gs_comp) > threshold
 # fig, ax = plt.subplots(figsize=(24,15))
 plt.imshow(matrix_logits, interpolation='nearest', aspect='auto')
 plt.xticks(np.arange(0,10, step=1))

@@ -24,7 +24,6 @@ def wrap_env(
         frame_skip,
         gray_scale, frame_stack,
         randomize_action, eval_epsilon,
-        action_choices,
         encoder, device):
     # wrap env: time limit...
     # Don't use `ContinuingTimeLimit` for testing, in order to avoid unexpected behavior on submissions.
@@ -49,8 +48,8 @@ def wrap_env(
     if gray_scale:
         env = GrayScaleWrapper(env, dict_space_key='pov')
 
-    if test:
-        env = ObtainCoordWrapper(env, outdir)
+    # if test:
+    env = ObtainCoordWrapper(env, outdir)
     env = ObtainPoVWrapper(env)
     env = MoveAxisWrapper(env, source=-1, destination=0)  # convert hwc -> chw as Pytorch requires.
 
@@ -63,7 +62,7 @@ def wrap_env(
     if frame_stack is not None and frame_stack > 0:
         env = FrameStack(env, frame_stack, channel_order='chw')
 
-    env = ClusteredActionWrapper(env, clusters=action_choices)
+    env = ClusteredActionWrapper(env)
 
     # NEW
     env = TransformReward(env, encoder)
@@ -427,20 +426,31 @@ class GrayScaleWrapper(gym.ObservationWrapper):
 
 
 class ClusteredActionWrapper(gym.ActionWrapper):
-    def __init__(self, env, clusters):
+    def __init__(self, env):
         super().__init__(env)
-        self._clusters = clusters
         self.env = env
-        self._np_random = np.random.RandomState()
 
-        self.action_space = gym.spaces.Discrete(len(clusters))
+        self.action_space = gym.spaces.Discrete(4)
+
+        base = self.env.action_space.no_op()
+
+        forward = base.copy()
+        forward['forward'] = np.array(1)
+        forward['sprint'] = np.array(1)
+
+        right = base.copy()
+        right['camera'] = np.array([0,10], dtype=np.float32)
+
+        left = base.copy()
+        left['camera'] = np.array([0,-10], dtype=np.float32)
+
+        self.actions = [base, forward, right, left]
 
     def action(self, action):
-        return {'vector': self._clusters[action]}
+        return self.actions[action]
 
     def seed(self, seed):
         super().seed(seed)
-        self._np_random.seed(seed)
 
 class TransformReward(gym.RewardWrapper):
     """Transform the reward via an arbitrary function.

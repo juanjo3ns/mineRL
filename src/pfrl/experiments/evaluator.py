@@ -5,7 +5,7 @@ import statistics
 import time
 
 import numpy as np
-
+import wandb
 import pfrl
 
 from IPython import embed
@@ -328,6 +328,9 @@ def create_tb_writer(outdir):
 
 def record_tb_stats(summary_writer, agent_stats, eval_stats, t):
     cur_time = time.time()
+
+    wandb.log(dict(agent_stats))
+    wandb.log(eval_stats)
 
     for stat, value in agent_stats:
         summary_writer.add_scalar("agent/" + stat, value, t, cur_time)
