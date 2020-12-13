@@ -7,14 +7,14 @@ gpu: 0
 
 demo: yes
 monitor: yes
-load: './results/train_rl.1.2/best/'
+load: './results/train_rl.2.2/best/'
 eval_n_runs: 5
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
 update_interval: 4
-frame_skip: 4
+frame_skip: 10
 gamma: 0.99
 clip_delta: yes
 num_step_return: 1

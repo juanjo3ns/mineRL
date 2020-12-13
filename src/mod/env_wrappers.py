@@ -439,10 +439,10 @@ class ClusteredActionWrapper(gym.ActionWrapper):
         forward['sprint'] = np.array(1)
 
         right = forward.copy()
-        right['camera'] = np.array([0,10], dtype=np.float32)
+        right['camera'] = np.array([0,4], dtype=np.float32)
 
         left = forward.copy()
-        left['camera'] = np.array([0,-10], dtype=np.float32)
+        left['camera'] = np.array([0,-4], dtype=np.float32)
 
         self.actions = [base, forward, right, left]
 

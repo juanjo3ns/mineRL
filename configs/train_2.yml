@@ -14,7 +14,7 @@ agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
 update_interval: 4
-frame_skip: 4
+frame_skip: 10
 gamma: 0.99
 clip_delta: yes
 num_step_return: 1
@@ -30,7 +30,7 @@ final_epsilon: 0.01
 eval_epsilon: 0.001
 noisy_net_sigma: null
 replay_capacity: 10.e+6
-replay_start_size: 3.e+4
+replay_start_size: 2.e+4
 prioritized: yes
 target_update_interval: 2.e+4
 
