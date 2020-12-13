@@ -28,15 +28,18 @@ logger = logging.getLogger(__name__)
 
 def main():
     conf = getConfig(sys.argv[1])
+
+    exp_id = 'eval_' if conf['demo'] else 'train_'
+    exp_id += conf['outdir']
+
     wandb.init(
         project="mineRL",
         config=conf
     )
-    wandb.run.name = conf['outdir']
+
+    wandb.run.name = exp_id
     wandb.run.save()
 
-    exp_id = 'eval_' if conf['demo'] else 'train_'
-    exp_id += conf['outdir']
     args = str(conf)
     outdir = pfrl.experiments.prepare_output_dir(args, 'results', exp_id=exp_id)
 
@@ -175,10 +178,10 @@ def dqn_family(conf, outdir):
     maximum_frames = 8000000
     if frame_skip is None:
         steps = maximum_frames
-        eval_interval = 3000 * 20  # (approx.) every 20 episode (counts "1 episode = 2000 steps")
+        eval_interval = 2000 * 20  # (approx.) every 20 episode (counts "1 episode = 2000 steps")
     else:
         steps = maximum_frames // frame_skip
-        eval_interval = 3000 * 30 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
+        eval_interval = 2000 * 30 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
 
     agent = get_agent(
         n_actions=4, arch=arch, n_input_channels=env.observation_space.shape[0],

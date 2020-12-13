@@ -1,4 +1,4 @@
-outdir: 'rl.0.0'
+outdir: 'rl.2.0'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -7,14 +7,14 @@ gpu: 0
 
 demo: yes
 monitor: yes
-load: './results/train_rl.0.0/best/'
-eval_n_runs: 3
+load: './results/train_rl.2.0/best/'
+eval_n_runs: 5
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
 update_interval: 4
-frame_skip: null
+frame_skip: 4
 gamma: 0.99
 clip_delta: yes
 num_step_return: 1
@@ -33,7 +33,6 @@ replay_capacity: 10.e+6
 replay_start_size: 3.e+4
 prioritized: yes
 target_update_interval: 2.e+4
-kmeans_n_clusters: 30
 
 encoder_version: 'curl_0.3.5'
 load_epoch: '70000.pt'

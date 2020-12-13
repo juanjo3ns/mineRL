@@ -13,14 +13,14 @@ class Navigate(SimpleEnvSpec):
         name = 'MineRLNavigate{}-v0'.format(suffix)
         xml = 'navigation{}.xml'.format(suffix)
         self.dense, self.extreme = dense, extreme
-        super().__init__(name, xml, max_episode_steps=3000)
+        super().__init__(name, xml, max_episode_steps=2000)
 
     def is_from_folder(self, folder: str) -> bool:
         return folder == 'navigateextreme' if self.extreme else folder == 'navigate'
 
     def create_mission_handlers(self) -> List[minerl.herobraine.hero.AgentHandler]:
         mission_handlers = [
-            handlers.EpisodeLength(3000 // 20),
+            handlers.EpisodeLength(2000 // 20),
             handlers.RewardForTouchingBlock(
                 {"diamond_block", 100.0}
             ),

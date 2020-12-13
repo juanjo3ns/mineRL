@@ -78,25 +78,24 @@ def save_fig(img, name):
 threshold = 18
 print("Starting comparison...")
 with torch.no_grad():
-    matrix_logits = np.zeros((10,10))
-    stack = []
+    matrix_logits = np.zeros((8,8))
+    # stack = []
+    # for i in range(8):
+    #     stack.append(curl.get_goal_state(i))
+    # embed()
+
+
     for i in range(8):
-        stack.append(curl.get_goal_state(i))
-    embed()
-
-
-    # for i in range(10):
-    #     gs = curl.get_goal_state(i)
-    #     gs = torch.from_numpy(gs).to(device)
-    #     for j in range(10):
-    #         gs_comp = curl.get_goal_state(j)
-    #         gs_comp = torch.from_numpy(gs_comp).to(device)
-    #         embed()
-    #         matrix_logits[i,j] = curl.compute_logits_(gs, gs_comp) > threshold
-# fig, ax = plt.subplots(figsize=(24,15))
+        gs = curl.get_goal_state(i)
+        gs = torch.from_numpy(gs).to(device)
+        for j in range(8):
+            gs_comp = curl.get_goal_state(j)
+            gs_comp = torch.from_numpy(gs_comp).to(device)
+            matrix_logits[i,j] = curl.compute_logits_(gs, gs_comp) > threshold
+fig, ax = plt.subplots(figsize=(24,15))
 plt.imshow(matrix_logits, interpolation='nearest', aspect='auto')
-plt.xticks(np.arange(0,10, step=1))
-plt.yticks(np.arange(0,10, step=1))
+plt.xticks(np.arange(0,8, step=1))
+plt.yticks(np.arange(0,8, step=1))
 plt.colorbar()
 plt.tight_layout()
 plt.show()

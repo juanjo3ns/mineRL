@@ -1,4 +1,4 @@
-outdir: 'rl.1.0'
+outdir: 'rl.2.0'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -8,7 +8,7 @@ gpu: 0
 demo: no
 monitor: no
 load: null
-eval_n_runs: 3
+eval_n_runs: 2
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
@@ -39,4 +39,4 @@ load_epoch: '70000.pt'
 embedding_dim: 50
 img_size: 64
 threshold: 20
-path_goal_states: './goal_states_single_1'
+path_goal_states: './goal_states_flat_triplet'

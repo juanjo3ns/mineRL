@@ -8,7 +8,7 @@ gpu: 0
 demo: no
 monitor: no
 load: null
-eval_n_runs: 3
+eval_n_runs: 2
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'

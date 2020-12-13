@@ -48,8 +48,8 @@ def wrap_env(
     if gray_scale:
         env = GrayScaleWrapper(env, dict_space_key='pov')
 
-    # if test:
-    env = ObtainCoordWrapper(env, outdir)
+    if test:
+        env = ObtainCoordWrapper(env, outdir)
     env = ObtainPoVWrapper(env)
     env = MoveAxisWrapper(env, source=-1, destination=0)  # convert hwc -> chw as Pytorch requires.
 
@@ -438,10 +438,10 @@ class ClusteredActionWrapper(gym.ActionWrapper):
         forward['forward'] = np.array(1)
         forward['sprint'] = np.array(1)
 
-        right = base.copy()
+        right = forward.copy()
         right['camera'] = np.array([0,10], dtype=np.float32)
 
-        left = base.copy()
+        left = forward.copy()
         left['camera'] = np.array([0,-10], dtype=np.float32)
 
         self.actions = [base, forward, right, left]
