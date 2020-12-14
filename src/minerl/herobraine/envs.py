@@ -9,13 +9,19 @@ from minerl.herobraine.env_specs.obtain_specs import ObtainDiamond, ObtainDiamon
 from minerl.herobraine.wrappers import Obfuscated, Vectorized
 import minerl.data.version
 import os
-
+import sys
+from config import getConfig
 
 # Must load non-obfuscated envs first!
 # Publish.py depends on this order for black-listing streams
 MINERL_TREECHOP_V0 = Treechop()
 
-MINERL_NAVIGATE_V0 = Navigate(dense=False, extreme=False)
+if 'train' in sys.argv[1] or 'val' in sys.argv[1]:
+    conf = getConfig(sys.argv[1])
+
+    MINERL_NAVIGATE_V0 = Navigate(dense=False, extreme=False, max_episode_steps=conf['max_episode_steps'])
+else:
+    MINERL_NAVIGATE_V0 = Navigate(dense=False, extreme=False)
 MINERL_NAVIGATE_EXTREME_V0 = Navigate(dense=False, extreme=True)
 MINERL_NAVIGATE_DENSE_V0 = Navigate(dense=True, extreme=False)
 MINERL_NAVIGATE_DENSE_EXTREME_V0 = Navigate(dense=True, extreme=True)

@@ -1,4 +1,4 @@
-outdir: 'rl.2.1'
+outdir: 'rl.3.1'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -8,13 +8,15 @@ gpu: 0
 demo: no
 monitor: no
 load: null
-eval_n_runs: 2
+eval_n_runs: 8
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
+max_episode_steps: 1500
+batch_size: 64
 update_interval: 4
-frame_skip: 4
+frame_skip: 10
 gamma: 0.99
 clip_delta: yes
 num_step_return: 1
@@ -30,7 +32,7 @@ final_epsilon: 0.01
 eval_epsilon: 0.001
 noisy_net_sigma: null
 replay_capacity: 10.e+6
-replay_start_size: 3.e+4
+replay_start_size: 1.e+4
 prioritized: yes
 target_update_interval: 2.e+4
 

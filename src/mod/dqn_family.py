@@ -74,6 +74,8 @@ def dqn_family(conf, outdir):
     agent_type = conf['agent']
     arch = conf['arch']
 
+    max_episode_steps = conf['max_episode_steps']
+    batch_size = conf['batch_size']
     update_interval = conf['update_interval']
     frame_skip = conf['frame_skip']
     gamma = conf['gamma']
@@ -156,6 +158,7 @@ def dqn_family(conf, outdir):
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
+
     # core_env.make_interactive(port=6666, realtime=True)
 
     # This seed controls which environment will be rendered
@@ -192,7 +195,7 @@ def dqn_family(conf, outdir):
         replay_capacity=replay_capacity, num_step_return=num_step_return,
         agent_type=agent_type, gpu=gpu, gamma=gamma, replay_start_size=replay_start_size,
         target_update_interval=target_update_interval, clip_delta=clip_delta,
-        batch_accumulator=batch_accumulator,
+        batch_accumulator=batch_accumulator, batch_size=batch_size
     )
 
     if load:
@@ -201,7 +204,7 @@ def dqn_family(conf, outdir):
 
     # experiment
     if demo:
-        eval_stats = pfrl.experiments.eval_performance(env=eval_env, agent=agent, n_steps=None, max_episode_len=2000, n_episodes=eval_n_runs)
+        eval_stats = pfrl.experiments.eval_performance(env=eval_env, agent=agent, n_steps=None, max_episode_len=max_episode_steps, n_episodes=eval_n_runs)
         logger.info('n_runs: {} mean: {} median: {} stdev {}'.format(
             eval_n_runs, eval_stats['mean'], eval_stats['median'], eval_stats['stdev']))
     else:
@@ -227,7 +230,7 @@ def get_agent(
         noisy_net_sigma, final_epsilon, final_exploration_frames, explorer_sample_func,
         lr, adam_eps,
         prioritized, steps, update_interval, replay_capacity, num_step_return,
-        agent_type, gpu, gamma, replay_start_size, target_update_interval, clip_delta, batch_accumulator
+        agent_type, gpu, gamma, replay_start_size, target_update_interval, clip_delta, batch_accumulator,batch_size
 ):
     # Q function
     q_func = parse_arch(arch, n_actions, n_input_channels=n_input_channels)
@@ -260,7 +263,7 @@ def get_agent(
     agent = Agent(
         q_func, opt, rbuf, gpu=gpu, gamma=gamma, explorer=explorer, replay_start_size=replay_start_size,
         target_update_interval=target_update_interval, clip_delta=clip_delta, update_interval=update_interval,
-        batch_accumulator=batch_accumulator, phi=phi)
+        batch_accumulator=batch_accumulator, phi=phi, minibatch_size=batch_size)
 
     return agent
 

@@ -1,4 +1,4 @@
-outdir: 'rl.1.2'
+outdir: 'rl.2.2'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -13,6 +13,8 @@ eval_n_runs: 2
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
+max_episode_steps: 2000
+batch_size: 64
 update_interval: 4
 frame_skip: 10
 gamma: 0.99

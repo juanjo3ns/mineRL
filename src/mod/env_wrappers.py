@@ -62,7 +62,7 @@ def wrap_env(
     if frame_stack is not None and frame_stack > 0:
         env = FrameStack(env, frame_stack, channel_order='chw')
 
-    env = ClusteredActionWrapper(env)
+    env = ClusteredActionWrapper(env, frame_skip)
 
     # NEW
     env = TransformReward(env, encoder)
@@ -426,9 +426,12 @@ class GrayScaleWrapper(gym.ObservationWrapper):
 
 
 class ClusteredActionWrapper(gym.ActionWrapper):
-    def __init__(self, env):
+    def __init__(self, env, frame_skip):
         super().__init__(env)
         self.env = env
+        self.delta_degree = 45
+        if not frame_skip == None:
+            self.delta_degree /= frame_skip
 
         self.action_space = gym.spaces.Discrete(4)
 
@@ -439,10 +442,10 @@ class ClusteredActionWrapper(gym.ActionWrapper):
         forward['sprint'] = np.array(1)
 
         right = forward.copy()
-        right['camera'] = np.array([0,4], dtype=np.float32)
+        right['camera'] = np.array([0,self.delta_degree], dtype=np.float32)
 
         left = forward.copy()
-        left['camera'] = np.array([0,-4], dtype=np.float32)
+        left['camera'] = np.array([0,-self.delta_degree], dtype=np.float32)
 
         self.actions = [base, forward, right, left]
 

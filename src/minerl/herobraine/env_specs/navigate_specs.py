@@ -7,20 +7,21 @@ from minerl.herobraine.env_specs.simple_env_spec import SimpleEnvSpec
 
 
 class Navigate(SimpleEnvSpec):
-    def __init__(self, dense, extreme):
+    def __init__(self, dense, extreme, max_episode_steps=2000):
         suffix = 'Extreme' if extreme else ''
         suffix += 'Dense' if dense else ''
         name = 'MineRLNavigate{}-v0'.format(suffix)
         xml = 'navigation{}.xml'.format(suffix)
         self.dense, self.extreme = dense, extreme
-        super().__init__(name, xml, max_episode_steps=2000)
+        self.max_episode_steps = max_episode_steps
+        super().__init__(name, xml, max_episode_steps=self.max_episode_steps)
 
     def is_from_folder(self, folder: str) -> bool:
         return folder == 'navigateextreme' if self.extreme else folder == 'navigate'
 
     def create_mission_handlers(self) -> List[minerl.herobraine.hero.AgentHandler]:
         mission_handlers = [
-            handlers.EpisodeLength(2000 // 20),
+            handlers.EpisodeLength(self.max_episode_steps // 20),
             handlers.RewardForTouchingBlock(
                 {"diamond_block", 100.0}
             ),

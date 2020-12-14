@@ -19,7 +19,7 @@
             <AllowSpawning>false</AllowSpawning>
         </ServerInitialConditions>
         <ServerHandlers>
-            <FlatWorldGenerator forceReset="true"/>
+            <FlatWorldGenerator forceReset="false"/>
             <NavigationDecorator>
                 <randomPlacementProperties>
                     <maxRandomizedRadius>64</maxRandomizedRadius>

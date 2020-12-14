@@ -13,8 +13,10 @@ eval_n_runs: 2
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
+max_episode_steps: 2000
+batch_size: 64
 update_interval: 4
-frame_skip: 10
+frame_skip: null
 gamma: 0.99
 clip_delta: yes
 num_step_return: 1
