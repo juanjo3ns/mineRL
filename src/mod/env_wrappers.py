@@ -212,7 +212,8 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         obs_anchor = torch.from_numpy(observation).float().unsqueeze(dim=0).to(self.device)
         z_a = self.curl.encode(obs_anchor)
         # Compute reward as distance similarity in the embedding space - baseline reward (max)
-        reward = int(self.curl.compute_logits_(z_a, goal_state) > self.curl.threshold)
+        r = self.curl.compute_logits_(z_a, goal_state)
+        reward = int(r > self.curl.threshold)
         self.curl.reward = reward
         if self.test:
             csvfile = open(os.path.join(self.outdir, f"rewards_{self.env.goal_state}.{self.env.resets-1}.csv"), 'a')

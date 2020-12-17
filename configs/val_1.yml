@@ -16,7 +16,7 @@ arch: 'distributed_dueling'
 max_episode_steps: 1500
 batch_size: 64
 update_interval: 4
-frame_skip: 4
+frame_skip: 10
 gamma: 0.99
 clip_delta: yes
 num_step_return: 1

@@ -69,6 +69,8 @@ def main(opts):
     # load coords
     csv_path_coords = os.path.join(data.data_dir, opts.stream_name, f"coords_{gs}.{tr}.csv")
     coords = load_csv(csv_path_coords, type='coords')
+    coords = np.repeat(coords, 10, axis=0)
+    rewards = np.repeat(rewards, 10)
 
     trajectory_display_controller = TrajectoryDisplayController(
         data_frames,
