@@ -13,6 +13,51 @@ from torch.utils.data import Dataset
 
 from IPython import embed
 
+class CustomMinecraftData(Dataset):
+    def __init__(self, env, mode, split, transform=None, path='../data', **kwargs) -> None:
+        self.path = path
+        self.env = env
+        self.mode = mode
+        self.split = split
+        self.dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+        self.data = self.loadData()
+        self.transform = transform
+
+    def loadData(self) -> list:
+        data = []
+
+        print('Loading data...')
+        path = Path(self.path)
+
+        print(f"\n\tLoading environment {env}")
+        self.num_traj = len(os.listdir(path / self.env))
+        traj_list = sorted(os.listdir(path / self.env), key=lambda x: int(x.split('.')[0].split('_')[1]))
+
+        if self.mode == 'train':
+            traj_list = traj_list[:int(self.split*num_traj)]
+        else:
+            traj_list = traj_list[int(self.split*num_traj):]
+
+        for i, vid in enumerate(traj_list):
+            print(f"\tTraj: {i}", end ='\r')
+
+
+
+            data.append(obs)
+        print()
+        return data
+
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __getitem__(self, index):
+        # Pick trajectory
+        obs = self.data[index]
+        if self.transform is not None:
+            obs = self.transform(obs)
+        return obs
+
 
 class MultiMinecraftData(Dataset):
     def __init__(self, env_list, mode, split, extra, transform=None, path='../data', **kwargs) -> None:

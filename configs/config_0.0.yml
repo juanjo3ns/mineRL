@@ -1,10 +1,10 @@
-experiment: 'vqvae_0'
+experiment: 'vqvae_0.0'
 environment: 'MineRLNavigate-v0'
-batch_size: 256
-num_training_updates: 25000
-learning_rate: 0.001
-split: 0.9
 vqvae:
+  epochs: 100
+  split: 0.95
+  lr: 0.001
+  batch_size: 256
   num_hiddens: 128
   num_residual_hiddens: 32
   num_residual_layers: 2
@@ -12,13 +12,3 @@ vqvae:
   num_embeddings: 512
   commitment_cost: 0.25
   decay: 0.99
-pixelcnn:
-  epochs: 100
-  save: no
-  log_interval: 100
-  lr: 0.0003
-  img_dim: 16
-  batch_size: 32
-  num_hiddens: 64
-  num_layers: 15
-  gen_samples: no
