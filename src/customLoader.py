@@ -29,8 +29,8 @@ class CustomMinecraftData(Dataset):
         print('Loading data...')
         path = Path(self.path)
 
-        print(f"\n\tLoading environment {env}")
-        self.num_traj = len(os.listdir(path / self.env))
+        print(f"\n\tLoading environment {self.env}")
+        num_traj = len(os.listdir(path / self.env))
         traj_list = sorted(os.listdir(path / self.env), key=lambda x: int(x.split('.')[0].split('_')[1]))
 
         if self.mode == 'train':
@@ -38,14 +38,15 @@ class CustomMinecraftData(Dataset):
         else:
             traj_list = traj_list[int(self.split*num_traj):]
 
-        for i, vid in enumerate(traj_list):
+        for i, traj in enumerate(traj_list):
             print(f"\tTraj: {i}", end ='\r')
-
-
+            obs = np.load(path / self.env / traj, allow_pickle=True)
 
             data.append(obs)
         print()
-        return data
+
+        data = np.array(data)
+        return data.reshape(-1, 64, 64, 3)
 
 
     def __len__(self) -> int:
@@ -242,10 +243,12 @@ class LatentBlockDataset(Dataset):
 if __name__ == '__main__':
     transform = transforms.Compose([
                               transforms.ToTensor(),
+                              transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
                             ])
-    env_list = ['MineRLNavigate-v0', 'MineRLNavigateVectorObf-v0']
-    mrl = MultiMinecraftData(env_list, 'train', 1, False, transform=transform)
-    embed()
+    # env_list = ['MineRLNavigate-v0', 'MineRLNavigateVectorObf-v0']
+    # mrl = MultiMinecraftData(env_list, 'train', 1, False, transform=transform)
+    # embed()
     # img = mrl[10]
     # plt.imshow(img)
     # plt.show()
+    # c = CustomMinecraftData('CustomTrajectories', 'val', 0.95, transform=transform)

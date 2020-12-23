@@ -1,14 +1,14 @@
 experiment: 'vqvae_0.0'
 environment: 'MineRLNavigate-v0'
+epochs: 100
 vqvae:
-  epochs: 100
   split: 0.95
   lr: 0.001
   batch_size: 256
-  num_hiddens: 128
+  num_hiddens: 64
   num_residual_hiddens: 32
   num_residual_layers: 2
-  embedding_dim: 64
-  num_embeddings: 512
+  embedding_dim: 256
+  num_embeddings: 10
   commitment_cost: 0.25
   decay: 0.99

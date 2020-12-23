@@ -6,6 +6,7 @@ import json
 import time
 import copy
 import minerl
+import wandb
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,10 +23,11 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-from customLoader import CustomMinecraftData
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+from torchvision.utils import make_grid
+from customLoader import CustomMinecraftData
 from torchvision.transforms import transforms
+from torch.utils.tensorboard import SummaryWriter
 
 from models.VQVAE import VectorQuantizer, VectorQuantizerEMA, Encoder, Decoder
 
@@ -57,23 +59,21 @@ class VQVAE(pl.LightningModule):
         self.batch_size = batch_size
         self.lr = lr
         self.split = split
-        embed()
-
 
         self._encoder = Encoder(3, num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
-        self._pre_vq_conv = nn.Conv2d(in_channels=num_hiddens,
-                                      out_channels=embedding_dim,
-                                      kernel_size=1,
-                                      stride=1)
+        # self._pre_vq_conv = nn.Conv2d(in_channels=num_hiddens,
+        #                               out_channels=embedding_dim,
+        #                               kernel_size=1,
+        #                               stride=1)
         if decay > 0.0:
             self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
                                               commitment_cost, decay)
         else:
             self._vq_vae = VectorQuantizer(num_embeddings, embedding_dim,
                                            commitment_cost)
-        self._decoder = Decoder(embedding_dim,
+        self._decoder = Decoder(num_hiddens,
                                 num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
@@ -87,7 +87,7 @@ class VQVAE(pl.LightningModule):
 
     def forward(self, x):
         z = self._encoder(x)
-        z = self._pre_vq_conv(z)
+        # z = self._pre_vq_conv(z)
         loss, quantized, perplexity, _ = self._vq_vae(z)
         x_recon = self._decoder(quantized)
 
@@ -96,7 +96,7 @@ class VQVAE(pl.LightningModule):
     def training_step(self, batch, batch_idx):
 
         vq_loss, data_recon, perplexity = self(batch)
-        recon_error = F.mse_loss(data_recon, data)
+        recon_error = F.mse_loss(data_recon, batch)
         loss = recon_error + vq_loss
 
         self.log('loss/train', loss, on_step=False, on_epoch=True)
@@ -107,15 +107,16 @@ class VQVAE(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
 
         vq_loss, data_recon, perplexity = self(batch)
-        recon_error = F.mse_loss(data_recon, data)
+        recon_error = F.mse_loss(data_recon, batch)
         loss = recon_error + vq_loss
 
-        self.log('loss/train', loss, on_step=False, on_epoch=True)
-        self.log('perplexity/train', perplexity, on_step=False, on_epoch=True)
+        self.log('loss/val', loss, on_step=False, on_epoch=True)
+        self.log('perplexity/val', perplexity, on_step=False, on_epoch=True)
 
         if batch_idx == 0:
-            grid = make_grid(data_recon)
-            self.logger.experiment.add_image('images', grid, self.current_epoch)
+            grid = make_grid(data_recon[:64].cpu().data)
+            grid = grid.permute(1,2,0)
+            self.logger.experiment.log({"Images": [wandb.Image(grid.numpy())]})
 
         return loss
 
@@ -124,12 +125,12 @@ class VQVAE(pl.LightningModule):
 
     def train_dataloader(self):
         train_dataset = CustomMinecraftData('CustomTrajectories', 'train', self.split, transform=self.transform)
-        train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
+        train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
         return train_dataloader
 
     def val_dataloader(self):
-        val_dataset = CustomMinecraftData('CustomTrajectories', 'val', self.split, transform=self.transform)        
-        val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False)
+        val_dataset = CustomMinecraftData('CustomTrajectories', 'val', self.split, transform=self.transform)
+        val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 
 
@@ -148,24 +149,22 @@ class VQVAE(pl.LightningModule):
         return encoding_indices
 
 
-# wandb_logger = WandbLogger(
-#     project='mineRL',
-#     name=conf['experiment'],
-#     tags=['vqvae']
-# )
-#
-# wandb_logger.log_hyperparams(conf['vqvae'])
+wandb_logger = WandbLogger(
+    project='mineRL',
+    name=conf['experiment'],
+    tags=['vqvae']
+)
+
+wandb_logger.log_hyperparams(conf['vqvae'])
 
 vqvae = VQVAE(**conf['vqvae'])
-exit()
 
 trainer = pl.Trainer(
     gpus=1,
-    max_epochs=conf['vqvae']['epochs'],
+    max_epochs=conf['epochs'],
     progress_bar_refresh_rate=20,
     weights_summary='full',
     logger=wandb_logger
 )
 
-#trainer = pl.Trainer(fast_dev_run=True)
 trainer.fit(vqvae)
