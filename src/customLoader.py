@@ -13,12 +13,14 @@ from torch.utils.data import Dataset
 
 from IPython import embed
 
+
 class CustomMinecraftData(Dataset):
-    def __init__(self, env, mode, split, transform=None, path='../data', **kwargs) -> None:
+    def __init__(self, env, mode, split, transform=None, path='../data', delay=False, **kwargs) -> None:
         self.path = path
         self.env = env
         self.mode = mode
         self.split = split
+        self.delay = delay
         self.dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
         self.data = self.loadData()
         self.transform = transform
@@ -41,7 +43,7 @@ class CustomMinecraftData(Dataset):
         for i, traj in enumerate(traj_list):
             print(f"\tTraj: {i}", end ='\r')
             obs = np.load(path / self.env / traj, allow_pickle=True)
-
+            self.trj_length = obs.shape[0]
             data.append(obs)
         print()
 
@@ -54,6 +56,21 @@ class CustomMinecraftData(Dataset):
 
     def __getitem__(self, index):
         # Pick trajectory
+        if self.delay:
+            if index + 1 == len(self.data):
+                index -= 1
+            if index%self.trj_length==0 and index>0:
+                key = self.data[index-1]
+                query = self.data[index]
+            else:
+                key = self.data[index]
+                query = self.data[index+1]
+
+            if self.transform is not None:
+                key = self.transform(key)
+                query = self.transform(query)
+            return key, query
+
         obs = self.data[index]
         if self.transform is not None:
             obs = self.transform(obs)
@@ -251,4 +268,4 @@ if __name__ == '__main__':
     # img = mrl[10]
     # plt.imshow(img)
     # plt.show()
-    # c = CustomMinecraftData('CustomTrajectories', 'val', 0.95, transform=transform)
+    # c = CustomMinecraftData_('CustomTrajectories', 'train', 0.95, transform=transform)

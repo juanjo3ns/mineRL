@@ -1,6 +1,6 @@
-experiment: 'vqvae_0.0'
+experiment: 'vqvae_0.1'
 environment: 'MineRLNavigate-v0'
-epochs: 100
+epochs: 1000
 vqvae:
   split: 0.95
   lr: 0.001

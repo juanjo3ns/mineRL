@@ -124,12 +124,12 @@ class VQVAE(pl.LightningModule):
         return torch.optim.Adam(params=self.parameters(), lr=self.lr, weight_decay=1e-5)
 
     def train_dataloader(self):
-        train_dataset = CustomMinecraftData('CustomTrajectories', 'train', self.split, transform=self.transform)
+        train_dataset = CustomMinecraftData('CustomTrajectories1', 'train', self.split, transform=self.transform)
         train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
         return train_dataloader
 
     def val_dataloader(self):
-        val_dataset = CustomMinecraftData('CustomTrajectories', 'val', self.split, transform=self.transform)
+        val_dataset = CustomMinecraftData('CustomTrajectories1', 'val', self.split, transform=self.transform)
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 
@@ -164,7 +164,8 @@ trainer = pl.Trainer(
     max_epochs=conf['epochs'],
     progress_bar_refresh_rate=20,
     weights_summary='full',
-    logger=wandb_logger
+    logger=wandb_logger,
+    default_root_dir=f"./results/{conf['experiment']}"
 )
 
 trainer.fit(vqvae)
