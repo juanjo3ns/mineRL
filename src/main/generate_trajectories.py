@@ -36,7 +36,7 @@ frame_skip = 10
 MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLNavigate-v0')
 env = gym.make('MineRLNavigate-v0')
 
-outdir = './results/custom_trajectories'
+outdir = './results/custom_trajectories1'
 
 env.goal_state = 0
 env = FrameSkip(env, skip=frame_skip)
@@ -57,7 +57,7 @@ for episode in range(episodes):
 
 
     trajectory = np.array(trajectory)
-    with open(f'../data/CustomTrajectories/trajectory_{episode}.npy', 'wb') as f:
+    with open(f'../data/CustomTrajectories1/trajectory_{episode}.npy', 'wb') as f:
         np.save(f, trajectory)
 
 env.close()

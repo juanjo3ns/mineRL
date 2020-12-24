@@ -105,11 +105,10 @@ def custom_steps(obs, action):
 
 
 ini = time.time()
-action = env.action_space.sample()
-embed()
-# while True:
-#     obs, reward, done, _ = env.step(action)
-#     time.sleep(0.1)
-#     # if time.time()-ini > 300:
-    #     break
+while True:
+    action = env.action_space.sample()
+    obs, reward, done, _ = env.step(action)
+    time.sleep(0.5)
+    if time.time()-ini > 300:
+        break
 env.close()
