@@ -113,12 +113,12 @@ class Contrastive(pl.LightningModule):
         return optim.Adam(self.parameters(), lr=self.lr, amsgrad=False)
 
     def train_dataloader(self):
-        train_dataset = CustomMinecraftData('CustomTrajectories1', 'train', self.split, transform=self.transform, delay=True)
+        train_dataset = CustomMinecraftData('CustomTrajectories2', 'train', self.split, transform=self.transform, delay=True)
         train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
         return train_dataloader
 
     def val_dataloader(self):
-        val_dataset = CustomMinecraftData('CustomTrajectories1', 'val', self.split, transform=self.transform, delay=True)
+        val_dataset = CustomMinecraftData('CustomTrajectories2', 'val', self.split, transform=self.transform, delay=True)
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 

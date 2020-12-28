@@ -1,4 +1,4 @@
-experiment: 'curl_0.0'
+experiment: 'curl_0.1'
 environment: 'MineRLNavigate-v0'
 epochs: 1000
 curl:
