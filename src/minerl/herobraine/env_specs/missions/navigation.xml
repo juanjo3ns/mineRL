@@ -41,9 +41,9 @@
               <DrawCuboid x1="10" y1="3" z1="10" x2="50" y2="3" z2="50" type="gold_block"/>
               <DrawCuboid x1="-10" y1="3" z1="10" x2="10" y2="3" z2="50" type="obsidian"/>
               <DrawCuboid x1="10" y1="3" z1="-10" x2="50" y2="3" z2="10" type="dirt"/>
-              <DrawCuboid x1="10" y1="3" z1="-50" x2="50" y2="3" z2="-10" type="slime"/>
+              <DrawCuboid x1="10" y1="3" z1="-50" x2="50" y2="3" z2="-10" type="emerald_block"/>
               <DrawCuboid x1="-10" y1="3" z1="-50" x2="10" y2="3" z2="-10" type="stone"/>
-              <DrawCuboid x1="-50" y1="3" z1="-50" x2="-10" y2="3" z2="-10" type="water"/>
+              <DrawCuboid x1="-50" y1="3" z1="-50" x2="-10" y2="3" z2="-10" type="ice"/>
               <DrawCuboid x1="-50" y1="3" z1="-10" x2="-10" y2="3" z2="10" type="sand"/>
               <DrawCuboid x1="-50" y1="3" z1="10" x2="-10" y2="3" z2="50" type="snow"/>
             </DrawingDecorator>

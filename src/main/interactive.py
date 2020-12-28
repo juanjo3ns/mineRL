@@ -50,19 +50,19 @@ else:
     raise Exception("Sorry user not identified!")
 
 
-pixel_encoder = PixelEncoder(obs_shape, feature_dim)
-pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
+# pixel_encoder = PixelEncoder(obs_shape, feature_dim)
+# pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
+#
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#
+# curl = CURL(obs_shape, feature_dim, pixel_encoder, pixel_encoder_target).to(device)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-curl = CURL(obs_shape, feature_dim, pixel_encoder, pixel_encoder_target).to(device)
+# curl.eval()
 
-
-curl.eval()
-
-if conf['curl']['load']:
-    weights = torch.load(path_weights / conf['experiment'] / conf['curl']['epoch'])['state_dict']
-    curl.load_state_dict(weights)
+# if conf['curl']['load']:
+#     weights = torch.load(path_weights / conf['experiment'] / conf['curl']['epoch'])['state_dict']
+#     curl.load_state_dict(weights)
 
 def save_image(img, name):
     fig, ax = plt.subplots()
@@ -75,12 +75,12 @@ def save_fig(img, name):
     plt.savefig(f'../images/inference_attention_2/{name}.svg')
     plt.close()
 
-def encode(obs, name):
-    obs_anchor = torch.from_numpy(obs).float().unsqueeze(dim=0).to(device)
-    obs_anchor = obs_anchor.permute(0,3,1,2)
-    z_a = curl.encode(obs_anchor)
-    with open(f'./goal_states_flat_biome/{name}.npy', 'wb') as f:
-        np.save(f, z_a.detach().cpu().numpy())
+# def encode(obs, name):
+#     obs_anchor = torch.from_numpy(obs).float().unsqueeze(dim=0).to(device)
+#     obs_anchor = obs_anchor.permute(0,3,1,2)
+#     z_a = curl.encode(obs_anchor)
+#     with open(f'./goal_states_flat_biome/{name}.npy', 'wb') as f:
+#         np.save(f, z_a.detach().cpu().numpy())
 
 env = gym.make('MineRLNavigate-v0')
 
