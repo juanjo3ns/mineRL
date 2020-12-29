@@ -52,13 +52,15 @@ else:
 
 class Contrastive(pl.LightningModule):
     def __init__(self, feature_dim, tau, batch_size=256, lr=0.001, split=0.95,
-                img_size=64, soft_update=2):
+                img_size=64, soft_update=2, delay=False, trajectories='CustomTrajectories2'):
         super(Contrastive, self).__init__()
 
 
         self.batch_size = batch_size
         self.lr = lr
         self.split = split
+        self.delay = delay
+        self.trajectories = trajectories
 
         self.feature_dim = feature_dim
         self.tau = tau
@@ -94,7 +96,7 @@ class Contrastive(pl.LightningModule):
         logits, labels = self(batch)
         loss = self.criterion(logits, labels)
 
-        self.log('loss/train', loss, on_step=True, on_epoch=True)
+        self.log('loss/train_epoch', loss, on_step=False, on_epoch=True)
 
         if batch_idx%2==0:
             self.soft_update_params()
@@ -105,7 +107,7 @@ class Contrastive(pl.LightningModule):
         logits, labels = self(batch)
         loss = self.criterion(logits, labels)
 
-        self.log('loss/val', loss, on_step=True, on_epoch=True)
+        self.log('loss/val_epoch', loss, on_step=False, on_epoch=True)
 
         return loss
 
@@ -113,12 +115,12 @@ class Contrastive(pl.LightningModule):
         return optim.Adam(self.parameters(), lr=self.lr, amsgrad=False)
 
     def train_dataloader(self):
-        train_dataset = CustomMinecraftData('CustomTrajectories2', 'train', self.split, transform=self.transform, delay=True)
+        train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay)
         train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
         return train_dataloader
 
     def val_dataloader(self):
-        val_dataset = CustomMinecraftData('CustomTrajectories2', 'val', self.split, transform=self.transform, delay=True)
+        val_dataset = CustomMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, delay=self.delay)
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 

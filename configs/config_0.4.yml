@@ -1,6 +1,6 @@
 experiment: 'curl_0.1'
 environment: 'MineRLNavigate-v0'
-epochs: 1000
+epochs: 500
 curl:
   batch_size: 32
   lr: 0.001
@@ -8,3 +8,5 @@ curl:
   feature_dim: 50
   img_size: 64
   tau: 0.005
+  delay: True
+  trajectories: 'CustomTrajectories2'

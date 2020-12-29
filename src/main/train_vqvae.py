@@ -52,13 +52,16 @@ else:
 class VQVAE(pl.LightningModule):
     def __init__(self, num_hiddens, num_residual_layers, num_residual_hiddens,
                  num_embeddings, embedding_dim, commitment_cost, decay=0,
-                 batch_size=256, lr=0.001, split=0.95, img_size=64):
+                 batch_size=256, lr=0.001, split=0.95, img_size=64,
+                 delay=False, trajectories='CustomTrajectories2'):
         super(VQVAE, self).__init__()
 
 
         self.batch_size = batch_size
         self.lr = lr
         self.split = split
+        self.delay = delay
+        self.trajectories = trajectories
 
         self._encoder = Encoder(3, num_hiddens,
                                 num_residual_layers,
@@ -94,9 +97,13 @@ class VQVAE(pl.LightningModule):
         return loss, x_recon, perplexity
 
     def training_step(self, batch, batch_idx):
+        x = batch
+        y = batch
+        if self.delay:
+            x,y = batch
 
-        vq_loss, data_recon, perplexity = self(batch)
-        recon_error = F.mse_loss(data_recon, batch)
+        vq_loss, data_recon, perplexity = self(x)
+        recon_error = F.mse_loss(data_recon, y)
         loss = recon_error + vq_loss
 
         self.log('loss/train', loss, on_step=False, on_epoch=True)
@@ -124,12 +131,12 @@ class VQVAE(pl.LightningModule):
         return torch.optim.Adam(params=self.parameters(), lr=self.lr, weight_decay=1e-5)
 
     def train_dataloader(self):
-        train_dataset = CustomMinecraftData('CustomTrajectories2', 'train', self.split, transform=self.transform)
+        train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay)
         train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
         return train_dataloader
 
     def val_dataloader(self):
-        val_dataset = CustomMinecraftData('CustomTrajectories2', 'val', self.split, transform=self.transform)
+        val_dataset = CustomMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, delay=self.delay)
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 

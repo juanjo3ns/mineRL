@@ -1,6 +1,6 @@
 experiment: 'vqvae_0.2'
 environment: 'MineRLNavigate-v0'
-epochs: 1000
+epochs: 500
 vqvae:
   split: 0.95
   lr: 0.001
@@ -12,3 +12,5 @@ vqvae:
   num_embeddings: 10
   commitment_cost: 0.25
   decay: 0.99
+  delay: True
+  trajectories: 'CustomTrajectories2'
