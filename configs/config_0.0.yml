@@ -1,4 +1,4 @@
-experiment: 'vqvae_0.2'
+experiment: 'vqvae_0.3'
 environment: 'MineRLNavigate-v0'
 epochs: 500
 vqvae:

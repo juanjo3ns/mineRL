@@ -60,6 +60,7 @@ class VQVAE(pl.LightningModule):
         self.batch_size = batch_size
         self.lr = lr
         self.split = split
+        
         self.delay = delay
         self.trajectories = trajectories
 
@@ -112,9 +113,12 @@ class VQVAE(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-
-        vq_loss, data_recon, perplexity = self(batch)
-        recon_error = F.mse_loss(data_recon, batch)
+        x = batch
+        y = batch
+        if self.delay:
+            x,y = batch
+        vq_loss, data_recon, perplexity = self(x)
+        recon_error = F.mse_loss(data_recon, y)
         loss = recon_error + vq_loss
 
         self.log('loss/val', loss, on_step=False, on_epoch=True)
