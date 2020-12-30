@@ -8,5 +8,5 @@ curl:
   feature_dim: 50
   img_size: 64
   tau: 0.005
-  delay: True
+  delay: False
   trajectories: 'CustomTrajectories2'

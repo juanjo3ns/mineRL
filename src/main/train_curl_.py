@@ -1,4 +1,5 @@
 import os
+import csv
 import sys
 import cv2
 import gym
@@ -17,6 +18,7 @@ from pathlib import Path
 from pprint import pprint
 from config import setSeed, getConfig
 from collections import OrderedDict
+from sklearn.cluster import KMeans
 
 import torch
 import torch.nn as nn
@@ -79,6 +81,7 @@ class Contrastive(pl.LightningModule):
                                 ])
         self.criterion = torch.nn.CrossEntropyLoss()
 
+
     def forward(self, data):
         key, query = data
 
@@ -132,24 +135,74 @@ class Contrastive(pl.LightningModule):
                 self.tau * param.data + (1 - self.tau) * target_param.data
             )
 
+    def kmeans(self, embeddings):
+        return KMeans(n_clusters=10, random_state=0).fit(embeddings)
 
-wandb_logger = WandbLogger(
-    project='mineRL',
-    name=conf['experiment'],
-    tags=['curl']
-)
+    def compute_rewards(self):
+        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
+        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
 
-wandb_logger.log_hyperparams(conf['curl'])
+        # compute embeddings of all trajectories
+        print("\nComputing embeddings from all data points...")
+        embeddings = []
+        for key in train_dataloader:
+            embeddings.append(self.curl.encode(key.cuda()).detach().cpu().numpy())
+        embeddings = np.array(embeddings)
 
-contr = Contrastive(**conf['curl'])
+        # compute kmeans clusters
+        print("Computing kmeans over embeddings...")
+        kmeans = self.kmeans(embeddings.squeeze())
+        csvfile = None
 
-trainer = pl.Trainer(
-    gpus=1,
-    max_epochs=conf['epochs'],
-    progress_bar_refresh_rate=20,
-    weights_summary='full',
-    logger=wandb_logger,
-    default_root_dir=f"./results/{conf['experiment']}"
-)
+        # iterate over kmeans clusters
+        for j, k in enumerate(kmeans.cluster_centers_):
+            k = torch.from_numpy(k).cuda()
+            # iterate over trajectories and steps
+            if not os.path.exists(f"./results/kmean_GS_{j}"):
+                os.mkdir(f"./results/kmean_GS_{j}")
+            print(f"\nComparing to cluster {j}")
+            traj = -1
+            for i, e in enumerate(embeddings):
+                if i % train_dataset.trj_length == 0:
+                    if not csvfile == None:
+                        csvfile.close()
+                    traj += 1
+                    csvfile = open( f"./results/kmean_GS_{j}/rewards_{j}.{traj}.csv", 'a')
+                print(f"\tTrajectory {traj}", end = '\r')
+                # compute reward between cluster and step
+                e = torch.from_numpy(e.squeeze()).cuda()
+                r = self.curl.compute_logits_(e, k)
+                r = round(r.detach().cpu().item(),2)
+                # store reward csv
+                csvwriter = csv.writer(csvfile, delimiter=',')
+                csvwriter.writerow([r])
 
-trainer.fit(contr)
+        csvfile.close()
+
+
+contr = Contrastive(**conf['curl']).cuda()
+path = './results/curl_0.1/mineRL/1ddjitvv/checkpoints/epoch=499-step=302999.ckpt'
+checkpoint = torch.load(path)
+contr.load_state_dict(checkpoint['state_dict'])
+contr.compute_rewards()
+
+# wandb_logger = WandbLogger(
+#     project='mineRL',
+#     name=conf['experiment'],
+#     tags=['curl']
+# )
+#
+# wandb_logger.log_hyperparams(conf['curl'])
+#
+# contr = Contrastive(**conf['curl'])
+#
+# trainer = pl.Trainer(
+#     gpus=1,
+#     max_epochs=conf['epochs'],
+#     progress_bar_refresh_rate=20,
+#     weights_summary='full',
+#     logger=wandb_logger,
+#     default_root_dir=f"./results/{conf['experiment']}"
+# )
+#
+# trainer.fit(contr)
