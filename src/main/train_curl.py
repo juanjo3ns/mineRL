@@ -24,8 +24,8 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
 from torch.utils.tensorboard import SummaryWriter
 
-from main.encoder import PixelEncoder
-from main.model import CURL
+from models.PixelEncoder import PixelEncoder
+from models.CURL import CURL
 
 from IPython import embed
 

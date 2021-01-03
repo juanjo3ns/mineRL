@@ -84,6 +84,16 @@ class VectorQuantizerEMA(nn.Module):
 
         return quantized.permute(0, 3, 1, 2).contiguous()
 
+    def compute_distances(self, inputs):
+        inputs = inputs.permute(0, 2, 3, 1).contiguous() # [1,16,16,64]
+        input_shape = inputs.shape
+        flat_input = inputs.view(-1, self._embedding_dim) # [256,64]
+
+        distances = (torch.sum(flat_input**2, dim=1, keepdim=True)
+                    + torch.sum(self._embedding.weight**2, dim=1)
+                    - 2 * torch.matmul(flat_input, self._embedding.weight.t()))
+
+        return distances
     def forward(self, inputs):
         # Comments on the right correspond to example for one image
         # convert inputs from BCHW -> BHWC

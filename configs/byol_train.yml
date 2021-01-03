@@ -1,0 +1,15 @@
+experiment: 'byol_0.0'
+environment: 'MineRLNavigate-v0'
+epochs: 500
+byol:
+  opt:
+    lr: 0.01
+    momentum: 0.9
+    weight_decay: 0.0004
+  batch_size: 32
+  mlp_hidden_size: 512
+  projection_size: 128
+  img_size: 64
+  m: 0.996
+  delay: True
+  trajectories: 'CustomTrajectories2'
