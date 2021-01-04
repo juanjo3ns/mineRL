@@ -1,23 +1,14 @@
 import os
 import csv
-import sys
-import cv2
-import gym
-import json
-import time
-import copy
-import minerl
 import wandb
 
 import numpy as np
-import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 
 from os.path import join
 from pathlib import Path
 from pprint import pprint
 from config import setSeed, getConfig
-from collections import OrderedDict
 
 import torch
 import torch.nn as nn
@@ -28,7 +19,6 @@ from torch.utils.data import DataLoader
 from torchvision.utils import make_grid
 from customLoader import CustomMinecraftData
 from torchvision.transforms import transforms
-from torch.utils.tensorboard import SummaryWriter
 
 from models.VQVAE import VectorQuantizer, VectorQuantizerEMA, Encoder, Decoder
 
@@ -148,11 +138,13 @@ class VQVAE(pl.LightningModule):
         csvfiles = []
         traj = -1
 
-        if not os.path.exists(f"./results/VQVAE_CENTROIDS_0"):
-            os.mkdir(f"./results/VQVAE_CENTROIDS_0")
-        for i in range(10):
-            if not os.path.exists(f"./results/VQVAE_CENTROIDS_0/vqvae_{i}"):
-                os.mkdir(f"./results/VQVAE_CENTROIDS_0/vqvae_{i}")
+        folder = 'VQVAE_CENTROIDS_2'
+        gs = 8
+        if not os.path.exists(f"./results/{folder}"):
+            os.mkdir(f"./results/{folder}")
+        for i in range(gs):
+            if not os.path.exists(f"./results/{folder}/vqvae_{i}"):
+                os.mkdir(f"./results/{folder}/vqvae_{i}")
 
         print("\nComputing embeddings from all data points...")
         for i, key in enumerate(train_dataloader):
@@ -162,8 +154,8 @@ class VQVAE(pl.LightningModule):
                         c.close()
                 traj += 1
                 csvfiles = []
-                for k in range(10):
-                    csvfiles.append(open( f"./results/VQVAE_CENTROIDS_0/vqvae_{k}/rewards_{k}.{traj}.csv", 'a'))
+                for k in range(gs):
+                    csvfiles.append(open( f"./results/{folder}/vqvae_{k}/rewards_{k}.{traj}.csv", 'a'))
 
             print(f"\tTrajectory {traj}", end = '\r')
             z = self._encoder(key.cuda())

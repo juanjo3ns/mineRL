@@ -1,4 +1,4 @@
-experiment: 'byol_0.0'
+experiment: 'byol_0.1'
 environment: 'MineRLNavigate-v0'
 epochs: 500
 byol:

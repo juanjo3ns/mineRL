@@ -32,7 +32,7 @@ from IPython import embed
 
 
 class Contrastive(pl.LightningModule):
-    def __init__(self, m=0.996, batch_size=256, opt=None, split=0.95,
+    def __init__(self, m=0.996, batch_size=256, lr=0.001, split=0.95,
                 mlp_hidden_size=512, projection_size=128, img_size=64,
                 delay=False, trajectories='CustomTrajectories2'):
         super(Contrastive, self).__init__()
@@ -43,7 +43,7 @@ class Contrastive(pl.LightningModule):
         self.delay = delay
         self.trajectories = trajectories
         self.m = m
-        self.opt = opt
+        self.lr = lr
 
         self.online_network = ResNet18(mlp_hidden_size, projection_size)
         self.target_network = ResNet18(mlp_hidden_size, projection_size)
@@ -97,7 +97,7 @@ class Contrastive(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return optim.SGD(list(self.online_network.parameters()) + list(self.target_network.parameters()), **self.opt)
+        return optim.Adam(list(self.online_network.parameters()) + list(self.target_network.parameters()), lr=self.lr, amsgrad=False)
 
     def train_dataloader(self):
         train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay)
@@ -136,3 +136,48 @@ class Contrastive(pl.LightningModule):
         for param_q, param_k in zip(self.online_network.parameters(), self.target_network.parameters()):
             param_k.data.copy_(param_q.data)  # initialize
             param_k.requires_grad = False  # not update by gradient
+
+    def kmeans(self, embeddings):
+        return KMeans(n_clusters=8, random_state=0, max_iter=500).fit(embeddings)
+
+    def compute_rewards(self):
+        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
+        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
+        self.eval()
+        # compute embeddings of all trajectories
+        print("\nComputing embeddings from all data points...")
+        embeddings = []
+        for key in train_dataloader:
+            embeddings.append(self.predictor(self.online_network(key.cuda())).detach().cpu().numpy())
+        embeddings = np.array(embeddings)
+
+        # compute kmeans clusters
+        print("Computing kmeans over embeddings...")
+        kmeans = self.kmeans(embeddings.squeeze())
+        csvfile = None
+
+        folder = "byol_gs1_"
+        # iterate over kmeans clusters
+        for j, k in enumerate(kmeans.cluster_centers_):
+            k = torch.from_numpy(k).cuda()
+            # iterate over trajectories and steps
+            if not os.path.exists(f"./results/{folder}{j}"):
+                os.mkdir(f"./results/{folder}{j}")
+            print(f"\nComparing to cluster {j}")
+            traj = -1
+            for i, e in enumerate(embeddings):
+                if i % train_dataset.trj_length == 0:
+                    if not csvfile == None:
+                        csvfile.close()
+                    traj += 1
+                    csvfile = open( f"./results/{folder}{j}/rewards_{j}.{traj}.csv", 'a')
+                print(f"\tTrajectory {traj}", end = '\r')
+                # compute reward between cluster and step
+                e = torch.from_numpy(e.squeeze()).cuda()
+                r = self.regression_loss(e.unsqueeze(dim=0), k.unsqueeze(dim=0))
+                r = round(r.detach().cpu().item(),3)
+                # store reward csv
+                csvwriter = csv.writer(csvfile, delimiter=',')
+                csvwriter.writerow([r])
+
+        csvfile.close()

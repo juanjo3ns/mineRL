@@ -1,12 +1,13 @@
 import os
 import sys
 import wandb
+import torch
 
 from os.path import join
 from pathlib import Path
 from config import setSeed, getConfig
 
-from vqvae import VQVAE
+from main.vqvae import VQVAE
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -26,7 +27,7 @@ else:
     raise Exception("Sorry user not identified!")
 
 vqvae = VQVAE(**conf['vqvae']).cuda()
-path = './results/vqvae_0.2/mineRL/y77fc26u/checkpoints/epoch=808-step=61483.ckpt'
+path = './results/vqvae_0.4/mineRL/3kgpkqsu/checkpoints/epoch=499-step=37999.ckpt'
 checkpoint = torch.load(path)
 vqvae.load_state_dict(checkpoint['state_dict'])
 vqvae.compute_similarity()

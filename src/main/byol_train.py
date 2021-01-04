@@ -35,7 +35,6 @@ wandb_logger.log_hyperparams(conf[alg])
 contr = Contrastive(**conf[alg])
 
 trainer = pl.Trainer(
-    fast_dev_run=True,
     gpus=1,
     max_epochs=conf['epochs'],
     progress_bar_refresh_rate=20,
