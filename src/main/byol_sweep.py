@@ -54,6 +54,8 @@ def main():
     trainer.fit(contr)
 
 sweep_config = {
+    "project": "mineRL",
+    "name": "byol_sweep",
     "method": 'bayes',
     "metric": {
         "name": "loss/train_epoch",

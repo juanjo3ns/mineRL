@@ -2,12 +2,9 @@ experiment: 'byol_0.1'
 environment: 'MineRLNavigate-v0'
 epochs: 500
 byol:
-  opt:
-    lr: 0.01
-    momentum: 0.9
-    weight_decay: 0.0004
+  lr: 0.001
   batch_size: 32
-  mlp_hidden_size: 512
+  mlp_hidden_size: 256
   projection_size: 128
   img_size: 64
   m: 0.996
