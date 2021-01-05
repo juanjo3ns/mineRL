@@ -92,8 +92,8 @@ class VectorQuantizerEMA(nn.Module):
         distances = (torch.sum(flat_input**2, dim=1, keepdim=True)
                     + torch.sum(self._embedding.weight**2, dim=1)
                     - 2 * torch.matmul(flat_input, self._embedding.weight.t()))
-
         return distances
+
     def forward(self, inputs):
         # Comments on the right correspond to example for one image
         # convert inputs from BCHW -> BHWC
@@ -281,47 +281,56 @@ class Decoder(nn.Module):
 
         return self._conv_trans_5(x)
 
-# class VQVAE(nn.Module):
-#     def __init__(self, num_hiddens, num_residual_layers, num_residual_hiddens,
-#                  num_embeddings, embedding_dim, commitment_cost, decay=0):
-#         super(VQVAE, self).__init__()
-#
-#         self._encoder = Encoder(3, num_hiddens,
-#                                 num_residual_layers,
-#                                 num_residual_hiddens)
-#         self._pre_vq_conv = nn.Conv2d(in_channels=num_hiddens,
-#                                       out_channels=embedding_dim,
-#                                       kernel_size=1,
-#                                       stride=1)
-#         if decay > 0.0:
-#             self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
-#                                               commitment_cost, decay)
-#         else:
-#             self._vq_vae = VectorQuantizer(num_embeddings, embedding_dim,
-#                                            commitment_cost)
-#         self._decoder = Decoder(embedding_dim,
-#                                 num_hiddens,
-#                                 num_residual_layers,
-#                                 num_residual_hiddens)
-#
-#     def forward(self, x):
-#         z = self._encoder(x)
-#         z = self._pre_vq_conv(z)
-#         loss, quantized, perplexity, _ = self._vq_vae(z)
-#         x_recon = self._decoder(quantized)
-#
-#         return loss, x_recon, perplexity
-#
-#     def get_centroids(self, idx):
-#         z_idx = torch.LongTensor(idx).cuda()
-#         embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
-#         embeddings = embeddings.view((1,16,16,64))
-#         embeddings = embeddings.permute(0, 3, 1, 2).contiguous()
-#
-#         return self._decoder(embeddings)
-#
-#     def save_encoding_indices(self, x):
-#         z = self._encoder(x)
-#         z = self._pre_vq_conv(z)
-#         _, _, _, encoding_indices = self._vq_vae(z)
-#         return encoding_indices
+class VQVAE(nn.Module):
+    def __init__(self, num_hiddens, num_residual_layers, num_residual_hiddens,
+                 num_embeddings, embedding_dim, commitment_cost, decay=0.99, threshold=-1.5):
+        super(VQVAE, self).__init__()
+
+        self._encoder = Encoder(3, num_hiddens,
+                                num_residual_layers,
+                                num_residual_hiddens)
+        if decay > 0.0:
+            self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
+                                              commitment_cost, decay)
+        else:
+            self._vq_vae = VectorQuantizer(num_embeddings, embedding_dim,
+                                           commitment_cost)
+        self._decoder = Decoder(embedding_dim,
+                                num_hiddens,
+                                num_residual_layers,
+                                num_residual_hiddens)
+
+        self.threshold = threshold
+        self.num_goal_states = num_embeddings
+
+    def forward(self, x):
+        z = self._encoder(x)
+        loss, quantized, perplexity, _ = self._vq_vae(z)
+        x_recon = self._decoder(quantized)
+
+        return loss, x_recon, perplexity
+
+    def get_centroids(self, idx):
+        z_idx = torch.tensor(idx).cuda()
+        embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
+        embeddings = embeddings.view((1,2,2,64))
+        embeddings = embeddings.permute(0, 3, 1, 2).contiguous()
+
+        return self._decoder(embeddings)
+
+    def save_encoding_indices(self, x):
+        z = self._encoder(x)
+        z = self._pre_vq_conv(z)
+        _, _, _, encoding_indices = self._vq_vae(z)
+        return encoding_indices
+
+    def encode(self, x):
+        return self._encoder(x)
+
+    def compute_logits_(self, z_a, z_pos):
+        distances = self._vq_vae.compute_distances(z_a)
+        return distances.squeeze()[z_pos]
+
+    def get_goal_state(self, idx):
+        embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=idx)
+        return embeddings.detach().cpu().numpy()

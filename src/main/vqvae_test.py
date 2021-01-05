@@ -7,7 +7,7 @@ from os.path import join
 from pathlib import Path
 from config import setSeed, getConfig
 
-from main.vqvae import VQVAE
+from main.vqvae import VQVAE_PL
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -26,7 +26,7 @@ elif os.getenv('USER') == 'juan.jose.nieto':
 else:
     raise Exception("Sorry user not identified!")
 
-vqvae = VQVAE(**conf['vqvae']).cuda()
+vqvae = VQVAE_PL(**conf['vqvae']).cuda()
 path = './results/vqvae_0.4/mineRL/3kgpkqsu/checkpoints/epoch=499-step=37999.ckpt'
 checkpoint = torch.load(path)
 vqvae.load_state_dict(checkpoint['state_dict'])

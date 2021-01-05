@@ -20,18 +20,18 @@ from torchvision.utils import make_grid
 from customLoader import CustomMinecraftData
 from torchvision.transforms import transforms
 
-from models.VQVAE import VectorQuantizer, VectorQuantizerEMA, Encoder, Decoder
+from models.VQVAE import VQVAE
 
 from pytorch_lightning.loggers import WandbLogger
 
 from IPython import embed
 
-class VQVAE(pl.LightningModule):
+class VQVAE_PL(pl.LightningModule):
     def __init__(self, num_hiddens, num_residual_layers, num_residual_hiddens,
                  num_embeddings, embedding_dim, commitment_cost, decay=0,
                  batch_size=256, lr=0.001, split=0.95, img_size=64,
                  delay=False, trajectories='CustomTrajectories2'):
-        super(VQVAE, self).__init__()
+        super(VQVAE_PL, self).__init__()
 
 
         self.batch_size = batch_size
@@ -41,23 +41,15 @@ class VQVAE(pl.LightningModule):
         self.delay = delay
         self.trajectories = trajectories
 
-        self._encoder = Encoder(3, num_hiddens,
-                                num_residual_layers,
-                                num_residual_hiddens)
-        # self._pre_vq_conv = nn.Conv2d(in_channels=num_hiddens,
-        #                               out_channels=embedding_dim,
-        #                               kernel_size=1,
-        #                               stride=1)
-        if decay > 0.0:
-            self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
-                                              commitment_cost, decay)
-        else:
-            self._vq_vae = VectorQuantizer(num_embeddings, embedding_dim,
-                                           commitment_cost)
-        self._decoder = Decoder(num_hiddens,
-                                num_hiddens,
-                                num_residual_layers,
-                                num_residual_hiddens)
+        self.model = VQVAE(
+            num_hiddens,
+            num_residual_layers,
+            num_residual_hiddens,
+            num_embeddings,
+            embedding_dim,
+            commitment_cost,
+            decay
+        )
 
         self.example_input_array = torch.rand(batch_size, 3, img_size, img_size)
 
@@ -67,11 +59,7 @@ class VQVAE(pl.LightningModule):
                                 ])
 
     def forward(self, x):
-        z = self._encoder(x)
-        # z = self._pre_vq_conv(z)
-        loss, quantized, perplexity, _ = self._vq_vae(z)
-        x_recon = self._decoder(quantized)
-
+        loss, x_recon, perplexity = self.model.forward(x)
         return loss, x_recon, perplexity
 
     def training_step(self, batch, batch_idx):
@@ -121,15 +109,6 @@ class VQVAE(pl.LightningModule):
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 
-
-    def get_centroids(self, idx):
-        z_idx = torch.tensor(idx).cuda()
-        embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
-        embeddings = embeddings.view((1,2,2,64))
-        embeddings = embeddings.permute(0, 3, 1, 2).contiguous()
-
-        return self._decoder(embeddings)
-
     def compute_similarity(self):
         train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
         train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
@@ -164,9 +143,3 @@ class VQVAE(pl.LightningModule):
             for j, d in enumerate(distances):
                 csvwriter = csv.writer(csvfiles[j], delimiter=',')
                 csvwriter.writerow([-d])
-
-    def save_encoding_indices(self, x):
-        z = self._encoder(x)
-        z = self._pre_vq_conv(z)
-        _, _, _, encoding_indices = self._vq_vae(z)
-        return encoding_indices
