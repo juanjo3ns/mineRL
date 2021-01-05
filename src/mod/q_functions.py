@@ -8,7 +8,7 @@ from pfrl.q_functions.dueling_dqn import constant_bias_initializer
 from pfrl.initializers import init_chainer_default
 
 
-def parse_arch(arch, n_actions, n_input_channels):
+def parse_arch(arch, n_actions, n_input_channels, embedding_dim):
     if arch == 'dueling':
         # Conv2Ds of (channel, kernel, stride): [(32, 8, 4), (64, 4, 2), (64, 3, 1)]
         # return DuelingDQN(n_actions, n_input_channels=n_input_channels, hiddens=[256])
@@ -17,7 +17,14 @@ def parse_arch(arch, n_actions, n_input_channels):
         n_atoms = 51
         v_min = -10
         v_max = 10
-        return DistributionalDuelingDQN(n_actions, n_atoms, v_min, v_max, n_input_channels=n_input_channels)
+        return DistributionalDuelingDQN(
+            n_actions,
+            n_atoms,
+            v_min,
+            v_max,
+            n_input_channels=n_input_channels,
+            embedding_dim=embedding_dim
+            )
     else:
         raise RuntimeError('Unsupported architecture name: {}'.format(arch))
 
@@ -34,6 +41,7 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
         n_input_channels=4,
         activation=torch.relu,
         bias=0.1,
+        embedding_dim=64
     ):
         assert n_atoms >= 2
         assert v_min < v_max
@@ -60,7 +68,7 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
         # before
         # self.main_stream = nn.Linear(1024, 1024)
         # new
-        self.main_stream_1 = nn.Linear(100, 512)
+        self.main_stream_1 = nn.Linear(embedding_dim*2, 512)
         self.main_stream_2 = nn.Linear(512, 1024)
 
         self.a_stream = nn.Linear(512, n_actions * n_atoms)

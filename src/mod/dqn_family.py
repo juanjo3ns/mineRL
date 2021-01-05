@@ -9,8 +9,7 @@ import wandb
 
 import pfrl
 
-from main.encoder import PixelEncoder
-from main.model import CURL
+
 
 # local modules
 import sys
@@ -20,6 +19,7 @@ import utils
 from config import setSeed, getConfig
 from env_wrappers import wrap_env
 from q_functions import parse_arch
+
 
 from IPython import embed
 
@@ -97,12 +97,7 @@ def dqn_family(conf, outdir):
     prioritized = conf['prioritized']
     target_update_interval = conf['target_update_interval']
 
-    encoder_version = conf['encoder_version']
-    load_epoch = conf['load_epoch']
-    embedding_dim = conf['embedding_dim']
-    img_size = conf['img_size']
-    threshold = conf['threshold']
-    path_goal_states = conf['path_goal_states']
+    enc_conf = conf['encoder']
 
     os.environ['MALMO_MINECRAFT_OUTPUT_LOGDIR'] = outdir
 
@@ -113,38 +108,21 @@ def dqn_family(conf, outdir):
     train_seed = seed  # noqa: never used in this script
     test_seed = 2 ** 31 - 1 - seed
 
-    # CURL stuff #####################################
+    # Load encoder #####################################
     if os.getenv('USER') == 'juanjo':
-        path_weights = Path('../weights/')
+        path_weights = Path('./results/')
     elif os.getenv('USER') == 'juan.jose.nieto':
-        path_weights = Path('/mnt/gpid07/users/juan.jose.nieto/weights/')
+        path_weights = Path('/home/usuaris/imatge/juan.jose.nieto/mineRL/src/results')
     else:
-        raise Exception("Sorry user not identified!")
+        raise Exception("Sorry, user not identified!")
 
 
-    obs_shape = (3, img_size, img_size)
-    pixel_encoder = PixelEncoder(obs_shape, embedding_dim)
-    pixel_encoder_target = PixelEncoder(obs_shape, embedding_dim)
+    encoder = utils.load_encoder(enc_conf, path_weights)
+    print("Encoder loaded!")
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    curl = CURL(
-        obs_shape,
-        embedding_dim,
-        pixel_encoder,
-        pixel_encoder_target,
-        load_goal_states=True,
-        device=device,
-        threshold=threshold,
-        path_goal_states=path_goal_states
-    ).to(device)
-
-
-    weights = torch.load(path_weights / encoder_version / load_epoch)['state_dict']
-    curl.load_state_dict(weights)
     ######################################################
 
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # create & wrap env
     def wrap_env_partial(env, test):
         randomize_action = test and noisy_net_sigma is None
@@ -154,7 +132,7 @@ def dqn_family(conf, outdir):
             frame_skip=frame_skip,
             gray_scale=gray_scale, frame_stack=frame_stack,
             randomize_action=randomize_action, eval_epsilon=eval_epsilon,
-            encoder=curl, device=device)
+            encoder=encoder, device=device)
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
@@ -167,8 +145,6 @@ def dqn_family(conf, outdir):
     # training env
     env = wrap_env_partial(env=core_env, test=False)
     # env.seed(int(train_seed))
-
-
 
 
     # evaluation env
@@ -186,6 +162,8 @@ def dqn_family(conf, outdir):
         steps = maximum_frames // frame_skip
         eval_interval = 2000 * 30 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
 
+    embedding_dim = enc_conf[enc_conf['type']]['embedding_dim']
+
     agent = get_agent(
         n_actions=4, arch=arch, n_input_channels=env.observation_space.shape[0],
         noisy_net_sigma=noisy_net_sigma, final_epsilon=final_epsilon,
@@ -195,7 +173,7 @@ def dqn_family(conf, outdir):
         replay_capacity=replay_capacity, num_step_return=num_step_return,
         agent_type=agent_type, gpu=gpu, gamma=gamma, replay_start_size=replay_start_size,
         target_update_interval=target_update_interval, clip_delta=clip_delta,
-        batch_accumulator=batch_accumulator, batch_size=batch_size
+        batch_accumulator=batch_accumulator, batch_size=batch_size, embedding_dim=embedding_dim
     )
 
     if load:
@@ -230,10 +208,11 @@ def get_agent(
         noisy_net_sigma, final_epsilon, final_exploration_frames, explorer_sample_func,
         lr, adam_eps,
         prioritized, steps, update_interval, replay_capacity, num_step_return,
-        agent_type, gpu, gamma, replay_start_size, target_update_interval, clip_delta, batch_accumulator,batch_size
+        agent_type, gpu, gamma, replay_start_size, target_update_interval, clip_delta,
+        batch_accumulator,batch_size, embedding_dim
 ):
     # Q function
-    q_func = parse_arch(arch, n_actions, n_input_channels=n_input_channels)
+    q_func = parse_arch(arch, n_actions, n_input_channels=n_input_channels, embedding_dim=embedding_dim)
 
     # explorer
     if noisy_net_sigma is not None:

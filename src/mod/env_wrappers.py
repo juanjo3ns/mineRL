@@ -8,6 +8,7 @@ import csv
 import gym
 import numpy as np
 import cv2
+from random import randint
 
 from pfrl.wrappers import ContinuingTimeLimit, RandomizeAction, Monitor
 from pfrl.wrappers.atari_wrappers import ScaledFloatFrame, LazyFrames
@@ -80,16 +81,17 @@ class ResetWrapper(gym.Wrapper):
     def __init__(self, env, encoder, test):
         super().__init__(env)
         self.env = env
-        self.curl = encoder
+        self.model = encoder
         self.test = test
 
     def reset(self):
         ob = self.env.reset()
         # Sample goal state
+        num_goal_states = self.model.num_goal_states
         if self.test:
-            goal_state = (self.env.resets - 1) % len(self.curl.goal_states)
+            goal_state = (self.env.resets - 1) % num_goal_states
         else:
-            goal_state = self.curl.sample_goal_state()
+            goal_state = randint(0, num_goal_states-1)
 
         self.env.goal_state = goal_state
         return ob
@@ -200,25 +202,22 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
     """Obtain embedding vector corresponding to current observation."""
     def __init__(self, env, encoder, device, test):
         super().__init__(env)
-        self.curl = encoder
+        self.model = encoder
         self.device = device
         self.test = test
 
     def observation(self, observation):
-
-        goal_state = self.curl.get_goal_state(self.env.goal_state)
-        goal_state = torch.from_numpy(goal_state).float().to(self.device)
-
+        goal_state = self.env.goal_state
         obs_anchor = torch.from_numpy(observation).float().unsqueeze(dim=0).to(self.device)
-        z_a = self.curl.encode(obs_anchor)
+        z_a = self.model.encode(obs_anchor/255)
         # Compute reward as distance similarity in the embedding space - baseline reward (max)
-        r = self.curl.compute_logits_(z_a, goal_state)
-        reward = int(r > self.curl.threshold)
-        self.curl.reward = reward
+        r = self.model.compute_logits_(z_a, goal_state)
+        reward = int(r > self.model.threshold)
+        self.model.reward = reward
         if self.test:
             csvfile = open(os.path.join(self.outdir, f"rewards_{self.env.goal_state}.{self.env.resets-1}.csv"), 'a')
             csvwriter = csv.writer(csvfile, delimiter=',')
-            csvwriter.writerow([self.curl.reward])
+            csvwriter.writerow([self.model.reward])
             csvfile.close()
 
         return z_a.detach().cpu().numpy()
@@ -227,11 +226,11 @@ class ConcatenateWrapper(gym.ObservationWrapper):
     """Obtain embedding vector corresponding to current observation."""
     def __init__(self, env, encoder):
         super().__init__(env)
-        self.curl = encoder
+        self.model = encoder
 
     def observation(self, observation):
-        goal_state = self.curl.get_goal_state(self.env.goal_state)
-        obs_gs = np.concatenate((observation[0], goal_state[0]))
+        goal_state = self.model.get_goal_state(self.env.goal_state)
+        obs_gs = np.concatenate((observation.reshape(-1), goal_state))
         return obs_gs.reshape(1,obs_gs.shape[0])
 
 
@@ -464,7 +463,7 @@ class TransformReward(gym.RewardWrapper):
     def __init__(self, env, encoder):
         super(TransformReward, self).__init__(env)
 
-        self.curl = encoder
+        self.model = encoder
 
     def reward(self, reward):
-        return self.curl.reward
+        return self.model.reward
