@@ -23,7 +23,7 @@ else:
 
 
 curl = CURL(conf).cuda()
-path = './results/curl_0.1/mineRL/1ddjitvv/checkpoints/epoch=499-step=302999.ckpt'
+path = './results/curl_1.0/mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'
 checkpoint = torch.load(path)
 curl.load_state_dict(checkpoint['state_dict'])
 curl.compute_rewards()

@@ -56,7 +56,6 @@ class CURL(CURL_PL):
 
 
     def forward(self, data):
-        embed()
         key, query = data
 
         # Forward tensors through encoder
@@ -109,8 +108,8 @@ class CURL(CURL_PL):
                 self.tau * param.data + (1 - self.tau) * target_param.data
             )
 
-    def kmeans(self, embeddings):
-        return KMeans(n_clusters=8, random_state=0).fit(embeddings)
+    def kmeans(self, embeddings, num_clusters):
+        return KMeans(n_clusters=num_clusters, random_state=0).fit(embeddings)
 
     def compute_rewards(self):
         train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
@@ -123,32 +122,34 @@ class CURL(CURL_PL):
             embeddings.append(self.encode(key.cuda()).detach().cpu().numpy())
         embeddings = np.array(embeddings)
 
+        num_clusters=8
         # compute kmeans clusters
         print("Computing kmeans over embeddings...")
-        kmeans = self.kmeans(embeddings.squeeze())
-        csvfile = None
+        kmeans = self.kmeans(embeddings.squeeze(), num_clusters)
+        self.goal_states = torch.from_numpy(kmeans.cluster_centers_.squeeze()).cuda()
 
-        # iterate over kmeans clusters
-        for j, k in enumerate(kmeans.cluster_centers_):
-            k = torch.from_numpy(k).cuda()
-            # iterate over trajectories and steps
-            if not os.path.exists(f"./results/kmean_GS_{j}_8"):
-                os.mkdir(f"./results/kmean_GS_{j}_8")
-            print(f"\nComparing to cluster {j}")
-            traj = -1
-            for i, e in enumerate(embeddings):
-                if i % train_dataset.trj_length == 0:
-                    if not csvfile == None:
-                        csvfile.close()
-                    traj += 1
-                    csvfile = open( f"./results/kmean_GS_{j}_8/rewards_{j}.{traj}.csv", 'a')
-                print(f"\tTrajectory {traj}", end = '\r')
-                # compute reward between cluster and step
-                e = torch.from_numpy(e.squeeze()).cuda()
-                r = self.compute_logits_(e, k)
-                r = round(r.detach().cpu().item(),2)
-                # store reward csv
-                csvwriter = csv.writer(csvfile, delimiter=',')
-                csvwriter.writerow([r])
+        folder = "CURL_1.0_"
+        csvfiles = []
+        traj = -1
+        for i in range(num_clusters):
+            if not os.path.exists(f"./results/{folder}{i}"):
+                os.mkdir(f"./results/{folder}{i}")
 
-        csvfile.close()
+        print("\nComputing embeddings from all data points...")
+        for i, e in enumerate(embeddings):
+            if i % train_dataset.trj_length == 0:
+                if len(csvfiles) > 0:
+                    for c in csvfiles:
+                        c.close()
+                traj += 1
+                csvfiles = []
+                for k in range(num_clusters):
+                    csvfiles.append(open( f"./results/{folder}{k}/rewards_{k}.{traj}.csv", 'a'))
+
+            print(f"\tTrajectory {traj}", end = '\r')
+            e = torch.from_numpy(e.squeeze()).cuda()
+            distances = self.goal_state_distance(e)
+            distances = distances.squeeze().detach().cpu().numpy()
+            for j, d in enumerate(distances):
+                csvwriter = csv.writer(csvfiles[j], delimiter=',')
+                csvwriter.writerow([d])
