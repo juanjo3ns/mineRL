@@ -43,7 +43,6 @@ class PixelEncoder(nn.Module):
         return mu + eps * std
 
     def forward_conv(self, obs):
-        obs = obs / 255.
         self.outputs['obs'] = obs
 
         conv = torch.relu(self.convs[0](obs))

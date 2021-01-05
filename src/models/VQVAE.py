@@ -3,7 +3,9 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from scipy.signal import savgol_filter
+import pytorch_lightning as pl
 from IPython import embed
+
 
 class VectorQuantizer(nn.Module):
     def __init__(self, num_embeddings, embedding_dim, commitment_cost):
@@ -281,11 +283,10 @@ class Decoder(nn.Module):
 
         return self._conv_trans_5(x)
 
-class VQVAE(nn.Module):
-    def __init__(self, num_hiddens, num_residual_layers, num_residual_hiddens,
-                 num_embeddings, embedding_dim, commitment_cost, decay=0.99, threshold=-1.5):
-        super(VQVAE, self).__init__()
-
+class VQVAE_PL(pl.LightningModule):
+    def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
+                 num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99, threshold=-1.5):
+        super(VQVAE_PL, self).__init__()
         self._encoder = Encoder(3, num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
@@ -329,8 +330,9 @@ class VQVAE(nn.Module):
 
     def compute_logits_(self, z_a, z_pos):
         distances = self._vq_vae.compute_distances(z_a)
-        return distances.squeeze()[z_pos]
+        return -distances.squeeze()[z_pos].detach().cpu().item()
 
     def get_goal_state(self, idx):
-        embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=idx)
-        return embeddings.detach().cpu().numpy()
+        z_idx = torch.tensor(idx).cuda()
+        embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
+        return embeddings.squeeze().detach().cpu().numpy()

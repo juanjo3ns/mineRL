@@ -1,12 +1,13 @@
-experiment: 'byol_0.1'
+experiment: 'byol_test'
 environment: 'MineRLNavigate-v0'
 epochs: 500
+lr: 0.001
+batch_size: 32
+img_size: 64
+m: 0.996
+delay: yes
+trajectories: 'CustomTrajectories2'
+split: 0.95
 byol:
-  lr: 0.001
-  batch_size: 32
   mlp_hidden_size: 256
   projection_size: 128
-  img_size: 64
-  m: 0.996
-  delay: True
-  trajectories: 'CustomTrajectories2'

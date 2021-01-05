@@ -4,7 +4,7 @@ import wandb
 
 from pathlib import Path
 from config import setSeed, getConfig
-from main.curl import Contrastive
+from main.curl import CURL
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -30,9 +30,9 @@ wandb_logger = WandbLogger(
     tags=['curl']
 )
 
-wandb_logger.log_hyperparams(conf['curl'])
+wandb_logger.log_hyperparams(conf)
 
-contr = Contrastive(**conf['curl'])
+curl = CURL(conf)
 
 trainer = pl.Trainer(
     gpus=1,
@@ -43,4 +43,4 @@ trainer = pl.Trainer(
     default_root_dir=f"./results/{conf['experiment']}"
 )
 
-trainer.fit(contr)
+trainer.fit(curl)

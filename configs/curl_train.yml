@@ -1,12 +1,13 @@
-experiment: 'curl_0.1'
+experiment: 'curl_1.0'
 environment: 'MineRLNavigate-v0'
 epochs: 500
+batch_size: 32
+lr: 0.001
+trajectories: 'CustomTrajectories2'
+split: 0.95
+tau: 0.005
+soft_update: 2
+img_size: 64
+delay: yes
 curl:
-  batch_size: 32
-  lr: 0.001
-  soft_update: 2
-  feature_dim: 50
-  img_size: 64
-  tau: 0.005
-  delay: False
-  trajectories: 'CustomTrajectories2'
+  z_dim: 50

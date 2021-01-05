@@ -22,54 +22,30 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 from torch.utils.data import DataLoader
-from torchvision.utils import make_grid
 from customLoader import CustomMinecraftData
 from torchvision.transforms import transforms
 
-from models.BYOL_Basics import ResNet18, MLPHead
+from models.BYOL import BYOL_PL
 
 from IPython import embed
 
 
-class Contrastive(pl.LightningModule):
-    def __init__(self, m=0.996, batch_size=256, lr=0.001, split=0.95,
-                mlp_hidden_size=512, projection_size=128, img_size=64,
-                delay=False, trajectories='CustomTrajectories2'):
-        super(Contrastive, self).__init__()
+class BYOL(BYOL_PL):
+    def __init__(self, conf):
+        super(BYOL, self).__init__(**conf['byol'])
 
 
-        self.batch_size = batch_size
-        self.split = split
-        self.delay = delay
-        self.trajectories = trajectories
-        self.m = m
-        self.lr = lr
-
-        self.online_network = ResNet18(mlp_hidden_size, projection_size)
-        self.target_network = ResNet18(mlp_hidden_size, projection_size)
-
-        self.predictor = MLPHead(
-            in_channels=self.online_network.projetion.net[-1].out_features,
-            mlp_hidden_size=mlp_hidden_size,
-            projection_size=projection_size)
-
-
+        self.batch_size = conf['batch_size']
+        self.lr = conf['lr']
+        self.split = conf['split']
+        self.delay = conf['delay']
+        self.trajectories = conf['trajectories']
+        self.m = conf['m']
 
         self.transform = transforms.Compose([
                                   transforms.ToTensor(),
                                   transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
                                 ])
-
-    def forward(self, batch_view_1, batch_view_2):
-        p1 = self.predictor(self.online_network(batch_view_1))
-        p2 = self.predictor(self.online_network(batch_view_2))
-
-        # compute key features
-        with torch.no_grad():
-            t2 = self.target_network(batch_view_1)
-            t1 = self.target_network(batch_view_2)
-
-        return p1,p2,t1,t2
 
     def on_train_start(self):
         self.initializes_target_network()

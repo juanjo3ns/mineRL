@@ -6,7 +6,7 @@ from os.path import join
 from pathlib import Path
 from config import setSeed, getConfig
 
-from main.vqvae import VQVAE_PL
+from main.vqvae import VQVAE
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -31,9 +31,9 @@ wandb_logger = WandbLogger(
     tags=['vqvae']
 )
 
-wandb_logger.log_hyperparams(conf['vqvae'])
+wandb_logger.log_hyperparams(conf)
 
-vqvae = VQVAE_PL(**conf['vqvae'])
+vqvae = VQVAE(conf)
 
 trainer = pl.Trainer(
     gpus=1,

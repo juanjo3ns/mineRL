@@ -1,16 +1,17 @@
 experiment: 'vqvae_0.5'
 environment: 'MineRLNavigate-v0'
 epochs: 300
+delay: no
+trajectories: 'CustomTrajectories2'
+split: 0.95
+lr: 0.001
+batch_size: 256
+img_size: 64
 vqvae:
-  split: 0.95
-  lr: 0.001
-  batch_size: 256
   num_hiddens: 64
   num_residual_hiddens: 32
   num_residual_layers: 2
   embedding_dim: 256
-  num_embeddings: 10
+  num_embeddings: 8
   commitment_cost: 0.25
   decay: 0.99
-  delay: False
-  trajectories: 'CustomTrajectories2'

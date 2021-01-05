@@ -26,34 +26,27 @@ from torchvision.utils import make_grid
 from customLoader import CustomMinecraftData
 from torchvision.transforms import transforms
 
-from models.PixelEncoder import PixelEncoder
-from models.CURL import CURL
+from models.CURL import CURL_PL
 
 from IPython import embed
 
 
-class Contrastive(pl.LightningModule):
-    def __init__(self, feature_dim, tau, batch_size=256, lr=0.001, split=0.95,
-                img_size=64, soft_update=2, delay=False, trajectories='CustomTrajectories2'):
-        super(Contrastive, self).__init__()
-
-
-        self.batch_size = batch_size
-        self.lr = lr
-        self.split = split
-        self.delay = delay
-        self.trajectories = trajectories
-
-        self.feature_dim = feature_dim
-        self.tau = tau
-        self.soft_update = soft_update
+class CURL(CURL_PL):
+    def __init__(self, conf):
+        img_size = conf['img_size']
         obs_shape = (3, img_size, img_size)
+        conf['curl']['obs_shape'] = obs_shape
 
-        pixel_encoder = PixelEncoder(obs_shape, feature_dim)
-        pixel_encoder_target = PixelEncoder(obs_shape, feature_dim)
-        self.curl = CURL(obs_shape, feature_dim, pixel_encoder, pixel_encoder_target)
+        super(CURL, self).__init__(**conf['curl'])
 
-        # self.example_input_array = torch.rand(batch_size, 3, img_size, img_size)
+        self.batch_size = conf['batch_size']
+        self.lr = conf['lr']
+        self.split = conf['split']
+        self.delay = conf['delay']
+        self.trajectories = conf['trajectories']
+
+        self.tau = conf['tau']
+        self.soft_update = conf['soft_update']
 
         self.transform = transforms.Compose([
                                   transforms.ToTensor(),
@@ -63,14 +56,15 @@ class Contrastive(pl.LightningModule):
 
 
     def forward(self, data):
+        embed()
         key, query = data
 
         # Forward tensors through encoder
-        z_a = self.curl.encode(key)
-        z_pos = self.curl.encode(query, ema=True)
+        z_a = self.encode(key)
+        z_pos = self.encode(query, ema=True)
 
         # Compute distance
-        logits = self.curl.compute_logits(z_a, z_pos)
+        logits = self.compute_logits(z_a, z_pos)
         labels = torch.arange(logits.shape[0]).long().to(self.device)
 
         return logits, labels
@@ -108,8 +102,8 @@ class Contrastive(pl.LightningModule):
         return val_dataloader
 
     def soft_update_params(self):
-        net = self.curl.encoder
-        target_net = self.curl.encoder_target
+        net = self.encoder
+        target_net = self.encoder_target
         for param, target_param in zip(net.parameters(), target_net.parameters()):
             target_param.data.copy_(
                 self.tau * param.data + (1 - self.tau) * target_param.data
@@ -126,7 +120,7 @@ class Contrastive(pl.LightningModule):
         print("\nComputing embeddings from all data points...")
         embeddings = []
         for key in train_dataloader:
-            embeddings.append(self.curl.encode(key.cuda()).detach().cpu().numpy())
+            embeddings.append(self.encode(key.cuda()).detach().cpu().numpy())
         embeddings = np.array(embeddings)
 
         # compute kmeans clusters
@@ -151,7 +145,7 @@ class Contrastive(pl.LightningModule):
                 print(f"\tTrajectory {traj}", end = '\r')
                 # compute reward between cluster and step
                 e = torch.from_numpy(e.squeeze()).cuda()
-                r = self.curl.compute_logits_(e, k)
+                r = self.compute_logits_(e, k)
                 r = round(r.detach().cpu().item(),2)
                 # store reward csv
                 csvwriter = csv.writer(csvfile, delimiter=',')

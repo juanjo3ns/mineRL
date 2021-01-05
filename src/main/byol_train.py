@@ -4,7 +4,7 @@ import wandb
 
 from pathlib import Path
 from config import setSeed, getConfig
-from main.byol import Contrastive
+from main.byol import BYOL
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -23,16 +23,15 @@ elif os.getenv('USER') == 'juan.jose.nieto':
 else:
     raise Exception("Sorry user not identified!")
 
-alg = 'byol'
 wandb_logger = WandbLogger(
     project='mineRL',
     name=conf['experiment'],
-    tags=[alg]
+    tags=['byol']
 )
 
-wandb_logger.log_hyperparams(conf[alg])
+wandb_logger.log_hyperparams(conf)
 
-contr = Contrastive(**conf[alg])
+byol = BYOL(conf)
 
 trainer = pl.Trainer(
     gpus=1,
@@ -43,4 +42,4 @@ trainer = pl.Trainer(
     default_root_dir=f"./results/{conf['experiment']}"
 )
 
-trainer.fit(contr)
+trainer.fit(byol)

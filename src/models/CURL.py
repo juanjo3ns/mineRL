@@ -3,30 +3,30 @@ import numpy as np
 import torch
 import torch.nn as nn
 from random import randint
+import pytorch_lightning as pl
+from models.PixelEncoder import PixelEncoder
 
 from IPython import embed
 
-class CURL(nn.Module):
+class CURL_PL(pl.LightningModule):
     """
     CURL
     """
 
     def __init__(self,
-            obs_shape,
-            z_dim,
-            encoder,
-            encoder_target,
+            obs_shape=(3,64,64),
+            z_dim=50,
             output_type="continuous",
             load_goal_states=False,
             device=None,
             threshold=18,
             path_goal_states=None
             ):
-        super(CURL, self).__init__()
+        super(CURL_PL, self).__init__()
 
-        self.encoder = encoder
+        self.encoder = PixelEncoder(obs_shape, z_dim)
 
-        self.encoder_target = encoder_target
+        self.encoder_target = PixelEncoder(obs_shape, z_dim)
 
         self.W = nn.Parameter(torch.rand(z_dim, z_dim))
         self.output_type = output_type
@@ -34,8 +34,9 @@ class CURL(nn.Module):
         if load_goal_states:
             self.threshold = threshold
             self.path_gs = path_goal_states
-            self.device = device
+            self.dev = device
             self.goal_states = self.load_goal_states()
+            self.num_goal_states = self.goal_states.shape[0]
 
 
     def encode(self, x, detach=False, ema=False):
@@ -75,30 +76,18 @@ class CURL(nn.Module):
         - negatives are all other elements
         - to compute loss use multiclass cross entropy with identity matrix for labels
         """
-        Wz = torch.matmul(self.W, z_pos.T)  # (z_dim,B)
+        Wz = torch.matmul(self.W, self.goal_states.T)  # (z_dim,B)
         logits = torch.matmul(z_a, Wz)  # (B,B)
-        return logits
+        return logits.squeeze()[z_pos].detach().cpu().item()
 
     def load_goal_states(self):
         goal_states = []
         for gs in sorted(os.listdir(self.path_gs)):
             if 'npy' in gs:
                 goal_states.append(np.load(os.path.join(self.path_gs, gs)))
+        goal_states = np.array(goal_states)
+        goal_states = torch.from_numpy(goal_states).squeeze().float().to(self.dev)
         return goal_states
 
-    def compute_baselines(self):
-        baselines = []
-        for gs in self.goal_states:
-            gs = torch.from_numpy(gs).float().to(self.device)
-            baseline = self.compute_logits_(gs, gs)
-            baselines.append(baseline.detach().cpu().numpy())
-        self.baselines = baselines
-
-    def sample_goal_state(self):
-        return randint(0, len(self.goal_states)-1)
-
     def get_goal_state(self, idx):
-        return self.goal_states[idx]
-
-    def get_baseline(self, idx):
-        return self.baselines[idx]
+        return self.goal_states[idx].detach().cpu().numpy()

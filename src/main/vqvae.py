@@ -20,47 +20,37 @@ from torchvision.utils import make_grid
 from customLoader import CustomMinecraftData
 from torchvision.transforms import transforms
 
-from models.VQVAE import VQVAE
+from models.VQVAE import VQVAE_PL
 
 from pytorch_lightning.loggers import WandbLogger
 
 from IPython import embed
 
-class VQVAE_PL(pl.LightningModule):
-    def __init__(self, num_hiddens, num_residual_layers, num_residual_hiddens,
-                 num_embeddings, embedding_dim, commitment_cost, decay=0,
-                 batch_size=256, lr=0.001, split=0.95, img_size=64,
-                 delay=False, trajectories='CustomTrajectories2'):
-        super(VQVAE_PL, self).__init__()
+class VQVAE(VQVAE_PL):
+    def __init__(self, conf):
+        super(VQVAE, self).__init__(**conf['vqvae'])
+
+        self.batch_size = conf['batch_size']
+        self.lr = conf['lr']
+        self.split = conf['split']
+
+        self.delay = conf['delay']
+        self.trajectories = conf['trajectories']
+        img_size = conf['img_size']
 
 
-        self.batch_size = batch_size
-        self.lr = lr
-        self.split = split
-
-        self.delay = delay
-        self.trajectories = trajectories
-
-        self.model = VQVAE(
-            num_hiddens,
-            num_residual_layers,
-            num_residual_hiddens,
-            num_embeddings,
-            embedding_dim,
-            commitment_cost,
-            decay
-        )
-
-        self.example_input_array = torch.rand(batch_size, 3, img_size, img_size)
+        self.example_input_array = torch.rand(self.batch_size, 3, img_size, img_size)
+        if self.delay:
+            self.example_input_array = (
+                torch.rand(self.batch_size, 3, img_size, img_size),
+                torch.rand(self.batch_size, 3, img_size, img_size)
+                )
 
         self.transform = transforms.Compose([
                                   transforms.ToTensor(),
                                   transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
                                 ])
 
-    def forward(self, x):
-        loss, x_recon, perplexity = self.model.forward(x)
-        return loss, x_recon, perplexity
 
     def training_step(self, batch, batch_idx):
         x = batch

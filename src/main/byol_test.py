@@ -5,7 +5,7 @@ import torch
 
 from pathlib import Path
 from config import setSeed, getConfig
-from main.byol import Contrastive
+from main.byol import BYOL
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -24,8 +24,8 @@ elif os.getenv('USER') == 'juan.jose.nieto':
 else:
     raise Exception("Sorry user not identified!")
 
-contr = Contrastive(**conf['byol']).cuda()
-path = './results/byol_0.0/mineRL/3dfttou8/checkpoints/epoch=335-step=203615.ckpt'
+byol = BYOL(conf).cuda()
+path = './results/byol_0.1/mineRL/ie2460w5/checkpoints/epoch=499-step=302999.ckpt'
 checkpoint = torch.load(path)
-contr.load_state_dict(checkpoint['state_dict'])
-contr.compute_rewards()
+byol.load_state_dict(checkpoint['state_dict'])
+# contr.compute_rewards()
