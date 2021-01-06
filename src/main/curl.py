@@ -111,7 +111,7 @@ class CURL(CURL_PL):
     def kmeans(self, embeddings, num_clusters):
         return KMeans(n_clusters=num_clusters, random_state=0).fit(embeddings)
 
-    def compute_rewards(self):
+    def compute_kmeans(self, num_clusters):
         train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
         train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
 
@@ -122,10 +122,15 @@ class CURL(CURL_PL):
             embeddings.append(self.encode(key.cuda()).detach().cpu().numpy())
         embeddings = np.array(embeddings)
 
-        num_clusters=8
         # compute kmeans clusters
         print("Computing kmeans over embeddings...")
         kmeans = self.kmeans(embeddings.squeeze(), num_clusters)
+        return kmeans, embeddings, train_dataset
+
+    def compute_rewards(self):
+
+        num_clusters=8
+        kmeans, embeddings, train_dataset = self.compute_kmeans(num_clusters)
         self.goal_states = torch.from_numpy(kmeans.cluster_centers_.squeeze()).cuda()
 
         folder = "CURL_1.0_"
@@ -153,3 +158,10 @@ class CURL(CURL_PL):
             for j, d in enumerate(distances):
                 csvwriter = csv.writer(csvfiles[j], delimiter=',')
                 csvwriter.writerow([d])
+
+    def store_goal_states(self):
+        num_clusters=8
+        kmeans, _, _ = self.compute_kmeans(num_clusters)
+        for i, k in enumerate(kmeans.cluster_centers_):
+            with open(f'./goal_states/flat_biome_curl_kmeans_0/{i}.npy', 'wb') as f:
+                np.save(f, k)
