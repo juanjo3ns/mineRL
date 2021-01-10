@@ -1,4 +1,4 @@
-outdir: 'rl.4.1.1'
+outdir: 'rl.5.2'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -7,8 +7,8 @@ gpu: 0
 
 demo: no
 monitor: no
-load: './results/train_rl.4.1/best/'
-eval_n_runs: 10
+load: null
+eval_n_runs: 8
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
@@ -37,7 +37,7 @@ prioritized: yes
 target_update_interval: 2.e+4
 
 encoder:
-  type: 'vqvae'
+  type: 'curl'
   img_size: 64
   vqvae:
     encoder_version: 'vqvae_0.3'
@@ -50,8 +50,8 @@ encoder:
     commitment_cost: 0.25
     threshold: -5.0
   curl:
-    encoder_version: 'curl_0.3.5'
-    load_epoch: '70000.pt'
+    encoder_version: 'curl_1.0'
+    load_epoch: 'mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'
     embedding_dim: 50
-    threshold: 18
-    path_goal_states: './goal_states_flat_biome'
+    threshold: 6
+    path_goal_states: './goal_states/flat_biome_curl_kmeans_0'

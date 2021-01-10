@@ -210,9 +210,16 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         goal_state = self.env.goal_state
         obs_anchor = torch.from_numpy(observation).float().unsqueeze(dim=0).to(self.device)
         z_a = self.model.encode(obs_anchor/255)
+
         # Compute reward as distance similarity in the embedding space - baseline reward (max)
-        r = self.model.compute_logits_(z_a, goal_state)
-        reward = int(r > self.model.threshold)
+        # r = self.model.compute_logits_(z_a, goal_state)
+        # reward = int(r > self.model.threshold)
+
+        # Compute reward as a classification problem. If the goal state with highest similarity
+        # is the current selected, give reward of 1.
+        g = self.model.compute_argmax(z_a, goal_state)
+        reward = int(g == self.env.goal_state)
+
         self.model.reward = reward
         if self.test:
             csvfile = open(os.path.join(self.outdir, f"rewards_{self.env.goal_state}.{self.env.resets-1}.csv"), 'a')

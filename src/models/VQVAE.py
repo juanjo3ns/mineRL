@@ -332,6 +332,10 @@ class VQVAE_PL(pl.LightningModule):
         distances = self._vq_vae.compute_distances(z_a)
         return -distances.squeeze()[z_pos].detach().cpu().item()
 
+    def compute_argmax(self, z_a, z_pos):
+        distances = self._vq_vae.compute_distances(z_a)
+        return torch.argmax(-distances).cpu().item()
+
     def get_goal_state(self, idx):
         z_idx = torch.tensor(idx).cuda()
         embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
