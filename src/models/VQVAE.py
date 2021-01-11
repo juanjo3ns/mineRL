@@ -332,7 +332,7 @@ class VQVAE_PL(pl.LightningModule):
         distances = self._vq_vae.compute_distances(z_a)
         return -distances.squeeze()[z_pos].detach().cpu().item()
 
-    def compute_argmax(self, z_a, z_pos):
+    def compute_argmax(self, z_a):
         distances = self._vq_vae.compute_distances(z_a)
         return torch.argmax(-distances).cpu().item()
 

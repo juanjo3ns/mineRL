@@ -30,4 +30,5 @@ vqvae = VQVAE(conf).cuda()
 path = './results/vqvae_0.4/mineRL/3kgpkqsu/checkpoints/epoch=499-step=37999.ckpt'
 checkpoint = torch.load(path)
 vqvae.load_state_dict(checkpoint['state_dict'])
-vqvae.compute_similarity()
+# vqvae.compute_similarity()
+vqvae.index_map()

@@ -13,7 +13,7 @@ from os.path import join
 from pathlib import Path
 from pprint import pprint
 from config import setSeed, getConfig
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict, Counter
 from sklearn.cluster import KMeans
 
 import torch
@@ -63,7 +63,7 @@ class CURL(CURL_PL):
         z_pos = self.encode(query, ema=True)
 
         # Compute distance
-        logits = self.compute_logits(z_a, z_pos)
+        logits = self.compute_train(z_a, z_pos)
         labels = torch.arange(logits.shape[0]).long().to(self.device)
 
         return logits, labels
@@ -111,7 +111,8 @@ class CURL(CURL_PL):
     def kmeans(self, embeddings, num_clusters):
         return KMeans(n_clusters=num_clusters, random_state=0).fit(embeddings)
 
-    def compute_kmeans(self, num_clusters):
+
+    def compute_embeddings(self,):
         train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
         train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
 
@@ -120,17 +121,14 @@ class CURL(CURL_PL):
         embeddings = []
         for key in train_dataloader:
             embeddings.append(self.encode(key.cuda()).detach().cpu().numpy())
-        embeddings = np.array(embeddings)
-
-        # compute kmeans clusters
-        print("Computing kmeans over embeddings...")
-        kmeans = self.kmeans(embeddings.squeeze(), num_clusters)
-        return kmeans, embeddings, train_dataset
+        embeddings = np.array(embeddings).squeeze()
+        return embeddings, train_dataset
 
     def compute_rewards(self):
 
         num_clusters=8
-        kmeans, embeddings, train_dataset = self.compute_kmeans(num_clusters)
+        embeddings, train_dataset = self.compute_embeddings()
+        kmeans = self.kmeans(embeddings, num_clusters)
         self.goal_states = torch.from_numpy(kmeans.cluster_centers_.squeeze()).cuda()
 
         folder = "CURL_1.0_"
@@ -140,7 +138,6 @@ class CURL(CURL_PL):
             if not os.path.exists(f"./results/{folder}{i}"):
                 os.mkdir(f"./results/{folder}{i}")
 
-        print("\nComputing embeddings from all data points...")
         for i, e in enumerate(embeddings):
             if i % train_dataset.trj_length == 0:
                 if len(csvfiles) > 0:
@@ -165,3 +162,49 @@ class CURL(CURL_PL):
         for i, k in enumerate(kmeans.cluster_centers_):
             with open(f'./goal_states/flat_biome_curl_kmeans_0/{i}.npy', 'wb') as f:
                 np.save(f, k)
+
+
+    def load_trajectories(self):
+        print("Loading trajectories...")
+
+        all_trajectories = []
+        files = sorted([x for x in os.listdir(f"./results/{self.trajectories}/") if 'coords' in x], key=lambda x: int(x.split('.')[1]))
+        for file in files:
+            with open(f"./results/{self.trajectories}/{file}") as csv_file:
+                trajectory = []
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                line_count = 0
+                for i, row in enumerate(csv_reader):
+                    trajectory.append(row)
+                all_trajectories.append(trajectory)
+        return np.array(all_trajectories)
+
+    def index_map(self):
+
+        num_clusters=8
+        trajectories = self.load_trajectories()
+        embeddings, train_dataset = self.compute_embeddings()
+        trajectories = trajectories.reshape(-1, 3)
+
+        width = 50
+        div = int(100/width)
+        print("Get index from all data points...")
+        goals_in_unit = defaultdict(list)
+        for i, (e, p) in enumerate(zip(embeddings, trajectories)):
+            x = int((float(p[0])+50)/div)
+            y = int((float(p[2])+50)/div)
+            idx = x*width +y
+            e = torch.from_numpy(e.squeeze()).cuda()
+            k = self.compute_argmax(e)
+            goals_in_unit[idx].append(k)
+
+        matrix = np.zeros((width, width))
+        for k,v in sorted(goals_in_unit.items()):
+            x = int(k/width)
+            y = int(k%width)
+            c = Counter(v)
+            matrix[x,y] = c.most_common(1)[0][0]
+
+        plt.imshow(matrix)
+        plt.legend(list(range(8)))
+        plt.show()

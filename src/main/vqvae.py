@@ -4,10 +4,12 @@ import wandb
 
 import numpy as np
 import pytorch_lightning as pl
+import matplotlib.pyplot as plt
 
 from os.path import join
 from pathlib import Path
 from pprint import pprint
+from collections import Counter, defaultdict
 from config import setSeed, getConfig
 
 import torch
@@ -133,3 +135,50 @@ class VQVAE(VQVAE_PL):
             for j, d in enumerate(distances):
                 csvwriter = csv.writer(csvfiles[j], delimiter=',')
                 csvwriter.writerow([-d])
+
+    def load_trajectories(self):
+        print("Loading trajectories...")
+
+        all_trajectories = []
+        files = sorted([x for x in os.listdir(f"./results/{self.trajectories}/") if 'coords' in x], key=lambda x: int(x.split('.')[1]))
+        for file in files:
+            with open(f"./results/{self.trajectories}/{file}") as csv_file:
+                trajectory = []
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                line_count = 0
+                for i, row in enumerate(csv_reader):
+                    trajectory.append(row)
+                all_trajectories.append(trajectory)
+        return np.array(all_trajectories)
+
+    def index_map(self):
+        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
+        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
+
+        num_clusters=10
+        trajectories = self.load_trajectories()
+        trajectories = trajectories.reshape(-1, 3)
+
+        width = 50
+        div = int(100/width)
+        print("Get index from all data points...")
+        goals_in_unit = defaultdict(list)
+        for i, (key, p) in enumerate(zip(train_dataloader, trajectories)):
+
+            x = int((float(p[0])+50)/div)
+            y = int((float(p[2])+50)/div)
+            idx = x*width +y
+
+            e = self._encoder(key.cuda())
+            k = self.compute_argmax(e)
+            goals_in_unit[idx].append(k)
+
+        matrix = np.zeros((width, width))
+        for k,v in sorted(goals_in_unit.items()):
+            x = int(k/width)
+            y = int(k%width)
+            c = Counter(v)
+            matrix[x,y] = c.most_common(1)[0][0]
+
+        plt.imshow(matrix)
+        plt.show()

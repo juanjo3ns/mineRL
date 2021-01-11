@@ -55,7 +55,14 @@ class CURL_PL(pl.LightningModule):
             z_out = z_out.detach()
         return z_out
 
-    def compute_logits(self, z_a, z_pos):
+    def compute_logits(self, z_a, z_pos=None):
+        if z_pos == None:
+            z_pos = self.goal_states
+        Wz = torch.matmul(self.W, z_pos.T)  # (z_dim,B)
+        logits = torch.matmul(z_a, Wz)  # (B,B)
+        return logits
+
+    def compute_train(self, z_a, z_pos):
         """
         Uses logits trick for CURL:
         - compute (B,B) matrix z_a (W z_pos.T)
@@ -63,25 +70,12 @@ class CURL_PL(pl.LightningModule):
         - negatives are all other elements
         - to compute loss use multiclass cross entropy with identity matrix for labels
         """
-        Wz = torch.matmul(self.W, z_pos.T)  # (z_dim,B)
-        logits = torch.matmul(z_a, Wz)  # (B,B)
-        logits = logits - torch.max(logits, 1)[0][:, None]
-        return logits
+        logits = self.compute_logits(z_a, z_pos)
+        return logits - torch.max(logits, 1)[0][:, None]
 
-    def compute_logits_(self, z_a, z_pos):
-        Wz = torch.matmul(self.W, self.goal_states.T)  # (z_dim,B)
-        logits = torch.matmul(z_a, Wz)  # (B,B)
-        return logits.squeeze()[z_pos].detach().cpu().item()
-
-    def compute_argmax(self, z_a, z_pos):
-        Wz = torch.matmul(self.W, self.goal_states.T)  # (z_dim,B)
-        logits = torch.matmul(z_a, Wz)  # (B,B)
+    def compute_argmax(self, z_a):
+        logits = self.compute_logits(z_a)
         return torch.argmax(logits).cpu().item()
-
-    def goal_state_distance(self, z_a):
-        Wz = torch.matmul(self.W, self.goal_states.T)  # (z_dim,B)
-        logits = torch.matmul(z_a, Wz)  # (B,B)
-        return logits
 
     def load_goal_states(self):
         goal_states = []

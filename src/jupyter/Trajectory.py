@@ -38,7 +38,7 @@ class Trajectory(ABC):
         self.hist_gstate = defaultdict(int)
 
         # raw data
-        self.files_ = os.listdir(f"../results/custom_trajectories2/")
+        self.files_ = os.listdir(f"../results/{self.experiment}/")
         self.files = os.listdir(f"../results/{self.experiment}/")
         self.data = self.load_data()
         self.rewards = self.load_rewards()
@@ -87,7 +87,7 @@ class Trajectory(ABC):
 
     def load_data(self):
         data = defaultdict(list)
-        files = sorted([x for x in self.files_ if 'coords' in x], key=lambda x: int(x.split('.')[1]))
+        files = sorted([x for x in self.files if 'coords' in x], key=lambda x: int(x.split('.')[1]))
         for file in files:
             goal_state = int(file.split('_')[1][0])
             trajectory = int(file.split('.')[1])
@@ -97,7 +97,7 @@ class Trajectory(ABC):
             self.hist_gstate[goal_state] += 1
 
 
-            with open(f"../results/custom_trajectories2/{file}") as csv_file:
+            with open(f"../results/{self.experiment}/{file}") as csv_file:
                 trajectory = []
                 csv_reader = csv.reader(csv_file, delimiter=',')
                 line_count = 0
