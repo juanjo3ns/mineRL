@@ -334,7 +334,8 @@ class VQVAE_PL(pl.LightningModule):
 
     def compute_argmax(self, z_a):
         distances = self._vq_vae.compute_distances(z_a)
-        return torch.argmax(-distances).cpu().item()
+        # it's the same as argmax of (-distances)
+        return torch.argmin(distances).cpu().item()
 
     def get_goal_state(self, idx):
         z_idx = torch.tensor(idx).cuda()

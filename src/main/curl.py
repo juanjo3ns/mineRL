@@ -186,7 +186,7 @@ class CURL(CURL_PL):
         embeddings, train_dataset = self.compute_embeddings()
         trajectories = trajectories.reshape(-1, 3)
 
-        width = 50
+        width = 25
         div = int(100/width)
         print("Get index from all data points...")
         goals_in_unit = defaultdict(list)
@@ -205,6 +205,7 @@ class CURL(CURL_PL):
             c = Counter(v)
             matrix[x,y] = c.most_common(1)[0][0]
 
-        plt.imshow(matrix)
-        plt.legend(list(range(8)))
+        fig, ax = plt.subplots()
+        im = plt.imshow(matrix)
+        fig.colorbar(im, ax=ax)
         plt.show()
