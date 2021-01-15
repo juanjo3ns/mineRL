@@ -181,7 +181,6 @@ class CURL(CURL_PL):
 
     def index_map(self):
 
-        num_clusters=8
         trajectories = self.load_trajectories()
         embeddings, train_dataset = self.compute_embeddings()
         trajectories = trajectories.reshape(-1, 3)
@@ -206,6 +205,6 @@ class CURL(CURL_PL):
             matrix[x,y] = c.most_common(1)[0][0]
 
         fig, ax = plt.subplots()
-        im = plt.imshow(matrix)
+        im = plt.imshow(matrix, cmap=plt.get_cmap('tab10'))
         fig.colorbar(im, ax=ax)
         plt.show()

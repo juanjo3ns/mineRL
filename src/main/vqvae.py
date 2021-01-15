@@ -181,6 +181,6 @@ class VQVAE(VQVAE_PL):
             matrix[x,y] = c.most_common(1)[0][0]
 
         fig, ax = plt.subplots()
-        im = plt.imshow(matrix)
+        im = plt.imshow(matrix, cmap=plt.get_cmap('tab10'))
         fig.colorbar(im, ax=ax)
         plt.show()
