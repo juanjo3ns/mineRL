@@ -1,4 +1,4 @@
-outdir: 'rl.4.2.1'
+outdir: 'rl.4.2.2'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -7,7 +7,7 @@ gpu: 0
 
 demo: no
 monitor: no
-load: './results/train_rl.4.2/best/'
+load: './results/train_rl.4.2.1/best/'
 eval_n_runs: 10
 
 agent: 'CategoricalDoubleDQN'

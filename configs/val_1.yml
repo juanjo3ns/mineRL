@@ -1,4 +1,4 @@
-outdir: 'rl.5.2.1'
+outdir: 'rl.5.2.3'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -7,8 +7,8 @@ gpu: 0
 
 demo: yes
 monitor: yes
-load: './results/train_rl.5.2.1/best/'
-eval_n_runs: 8
+load: './results/train_rl.5.2.3/best/'
+eval_n_runs: 80
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
