@@ -48,7 +48,8 @@ def main(opts):
     logger.info("Loading data for {}...".format(opts.stream_name))
     # added videostream name
     gs = opts.goal_state
-    files = [x for x in os.listdir(f"../data/MineRLTreechop-v0/{opts.stream_name}") if f"{gs}.mp4" in x]
+    tr = opts.trajectory
+    files = [x for x in os.listdir(f"../data/MineRLTreechop-v0/{opts.stream_name}") if f"{tr}.mp4" in x]
     name = files[0]
     data_frames = list(data.load_data(opts.stream_name, include_metadata=False, video_name=name))
     meta = data_frames[0][-1]
@@ -56,14 +57,13 @@ def main(opts):
     logger.info("META DATA: {}".format(meta))
 
     # load rewards
-    tr = opts.trajectory
     csv_path_rewards = os.path.join(data.data_dir, opts.stream_name, f"rewards_{gs}.{tr}.csv")
 
     rewards = load_csv(csv_path_rewards)
 
     # load goal state using opts.goal_state
 
-    goal_state_pov = imageio.imread(f"./goal_states_flat_biome/{opts.goal_state}.png")
+    goal_state_pov = imageio.imread(f"./goal_states/flat_biome/centroid_{opts.goal_state}.png")
     goal_state_pov = goal_state_pov[:,:,:3]
 
     # load coords
