@@ -6,8 +6,10 @@ import time
 import copy
 
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 import pytorch_lightning as pl
+import matplotlib.pyplot as plt
 
 from os.path import join
 from pathlib import Path
@@ -180,31 +182,23 @@ class CURL(CURL_PL):
         return np.array(all_trajectories)
 
     def index_map(self):
-
+        num_clusters = 8
         trajectories = self.load_trajectories()
         embeddings, train_dataset = self.compute_embeddings()
         trajectories = trajectories.reshape(-1, 3)
 
-        width = 25
-        div = int(100/width)
         print("Get index from all data points...")
-        goals_in_unit = defaultdict(list)
+        values = pd.DataFrame(columns=['x', 'y', 'index'])
         for i, (e, p) in enumerate(zip(embeddings, trajectories)):
-            x = int((float(p[0])+50)/div)
-            y = int((float(p[2])+50)/div)
-            idx = x*width +y
+            x = float(p[0])
+            y = float(p[2])
             e = torch.from_numpy(e.squeeze()).cuda()
             k = self.compute_argmax(e)
-            goals_in_unit[idx].append(k)
+            values = values.append({'x': x, 'y': y, 'index': int(k)}, ignore_index=True)
 
-        matrix = np.zeros((width, width))
-        for k,v in sorted(goals_in_unit.items()):
-            x = int(k/width)
-            y = int(k%width)
-            c = Counter(v)
-            matrix[x,y] = c.most_common(1)[0][0]
-
-        fig, ax = plt.subplots()
-        im = plt.imshow(matrix, cmap=plt.get_cmap('tab10'))
-        fig.colorbar(im, ax=ax)
+        palette = sns.color_palette(n_colors=num_clusters)
+        sns.scatterplot(x="x", y="y", hue="index", palette=palette, data=values)
+        labels = ["Code #" + str(i) for i in range(num_clusters)]
+        plt.legend(labels, bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
         plt.show()

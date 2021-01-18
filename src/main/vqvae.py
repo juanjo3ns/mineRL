@@ -3,6 +3,8 @@ import csv
 import wandb
 
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
 
@@ -159,28 +161,22 @@ class VQVAE(VQVAE_PL):
         trajectories = self.load_trajectories()
         trajectories = trajectories.reshape(-1, 3)
 
-        width = 25
-        div = int(100/width)
         print("Get index from all data points...")
-        goals_in_unit = defaultdict(list)
+        values = pd.DataFrame(columns=['x', 'y', 'index'])
         for i, (key, p) in enumerate(zip(train_dataloader, trajectories)):
 
-            x = int((float(p[0])+50)/div)
-            y = int((float(p[2])+50)/div)
-            idx = x*width +y
+            x = float(p[0])
+            y = float(p[2])
 
             e = self._encoder(key.cuda())
             k = self.compute_argmax(e)
-            goals_in_unit[idx].append(k)
+            values = values.append({'x': x, 'y': y, 'index': int(k)}, ignore_index=True)
 
-        matrix = np.zeros((width, width))
-        for k,v in sorted(goals_in_unit.items()):
-            x = int(k/width)
-            y = int(k%width)
-            c = Counter(v)
-            matrix[x,y] = c.most_common(1)[0][0]
 
-        fig, ax = plt.subplots()
-        im = plt.imshow(matrix, cmap=plt.get_cmap('tab10'))
-        fig.colorbar(im, ax=ax)
+        palette = sns.color_palette(n_colors=num_clusters)
+        sns.scatterplot(x="x", y="y", hue="index", palette=palette, data=values)
+        labels = ["Code #" + str(i) for i in range(num_clusters)]
+        embed()
+        plt.legend(labels=labels, bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
         plt.show()

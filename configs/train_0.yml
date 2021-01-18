@@ -13,7 +13,7 @@ eval_n_runs: 10
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
-max_episode_steps: 500
+max_episode_steps: 600
 batch_size: 64
 update_interval: 4
 frame_skip: 10

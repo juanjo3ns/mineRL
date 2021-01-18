@@ -29,14 +29,20 @@ from IPython import embed
 
 setSeed(0)
 
-episodes = 400
-steps = 500
+episodes = 500
+steps = 600
 frame_skip = 10
 
 MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLNavigate-v0')
 env = gym.make('MineRLNavigate-v0')
 
-outdir = './results/custom_trajectories2'
+folder = 'CustomTrajectories4'
+outdir = f"./results/{folder}"
+
+if not os.path.exists(outdir):
+    os.mkdir(outdir)
+if not os.path.exists(f"../data/{folder}"):
+    os.mkdir(f"../data/{folder}")
 
 env.goal_state = 0
 env = FrameSkip(env, skip=frame_skip)
@@ -57,7 +63,7 @@ for episode in range(episodes):
 
 
     trajectory = np.array(trajectory)
-    with open(f'../data/CustomTrajectories2/trajectory_{episode}.npy', 'wb') as f:
+    with open(f'../data/{folder}/trajectory_{episode}.npy', 'wb') as f:
         np.save(f, trajectory)
 
 env.close()
