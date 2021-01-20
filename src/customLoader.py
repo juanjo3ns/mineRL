@@ -268,4 +268,5 @@ if __name__ == '__main__':
     # img = mrl[10]
     # plt.imshow(img)
     # plt.show()
-    # c = CustomMinecraftData_('CustomTrajectories', 'train', 0.95, transform=transform)
+    # c = CustomMinecraftData('CustomTrajectories4', 'train', 0.95, transform=transform)
+    # embed()

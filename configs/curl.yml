@@ -1,0 +1,17 @@
+experiment: 'curl_test'
+environment: 'MineRLNavigate-v0'
+epochs: 400
+batch_size: 32
+lr: 0.001
+trajectories: 'CustomTrajectories2'
+split: 0.90
+tau: 0.005
+soft_update: 2
+img_size: 64
+delay: yes
+curl:
+  z_dim: 50
+test:
+  path_goal_states: './goal_states/flat_biome_curl_kmeans_0'
+  path_weights: './curl_1.0/mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'
+  # path_weights: './curl_2.1/mineRL/2szj8vij/checkpoints/epoch=499-step=428999.ckpt'
