@@ -10,6 +10,7 @@ import numpy as np
 import cv2
 from random import randint
 
+from torchvision.transforms import Normalize
 from pfrl.wrappers import ContinuingTimeLimit, RandomizeAction, Monitor
 from pfrl.wrappers.atari_wrappers import ScaledFloatFrame, LazyFrames
 
@@ -205,11 +206,17 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         self.model = encoder
         self.device = device
         self.test = test
+        self.transform = Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
 
     def observation(self, observation):
         goal_state = self.env.goal_state
-        obs_anchor = torch.from_numpy(observation).float().unsqueeze(dim=0).to(self.device)
-        z_a = self.model.encode(obs_anchor/255)
+        obs_anchor = torch.from_numpy(observation).float()
+        # We don't need .ToTensor since shape already 3,64,64 but we need to divide by 255
+        # Then, we substract the mean 0.5 and divide by 1 like in the encoder training
+        obs_norm = self.transform(obs_anchor/255)
+        obs = obs_norm.unsqueeze(dim=0).to(self.device)
+
+        z_a = self.model.encode(obs)
 
         # Compute reward as distance similarity in the embedding space - baseline reward (max)
         # r = self.model.compute_logits_(z_a, goal_state)
