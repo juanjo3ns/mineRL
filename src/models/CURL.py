@@ -77,6 +77,12 @@ class CURL_PL(pl.LightningModule):
         logits = self.compute_logits(z_a)
         return torch.argmax(logits).cpu().item()
 
+    def compute_second_argmax(self, z_a):
+        logits = self.compute_logits(z_a)
+        first = torch.argmax(logits).cpu().item()
+        logits[first] = 0
+        return torch.argmax(logits).cpu().item()
+
     def load_goal_states(self):
         goal_states = []
         for gs in sorted(os.listdir(self.path_gs)):
