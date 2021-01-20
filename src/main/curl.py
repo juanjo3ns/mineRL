@@ -11,6 +11,7 @@ import seaborn as sns
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
 
+from plot import *
 from os.path import join
 from pathlib import Path
 from pprint import pprint
@@ -55,6 +56,9 @@ class CURL(CURL_PL):
                                   transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
                                 ])
         self.criterion = torch.nn.CrossEntropyLoss()
+
+        self.path_goal_states = conf['test']['path_goal_states']
+        self.num_clusters = len(os.listdir(self.path_goal_states))
 
 
     def forward(self, data):
@@ -114,7 +118,7 @@ class CURL(CURL_PL):
         return KMeans(n_clusters=num_clusters, random_state=0).fit(embeddings)
 
 
-    def compute_embeddings(self,):
+    def compute_embeddings(self):
         train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
         train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
 
@@ -159,10 +163,12 @@ class CURL(CURL_PL):
                 csvwriter.writerow([d])
 
     def store_goal_states(self):
-        num_clusters=8
-        kmeans, _, _ = self.compute_kmeans(num_clusters)
+        num_clusters=9
+        embeddings, _ = self.compute_embeddings()
+        kmeans = self.kmeans(embeddings, num_clusters)
+
         for i, k in enumerate(kmeans.cluster_centers_):
-            with open(f'./goal_states/flat_biome_curl_kmeans_0/{i}.npy', 'wb') as f:
+            with open(f'./goal_states/{self.path_goal_states}/{i}.npy', 'wb') as f:
                 np.save(f, k)
 
 
@@ -182,23 +188,54 @@ class CURL(CURL_PL):
         return np.array(all_trajectories)
 
     def index_map(self):
-        num_clusters = 8
         trajectories = self.load_trajectories()
         embeddings, train_dataset = self.compute_embeddings()
         trajectories = trajectories.reshape(-1, 3)
 
         print("Get index from all data points...")
-        values = pd.DataFrame(columns=['x', 'y', 'index'])
+        values = pd.DataFrame(columns=['x', 'y', 'Code:'])
         for i, (e, p) in enumerate(zip(embeddings, trajectories)):
             x = float(p[0])
             y = float(p[2])
             e = torch.from_numpy(e.squeeze()).cuda()
             k = self.compute_argmax(e)
-            values = values.append({'x': x, 'y': y, 'index': int(k)}, ignore_index=True)
+            values = values.append({'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
 
-        palette = sns.color_palette(n_colors=num_clusters)
-        sns.scatterplot(x="x", y="y", hue="index", palette=palette, data=values)
-        labels = ["Code #" + str(i) for i in range(num_clusters)]
-        plt.legend(labels, bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.tight_layout()
-        plt.show()
+        values['Code:'] = values['Code:'].astype('int32')
+        palette = sns.color_palette(n_colors=self.num_clusters)
+        plot_idx_maps(values, palette, "brief")
+
+    def reward_map(self):
+        trajectories = self.load_trajectories()
+        embeddings, train_dataset = self.compute_embeddings()
+        trajectories = trajectories.reshape(-1, 3)
+
+        print("Get index from all data points...")
+        data_list = []
+        ini = time.time()
+        for g in range(self.num_clusters):
+            print(f"Comparing data points with goal state {g}", end="\r")
+            values = pd.DataFrame(columns=['x', 'y', 'reward'])
+            for i, (e, p) in enumerate(zip(embeddings, trajectories)):
+                x = float(p[0])
+                y = float(p[2])
+                e = torch.from_numpy(e.squeeze()).cuda()
+                k = self.compute_argmax(e)
+                r = 0
+                if k == g:
+                    r = torch.sum((e-self.goal_states[g])**2).detach().cpu().item()
+                values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
+            rewards = values['reward'].tolist()
+            nonzero = [m for m in rewards if not m == 0]
+            mx = max(nonzero)
+            for i, r in enumerate(rewards):
+                if r==0.0:
+                    rewards[i] = mx
+            rewards = np.array(rewards)*-1
+            rewards -= min(rewards)
+            rewards /= max(rewards)
+            values['reward'] = rewards
+            data_list.append(values)
+
+        print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")
+        plot_reward_maps(data_list)

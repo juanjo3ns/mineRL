@@ -18,9 +18,9 @@ conf = getConfig(sys.argv[1])
 
 
 if os.getenv('USER') == 'juanjo':
-    path_weights = Path('../weights/')
+    path_weights = Path('./results')
 elif os.getenv('USER') == 'juan.jose.nieto':
-    path_weights = Path('/mnt/gpid07/users/juan.jose.nieto/weights/')
+    path_weights = Path('/home/usuaris/imatge/juan.jose.nieto/mineRL/src/results')
 else:
     raise Exception("Sorry user not identified!")
 

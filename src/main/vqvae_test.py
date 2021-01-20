@@ -20,15 +20,14 @@ conf = getConfig(sys.argv[1])
 
 
 if os.getenv('USER') == 'juanjo':
-    path_weights = Path('../weights/')
+    path_weights = Path('./results')
 elif os.getenv('USER') == 'juan.jose.nieto':
-    path_weights = Path('/mnt/gpid07/users/juan.jose.nieto/weights/')
+    path_weights = Path('/home/usuaris/imatge/juan.jose.nieto/mineRL/src/results')
 else:
     raise Exception("Sorry user not identified!")
 
 vqvae = VQVAE(conf).cuda()
-path = './results/vqvae_0.3/mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'
-checkpoint = torch.load(path)
+checkpoint = torch.load(join(path_weights, conf['test']['path_weights']))
 vqvae.load_state_dict(checkpoint['state_dict'])
-# vqvae.compute_similarity()
-vqvae.index_map()
+# vqvae.index_map()
+vqvae.reward_map()

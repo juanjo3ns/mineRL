@@ -1,13 +1,14 @@
 import os
 import csv
+import time
 import wandb
-
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
 
+from plot import *
 from os.path import join
 from pathlib import Path
 from pprint import pprint
@@ -37,6 +38,7 @@ class VQVAE(VQVAE_PL):
         self.batch_size = conf['batch_size']
         self.lr = conf['lr']
         self.split = conf['split']
+        self.num_clusters = conf['vqvae']['num_embeddings']
 
         self.delay = conf['delay']
         self.trajectories = conf['trajectories']
@@ -157,12 +159,11 @@ class VQVAE(VQVAE_PL):
         train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
         train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
 
-        num_clusters=10
         trajectories = self.load_trajectories()
         trajectories = trajectories.reshape(-1, 3)
 
         print("Get index from all data points...")
-        values = pd.DataFrame(columns=['x', 'y', 'index'])
+        values = pd.DataFrame(columns=['x', 'y', 'Code:'])
         for i, (key, p) in enumerate(zip(train_dataloader, trajectories)):
 
             x = float(p[0])
@@ -170,13 +171,49 @@ class VQVAE(VQVAE_PL):
 
             e = self._encoder(key.cuda())
             k = self.compute_argmax(e)
-            values = values.append({'x': x, 'y': y, 'index': int(k)}, ignore_index=True)
+            values = values.append({'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
+
+        values['Code:'] = values['Code:'].astype('int32')
+        palette = sns.color_palette(n_colors=self.num_clusters)
+        plot_idx_maps(values, palette, "brief")
 
 
-        palette = sns.color_palette(n_colors=num_clusters)
-        sns.scatterplot(x="x", y="y", hue="index", palette=palette, data=values)
-        labels = ["Code #" + str(i) for i in range(num_clusters)]
-        embed()
-        plt.legend(labels=labels, bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.tight_layout()
-        plt.show()
+    def reward_map(self):
+        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
+        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
+
+        trajectories = self.load_trajectories()
+        trajectories = trajectories.reshape(-1, 3)
+
+        print("Get index from all data points...")
+        data_list = []
+        ini = time.time()
+        for g in range(self.num_clusters):
+            print(f"Comparing data points with goal state {g}", end="\r")
+            values = pd.DataFrame(columns=['x', 'y', 'reward'])
+            for i, (key, p) in enumerate(zip(train_dataloader, trajectories)):
+                x = float(p[0])
+                y = float(p[2])
+                e = self._encoder(key.cuda())
+                k = self.compute_argmax(e)
+                r = 0
+                if k == g:
+                    z_idx = torch.tensor(g).cuda()
+                    goal_state = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx).squeeze()
+                    e = e.view(-1)
+                    r = torch.sum((e-goal_state)**2).detach().cpu().item()
+                values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
+            rewards = values['reward'].tolist()
+            nonzero = [m for m in rewards if not m == 0]
+            mx = max(nonzero)
+            for i, r in enumerate(rewards):
+                if r==0.0:
+                    rewards[i] = mx
+            rewards = np.array(rewards)*-1
+            rewards -= min(rewards)
+            rewards /= max(rewards)
+            values['reward'] = rewards
+            data_list.append(values)
+
+        print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")
+        plot_reward_maps(data_list)

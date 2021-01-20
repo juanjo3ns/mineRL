@@ -2,6 +2,7 @@ import os
 import sys
 import torch
 
+from os.path import join
 import numpy as np
 from pathlib import Path
 from config import setSeed, getConfig
@@ -15,19 +16,25 @@ conf = getConfig(sys.argv[1])
 
 
 if os.getenv('USER') == 'juanjo':
-    path_weights = Path('../weights/')
+    path_weights = Path('./results')
 elif os.getenv('USER') == 'juan.jose.nieto':
-    path_weights = Path('/mnt/gpid07/users/juan.jose.nieto/weights/')
+    path_weights = Path('/home/usuaris/imatge/juan.jose.nieto/mineRL/src/results')
 else:
     raise Exception("Sorry user not identified!")
 
-conf['curl']['path_goal_states'] = './goal_states/flat_biome_curl_kmeans_0'
+conf['curl']['path_goal_states'] = conf['test']['path_goal_states']
 conf['curl']['load_goal_states'] = True
 conf['curl']['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 curl = CURL(conf).cuda()
-path = './results/curl_1.0/mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'
-checkpoint = torch.load(path)
+checkpoint = torch.load(join(path_weights, conf['test']['path_weights']))
 curl.load_state_dict(checkpoint['state_dict'])
-curl.index_map()
+
+# Do it in two steps since anyways we need to store goal states in numpy arrays.
+# First compute and store goal states (centroides with kmeans)
+# Then only compute index_maps or reward_maps
+
 # curl.store_goal_states()
+
+# curl.index_map()
+curl.reward_map()
