@@ -8,7 +8,7 @@ import csv
 import gym
 import numpy as np
 import cv2
-from random import randint
+from random import randint, choice
 
 from torchvision.transforms import Normalize
 from pfrl.wrappers import ContinuingTimeLimit, RandomizeAction, Monitor
@@ -90,13 +90,15 @@ class ResetWrapper(gym.Wrapper):
         # Sample goal state
         num_goal_states = self.model.num_goal_states
         if self.test:
-            goal_state = (self.env.resets - 1) % num_goal_states
+            # goal_state = (self.env.resets - 1) % num_goal_states
+            goal_state = self.model.goals[(self.env.resets - 1) % num_goal_states]
+
         else:
-            goal_state = randint(0, num_goal_states-1)
+            # goal_state = randint(0, num_goal_states-1)
+            goal_state = choice(self.model.goals)
 
         self.env.goal_state = goal_state
         return ob
-
 
 
 class FrameSkip(gym.Wrapper):
@@ -225,7 +227,11 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         # Compute reward as a classification problem. If the goal state with highest similarity
         # is the current selected, give reward of 1.
         g = self.model.compute_argmax(z_a)
-        reward = int(g == self.env.goal_state)
+        reward = 0
+        if self.env.goal_state == g:
+            distances = self.model._vq_vae.compute_distances(z_a).squeeze()
+            max = distances[g].detach().cpu().item()
+            reward = 1/(1+max)
 
         self.model.reward = reward
         if self.test:

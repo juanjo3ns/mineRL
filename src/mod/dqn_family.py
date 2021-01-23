@@ -116,7 +116,6 @@ def dqn_family(conf, outdir):
     else:
         raise Exception("Sorry, user not identified!")
 
-
     encoder = utils.load_encoder(enc_conf, path_weights)
     print("Encoder loaded!")
 

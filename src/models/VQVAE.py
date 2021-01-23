@@ -285,7 +285,7 @@ class Decoder(nn.Module):
 
 class VQVAE_PL(pl.LightningModule):
     def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
-                 num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99, threshold=-1.5):
+                 num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99, goals=[]):
         super(VQVAE_PL, self).__init__()
         self._encoder = Encoder(3, num_hiddens,
                                 num_residual_layers,
@@ -300,9 +300,8 @@ class VQVAE_PL(pl.LightningModule):
                                 num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
-
-        self.threshold = threshold
-        self.num_goal_states = num_embeddings
+        self.goals = goals
+        self.num_goal_states = len(goals)
 
     def forward(self, x):
         z = self._encoder(x)

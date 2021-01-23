@@ -48,10 +48,10 @@ encoder:
     embedding_dim: 256
     num_embeddings: 10
     commitment_cost: 0.25
-    threshold: -2.5
+    goals: [0,2,3,5,7,8,9]
   curl:
     encoder_version: 'curl_1.0'
     load_epoch: 'mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'
     embedding_dim: 50
-    threshold: 8
     path_goal_states: './goal_states/flat_biome_curl_kmeans_0'
+    goals: [0,2,3,5,7,8,9]

@@ -19,8 +19,8 @@ class CURL_PL(pl.LightningModule):
             output_type="continuous",
             load_goal_states=False,
             device=None,
-            threshold=18,
-            path_goal_states=None
+            path_goal_states=None,
+            goals=[]
             ):
         super(CURL_PL, self).__init__()
 
@@ -32,11 +32,11 @@ class CURL_PL(pl.LightningModule):
         self.output_type = output_type
 
         if load_goal_states:
-            self.threshold = threshold
             self.path_gs = path_goal_states
             self.dev = device
+            self.goals = goals
             self.goal_states = self.load_goal_states()
-            self.num_goal_states = self.goal_states.shape[0]
+            self.num_goal_states = len(goals)
 
 
     def encode(self, x, detach=False, ema=False):

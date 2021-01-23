@@ -24,6 +24,8 @@ def plot_reward_maps(data_list):
         x,y = 2,4
     elif num_plots == 9:
         x,y = 3,3
+    elif num_plots == 10:
+        x,y = 2,5
     else:
         x,y = 3,5
 
@@ -31,7 +33,7 @@ def plot_reward_maps(data_list):
 
     for i, ax in enumerate(axn.flat):
         if i < len(data_list):
-            ax.set_title('$r(s, z=z_{' + i + '})$') # do not use f-string here
+            ax.set_title('$r(s, z=z_{' + str(i) + '})$') # do not use f-string here
             g = ax.scatter(data_list[i]['x'],data_list[i]['y'], c=data_list[i]['reward'], marker='.')
 
     fig.colorbar(g, ax=axn[:,-1])

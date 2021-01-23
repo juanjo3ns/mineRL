@@ -198,21 +198,13 @@ class VQVAE(VQVAE_PL):
                 k = self.compute_argmax(e)
                 r = 0
                 if k == g:
-                    z_idx = torch.tensor(g).cuda()
-                    goal_state = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx).squeeze()
-                    e = e.view(-1)
-                    r = torch.sum((e-goal_state)**2).detach().cpu().item()
+                    # k2 = self.compute_second_argmax(e)
+                    distances = self._vq_vae.compute_distances(e).squeeze()
+                    max = distances[k].detach().cpu().item()
+                    # sec_max = distances[k2].detach().cpu().item()
+                    # r = (sec_max-max)/sec_max
+                    r=1/(1+max)
                 values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
-            rewards = values['reward'].tolist()
-            nonzero = [m for m in rewards if not m == 0]
-            mx = max(nonzero)
-            for i, r in enumerate(rewards):
-                if r==0.0:
-                    rewards[i] = mx
-            rewards = np.array(rewards)*-1
-            rewards -= min(rewards)
-            rewards /= max(rewards)
-            values['reward'] = rewards
             data_list.append(values)
 
         print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")

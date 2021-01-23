@@ -2,7 +2,7 @@ experiment: 'vqvae_test'
 environment: 'MineRLNavigate-v0'
 epochs: 200
 delay: no
-trajectories: 'CustomTrajectories4'
+trajectories: 'CustomTrajectories2'
 split: 0.90
 lr: 0.001
 batch_size: 256
@@ -12,11 +12,11 @@ vqvae:
   num_residual_hiddens: 32
   num_residual_layers: 2
   embedding_dim: 256
-  num_embeddings: 14
+  num_embeddings: 10
   commitment_cost: 0.25
   decay: 0.99
 test:
-  # path_weights: './vqvae_0.3/mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'
-  path_weights: './vqvae_1.2/mineRL/3qtc0w0y/checkpoints/epoch=131-step=14255.ckpt'
+  path_weights: './vqvae_0.3/mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'
+  # path_weights: './vqvae_1.2/mineRL/3qtc0w0y/checkpoints/epoch=131-step=14255.ckpt'
   # path_weights: './vqvae_1.1/mineRL/315ksn7x/checkpoints/epoch=203-step=22031.ckpt'
   # path_weights: './vqvae_1.0/mineRL/32lwarh6/checkpoints/epoch=199-step=21599.ckpt'

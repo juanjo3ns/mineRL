@@ -24,7 +24,6 @@ def load_encoder(conf, path_weights):
 
     encoder_version = conf['encoder_version']
     load_epoch = conf['load_epoch']
-    threshold = conf['threshold']
     embedding_dim = conf['embedding_dim']
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -37,8 +36,8 @@ def load_encoder(conf, path_weights):
             z_dim=embedding_dim,
             load_goal_states=True,
             device=device,
-            threshold=threshold,
-            path_goal_states=conf['path_goal_states']
+            path_goal_states=conf['path_goal_states'],
+            goals=conf['goals']
         )
 
 
@@ -50,7 +49,7 @@ def load_encoder(conf, path_weights):
             conf['num_embeddings'],
             embedding_dim,
             conf['commitment_cost'],
-            threshold=conf['threshold']
+            goals=conf['goals']
         )
     else:
         raise NotImplementedException()

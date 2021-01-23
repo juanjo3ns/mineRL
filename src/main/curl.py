@@ -220,21 +220,16 @@ class CURL(CURL_PL):
                 x = float(p[0])
                 y = float(p[2])
                 e = torch.from_numpy(e.squeeze()).cuda()
-                k = self.compute_argmax(e)
+                logits = self.compute_logits(e)
+                k = torch.argmax(logits).cpu().item()
                 r = 0
                 if k == g:
-                    r = torch.sum((e-self.goal_states[g])**2).detach().cpu().item()
+                    max = logits[k].detach().cpu().item()
+                    logits[k] = 0
+                    k2 = torch.argmax(logits).cpu().item()
+                    sec_max = logits[k2].detach().cpu().item()
+                    r = (max-sec_max)/max
                 values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
-            rewards = values['reward'].tolist()
-            nonzero = [m for m in rewards if not m == 0]
-            mx = max(nonzero)
-            for i, r in enumerate(rewards):
-                if r==0.0:
-                    rewards[i] = mx
-            rewards = np.array(rewards)*-1
-            rewards -= min(rewards)
-            rewards /= max(rewards)
-            values['reward'] = rewards
             data_list.append(values)
 
         print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")
