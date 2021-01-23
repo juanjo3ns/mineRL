@@ -1,4 +1,4 @@
-outdir: 'rl.test'
+outdir: 'rl.6.0.0'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -7,13 +7,13 @@ gpu: 0
 
 demo: no
 monitor: no
-load: './results/train_rl.4.2.1/best/'
-eval_n_runs: 10
+load: null
+eval_n_runs: 7
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
-max_episode_steps: 600
+max_episode_steps: 500
 batch_size: 64
 update_interval: 4
 frame_skip: 10
