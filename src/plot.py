@@ -1,6 +1,7 @@
+import numpy as np
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from IPython import embed
 
@@ -38,3 +39,15 @@ def plot_reward_maps(data_list):
 
     fig.colorbar(g, ax=axn[:,-1])
     plt.show()
+
+
+def compare_func():
+    x = np.arange(0,1,0.01)
+    plt.plot(x,np.minimum(np.ones(100),-np.log(x)))
+    plt.plot(x, np.power(1000,-x))
+    plt.plot(x, np.power(100,-x))
+    plt.plot(x, np.power(10,-x))
+    plt.legend(['min(1, -log_e(x))', '1e3^-x', '1e2^-x', '10^-x'])
+    plt.show()
+
+# compare_func()

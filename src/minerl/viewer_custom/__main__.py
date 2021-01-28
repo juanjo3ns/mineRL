@@ -63,7 +63,7 @@ def main(opts):
 
     # load goal state using opts.goal_state
 
-    goal_state_pov = imageio.imread(f"./goal_states/flat_biome/centroid_{opts.goal_state}.png")
+    goal_state_pov = imageio.imread(f"./goal_states/flat_biome_vqvae/centroid_{opts.goal_state}.png")
     goal_state_pov = goal_state_pov[:,:,:3]
 
     # load coords

@@ -110,10 +110,10 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         ax.spines['left'].set_visible(False)
 
         for i,(x,y) in enumerate(self.goal_states):
-            if self.goal_state == i:
-                plt.plot(x, y, marker='o', color='blue', markersize=13)
-            else:
-                plt.plot(x, y, marker='o', color='white', markersize=10)
+            # if self.goal_state == i:
+            #     plt.plot(x, y, marker='o', color='blue', markersize=13)
+            # else:
+            plt.plot(x, y, marker='o', color='white', markersize=10)
         plt.plot(self.coords[0,0], self.coords[0,1], marker='o', markersize=10)
         plt.plot(self.coords[:,0], self.coords[:,1])
         plt.plot(self.coords[step,0], self.coords[step,1],marker='o', markersize=5, color='red')
