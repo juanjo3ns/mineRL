@@ -1,5 +1,15 @@
 
 import wandb
+alg = 'vqvae'
+
+def update_custom(conf, d):
+    for k,v in d.items():
+        if '.' in k:
+            key = k.split('.')
+            conf[key[0]][key[1]] = v
+        else:
+            conf[k] = v
+    return conf
 
 def main():
     import os
@@ -15,32 +25,13 @@ def main():
     from IPython import embed
 
     run = wandb.init()
+    conf = getConfig(sys.argv[1])
 
-    conf = {
-      "experiment": f"vqvae_{run.step}.sweep",
-      "environment": "MineRLNavigate-v0",
-      "trajectories": "CustomTrajectories2",
-      "epochs": 50,
-      "delay": False,
-      "img_size": 64,
-      "split": 0.90,
-      "vqvae": {
-          "num_hiddens": 64,
-          "num_residual_hiddens": 32,
-          "num_residual_layers": 2,
-          "embedding_dim": 256,
-          "num_embeddings": 10,
-          "commitment_cost": 0.25,
-          "decay": 0.99
-      }
-    }
-
-    conf = {**conf , **run.config}
-
+    conf = update_custom(conf, run.config)
     wandb_logger = WandbLogger(
         project='mineRL',
         name=run.name,
-        tags=['vqvae', 'sweep']
+        tags=[alg, 'sweep']
     )
 
     wandb_logger.log_hyperparams(conf)
@@ -59,23 +50,23 @@ def main():
     trainer.fit(vqvae)
 
 sweep_config = {
-    "name": "vqvae_sweep",
+    "name": f"{alg}_1.sweep",
     "method": 'bayes',
     "metric": {
         "name": "loss/train",
         "goal": "minimize"
     },
     "parameters": {
-        "batch_size": {
-          "distribution": "int_uniform",
-          "max": 256,
-          "min": 32
+        "vqvae.commitment_cost": {
+              "distribution": "uniform",
+              "max": 1.0,
+              "min": 0.1
         },
         "lr": {
           "distribution": "uniform",
           "max": 0.01,
           "min": 0.0001
-        },
+        }
   }
 }
 
@@ -84,4 +75,4 @@ del os.environ["SLURM_NTASKS"]
 del os.environ["SLURM_JOB_NAME"]
 
 sweep_id = wandb.sweep(sweep_config, project="mineRL")
-wandb.agent(sweep_id, function=main, count=10)
+wandb.agent(sweep_id, function=main, count=30)

@@ -1,5 +1,6 @@
 
 import wandb
+alg = 'curl'
 
 def main():
     import os
@@ -8,14 +9,13 @@ def main():
 
     from pathlib import Path
     from config import setSeed, getConfig
-    from main.vqvae import VQVAE
+    from main.curl import CURL
     import pytorch_lightning as pl
     from pytorch_lightning.loggers import WandbLogger
 
     from IPython import embed
 
     run = wandb.init()
-    alg = 'curl'
 
     conf = {
       "experiment": f"{alg}_{run.step}.sweep",
@@ -28,13 +28,15 @@ def main():
       "img_size": 64,
       "split": 0.90,
       "curl": {
-          "z_dim": 64,
-
+          "z_dim": 64
+      },
+      "test":{
+          "path_goal_states": './goal_states/flat_biome_curl_kmeans_2',
+          "path_weights": './curl_2.1/mineRL/2szj8vij/checkpoints/epoch=499-step=428999.ckpt'
       }
     }
 
     conf = {**conf , **run.config}
-    embed()
 
     wandb_logger = WandbLogger(
         project='mineRL',
@@ -44,7 +46,7 @@ def main():
 
     wandb_logger.log_hyperparams(conf)
 
-    vqvae = VQVAE(conf)
+    curl = CURL(conf)
 
     trainer = pl.Trainer(
         gpus=1,
@@ -55,7 +57,7 @@ def main():
         default_root_dir=f"./results/{conf['experiment']}"
     )
 
-    trainer.fit(vqvae)
+    trainer.fit(curl)
 
 sweep_config = {
     "name": f"{alg}_sweep",
