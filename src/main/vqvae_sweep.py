@@ -78,5 +78,10 @@ sweep_config = {
         },
   }
 }
+
+import os
+del os.environ["SLURM_NTASKS"]
+del os.environ["SLURM_JOB_NAME"]
+
 sweep_id = wandb.sweep(sweep_config, project="mineRL")
-wandb.agent(sweep_id, function=main)
+wandb.agent(sweep_id, function=main, count=10)

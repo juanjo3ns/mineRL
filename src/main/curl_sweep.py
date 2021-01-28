@@ -34,6 +34,7 @@ def main():
     }
 
     conf = {**conf , **run.config}
+    embed()
 
     wandb_logger = WandbLogger(
         project='mineRL',
@@ -77,4 +78,4 @@ sweep_config = {
   }
 }
 sweep_id = wandb.sweep(sweep_config, project="mineRL")
-wandb.agent(sweep_id, function=main)
+wandb.agent(sweep_id, function=main, count=10)
