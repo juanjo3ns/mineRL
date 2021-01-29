@@ -16,27 +16,9 @@ def main():
     from IPython import embed
 
     run = wandb.init()
+    conf = getConfig(sys.argv[1])
 
-    conf = {
-      "experiment": f"{alg}_{run.step}.sweep",
-      "environment": "MineRLNavigate-v0",
-      "trajectories": "CustomTrajectories2",
-      "epochs": 50,
-      "delay": True,
-      "tau": 0.005,
-      "soft_update": 2,
-      "img_size": 64,
-      "split": 0.90,
-      "curl": {
-          "z_dim": 64
-      },
-      "test":{
-          "path_goal_states": './goal_states/flat_biome_curl_kmeans_2',
-          "path_weights": './curl_2.1/mineRL/2szj8vij/checkpoints/epoch=499-step=428999.ckpt'
-      }
-    }
-
-    conf = {**conf , **run.config}
+    conf = update_custom(conf, run.config)
 
     wandb_logger = WandbLogger(
         project='mineRL',
@@ -79,5 +61,10 @@ sweep_config = {
         },
   }
 }
+
+import os
+del os.environ["SLURM_NTASKS"]
+del os.environ["SLURM_JOB_NAME"]
+
 sweep_id = wandb.sweep(sweep_config, project="mineRL")
 wandb.agent(sweep_id, function=main, count=10)

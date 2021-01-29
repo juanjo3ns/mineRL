@@ -67,7 +67,6 @@ class VQVAE(VQVAE_PL):
         vq_loss, data_recon, perplexity = self(x)
         recon_error = F.mse_loss(data_recon, y)
         loss = recon_error + vq_loss
-
         self.log('loss/train', loss, on_step=False, on_epoch=True)
         self.log('perplexity/train', perplexity, on_step=False, on_epoch=True)
 
