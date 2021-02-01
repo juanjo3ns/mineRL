@@ -16,15 +16,6 @@ setSeed(0)
 assert len(sys.argv) == 2, "Indicate a configuration file like 'config_0.0'"
 conf = getConfig(sys.argv[1])
 
-
-if os.getenv('USER') == 'juanjo':
-    path_weights = Path('./results')
-elif os.getenv('USER') == 'juan.jose.nieto':
-    path_weights = Path('/home/usuaris/imatge/juan.jose.nieto/mineRL/src/results')
-else:
-    raise Exception("Sorry user not identified!")
-
-
 wandb_logger = WandbLogger(
     project='mineRL',
     name=conf['experiment'],

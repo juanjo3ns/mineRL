@@ -2,6 +2,15 @@
 import wandb
 alg = 'curl'
 
+def update_custom(conf, d):
+    for k,v in d.items():
+        if '.' in k:
+            key = k.split('.')
+            conf[key[0]][key[1]] = v
+        else:
+            conf[k] = v
+    return conf
+    
 def main():
     import os
     import sys
