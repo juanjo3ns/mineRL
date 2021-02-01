@@ -36,7 +36,7 @@ frame_skip = 10
 MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLNavigate-v0')
 env = gym.make('MineRLNavigate-v0')
 
-folder = 'CustomTrajectories5'
+folder = 'CustomTrajectories6'
 outdir = f"./results/{folder}"
 
 if not os.path.exists(outdir):

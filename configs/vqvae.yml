@@ -1,8 +1,8 @@
-experiment: 'vqvae_sweep_2'
+experiment: 'vqvae_3.0'
 environment: 'MineRLNavigate-v0'
-epochs: 30
+epochs: 60
 delay: no
-trajectories: 'CustomTrajectories5'
+trajectories: 'CustomTrajectories6'
 split: 0.90
 lr: 0.001
 batch_size: 256
@@ -12,7 +12,7 @@ vqvae:
   num_residual_hiddens: 32
   num_residual_layers: 2
   embedding_dim: 256
-  num_embeddings: 9
+  num_embeddings: 5
   commitment_cost: 0.25
   decay: 0.99
 test:

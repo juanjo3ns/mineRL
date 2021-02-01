@@ -1,4 +1,4 @@
-outdir: 'rl.6.1.0'
+outdir: 'rl.test'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 

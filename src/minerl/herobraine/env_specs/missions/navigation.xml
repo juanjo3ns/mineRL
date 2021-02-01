@@ -19,33 +19,14 @@
             <AllowSpawning>false</AllowSpawning>
         </ServerInitialConditions>
         <ServerHandlers>
-            <FlatWorldGenerator forceReset="false"/>
-            <NavigationDecorator>
-                <randomPlacementProperties>
-                    <maxRandomizedRadius>64</maxRandomizedRadius>
-                    <minRandomizedRadius>64</minRandomizedRadius>
-                    <block>diamond_block</block>
-                    <placement>surface</placement>
-                    <maxRadius>8</maxRadius>
-                    <minRadius>0</minRadius>
-                </randomPlacementProperties>
-                <minRandomizedDistance>0</minRandomizedDistance>
-                <maxRandomizedDistance>8</maxRandomizedDistance>
-                <randomizeCompassLocation>true</randomizeCompassLocation>
-            </NavigationDecorator>
+            <FileWorldGenerator src="/home/juanjo/Documents/minecraft/mineRL/src/minerl/env/Malmo/Minecraft/run/saves/CustomWorld3"/>
             <DrawingDecorator>
-              <DrawCuboid x1="-45" y1="3" z1="-45" x2="-45" y2="6" z2="45" type="glass"/>
-              <DrawCuboid x1="-45" y1="3" z1="-45" x2="45" y2="6" z2="-45" type="glass"/>
-              <DrawCuboid x1="-45" y1="3" z1="45" x2="45" y2="6" z2="45" type="glass"/>
-              <DrawCuboid x1="45" y1="3" z1="-45" x2="45" y2="6" z2="45" type="glass"/>
-              <DrawCuboid x1="15" y1="3" z1="15" x2="45" y2="3" z2="45" type="gold_block"/>
-              <DrawCuboid x1="-15" y1="3" z1="15" x2="15" y2="3" z2="45" type="obsidian"/>
-              <DrawCuboid x1="15" y1="3" z1="-15" x2="45" y2="3" z2="15" type="log"/>
-              <DrawCuboid x1="15" y1="3" z1="-45" x2="45" y2="3" z2="-15" type="emerald_block"/>
-              <DrawCuboid x1="-15" y1="3" z1="-45" x2="15" y2="3" z2="-15" type="stone"/>
-              <DrawCuboid x1="-45" y1="3" z1="-45" x2="-15" y2="3" z2="-15" type="lapis_block"/>
-              <DrawCuboid x1="-45" y1="3" z1="-15" x2="-15" y2="3" z2="15" type="sand"/>
-              <DrawCuboid x1="-45" y1="3" z1="15" x2="-15" y2="3" z2="45" type="snow"/>
+              <DrawCuboid x1="-40" y1="4" z1="-43" x2="-6" y2="100" z2="-43" type="barrier"/>
+              <DrawCuboid x1="-6" y1="4" z1="-43" x2="-6" y2="100" z2="-24" type="barrier"/>
+              <DrawCuboid x1="-6" y1="4" z1="-24" x2="35" y2="100" z2="-24" type="barrier"/>
+              <DrawCuboid x1="35" y1="4" z1="-24" x2="35" y2="100" z2="29" type="barrier"/>
+              <DrawCuboid x1="35" y1="4" z1="29" x2="-40" y2="100" z2="29" type="barrier"/>
+              <DrawCuboid x1="-40" y1="4" z1="-43" x2="-40" y2="100" z2="29" type="barrier"/>
             </DrawingDecorator>
             <ServerQuitFromTimeUp timeLimitMs="300000" description="out_of_time"/>
             <ServerQuitWhenAnyAgentFinishes/>
