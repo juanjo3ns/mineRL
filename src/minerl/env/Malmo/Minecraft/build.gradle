@@ -52,7 +52,7 @@ archivesBaseName = "MalmoMod"
 minecraft {
     version = "1.11.2-13.20.0.2228"
     runDir = "run"
-    
+
     // the mappings can be changed at any time, and must be in the following format.
     // snapshot_YYYYMMDD   snapshot are built nightly.
     // stable_#            stables are built at the discretion of the MCP team.
@@ -61,7 +61,7 @@ minecraft {
     mappings = "snapshot_20161220"
     makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 }
-runClient { 
+runClient {
     if (project.hasProperty("runDir")) {
         minecraft.runDir = project.getProperty("runDir")
     }
@@ -70,7 +70,7 @@ runClient {
 repositories {
     maven {
         name = "SpongePowered Repo"
-        url = "http://repo.spongepowered.org/maven/"
+        url = "https://repo.spongepowered.org/repository/maven-public/"
     }
     maven { url 'https://jitpack.io' }
 }
@@ -122,11 +122,11 @@ processResources
     // replace stuff in mcmod.info, nothing else
     from(sourceSets.main.resources.srcDirs) {
         include 'mcmod.info'
-                
+
         // replace version and mcversion
         expand 'version':project.version, 'mcversion':project.minecraft.version
     }
-        
+
     // copy everything else, thats not the mcmod.info
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'
@@ -170,7 +170,7 @@ project.tasks.idea.dependsOn copySrg
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
 compileJava.doLast {
-    File refmapFile =  compileJava.ext.refMapFile 
+    File refmapFile =  compileJava.ext.refMapFile
     if (refmapFile.exists()) {
         def ordered
         ordered = {
@@ -284,7 +284,7 @@ task jaxb() {
 
     inputs.files fileTree( dir: 'src/main/resources', include:'*.xsd' )
     outputs.dir 'src/main/java/com/microsoft/Malmo/Schemas'
-    
+
     doLast {
         // first clear the old .java files out of the folder in case some are no longer current
         delete fileTree(dir: 'src/main/java/com/microsoft/Malmo/Schemas', include: '*.java')

@@ -36,6 +36,7 @@ import gym.envs.registration
 import gym.spaces
 import numpy as np
 from lxml import etree
+from random import randint, uniform, choice
 from minerl.env import comms
 from minerl.env.comms import retry
 from minerl.env.malmo import InstanceManager, malmo_version, launch_queue_logger_thread
@@ -46,7 +47,7 @@ from minerl.herobraine.wrapper import EnvWrapper
 logger = logging.getLogger(__name__)
 
 missions_dir = os.path.join(os.path.dirname(__file__), 'missions')
-
+from IPython import embed
 
 class EnvException(Exception):
     """A special exception thrown in the creation of an environment's Malmo mission XML.
@@ -145,7 +146,7 @@ class MineRLEnv(gym.Env):
 
     def _get_new_instance(self, port=None, instance_id=None):
         """
-        Gets a new instance and sets up a logger if need be. 
+        Gets a new instance and sets up a logger if need be.
         """
 
         if not port is None:
@@ -196,6 +197,9 @@ class MineRLEnv(gym.Env):
             if i == -1:
                 raise EnvException("Mission xml must contain <Mission> tag.")
             xml = xml[i:]
+
+
+
 
         self.xml = etree.fromstring(xml)
         self.role = role
@@ -364,11 +368,13 @@ class MineRLEnv(gym.Env):
 
         self._last_pov = obs_dict['pov']
         self._last_obs = obs_dict
-        
+
 
         # Now we wrap
         if isinstance(self.env_spec, EnvWrapper):
             obs_dict = self.env_spec.wrap_observation(obs_dict)
+
+        obs_dict['coords'] = [info['XPos'], info['YPos'], info['ZPos']]
 
         return obs_dict
 
@@ -417,7 +423,7 @@ class MineRLEnv(gym.Env):
 
             action_str.append(
                 "{} {}".format(act, str(action_in[act])))
-            
+
 
         return "\n".join(action_str)
 
@@ -433,14 +439,14 @@ class MineRLEnv(gym.Env):
         .. code-block:: python
 
             env = gym.make('MineRL...')
-            
+
             # set the environment to allow interactive connections on port 6666
             # and slow the tick speed to 6666.
-            env.make_interactive(port=6666, realtime=True) 
+            env.make_interactive(port=6666, realtime=True)
 
             # reset the env
             env.reset()
-            
+
             # interact as normal.
             ...
 
@@ -454,7 +460,7 @@ class MineRLEnv(gym.Env):
 
         The interactor will disconnect when the mission resets, but you can connect again with the same command.
         If an interactor is already started, it won't need to be relaunched when running the commnad a second time.
-        
+
 
         Args:
             port (int):  The interaction port
@@ -466,7 +472,7 @@ class MineRLEnv(gym.Env):
         self._is_real_time = realtime
         self.interact_port = port
         self.max_players = max_players
-            
+
 
     @staticmethod
     def _hello(sock):
@@ -535,7 +541,7 @@ class MineRLEnv(gym.Env):
                 "Connection with Minecraft client cleaned more than once; restarting.")
             if self.instance:
                 self.instance.kill()
-            
+
             self.instance = self._get_new_instance(instance_id=self.instance.instance_id)
 
             self.had_to_clean = False
@@ -573,7 +579,7 @@ class MineRLEnv(gym.Env):
             self.integratedServerPort = port
             logger.warn("MineRL agent is public, connect on port {} with Minecraft 1.11".format(port))
             # Todo make a launch command.
-            
+
 
 
         return self._process_observation(obs, info)
@@ -591,7 +597,7 @@ class MineRLEnv(gym.Env):
 
         Note:
         THIS MUST BE CALLED BEFORE :code:`env.reset()`
-        
+
         Args:
             seed (long, optional):  Defaults to 42.
             seed_spaces (bool, option): If the observation space and action space shoud be seeded. Defaults to True.
@@ -635,8 +641,9 @@ class MineRLEnv(gym.Env):
 
                 # Process the observation and done state.
                 out_obs = self._process_observation(obs, info)
+
                 self.done = (done == 1)
-                
+
                 if self._is_real_time:
                     t0 = time.time()
                     # Todo: Add catch-up
@@ -760,9 +767,11 @@ class MineRLEnv(gym.Env):
         num_retries = 0
         logger.debug("Sending mission init!")
         while ok != 1:
+
             # implemented random initial direction and position
             mod = etree.tostring(self.xml)
             mod = str(mod, 'utf-8')
+
             # position
             # random_x = randint(-30,30)
             # random_z = randint(-30,30)
@@ -773,11 +782,30 @@ class MineRLEnv(gym.Env):
             # mod = mod[:idx_z] + str(random_z) + mod[idx_z+1:]
             # direction
             idx = mod.index('yaw')+5
-            # random_yaw = randint(-360,360)
-            random_yaw = choice([0,90,180,270])
+            random_yaw = randint(-360,360)
+            # random_yaw = choice([0,90,180,270])
             mod = mod[:idx] + str(random_yaw) + mod[idx+1:]
             mod = etree.fromstring(mod)
             #######
+
+            xml = etree.tostring(mod)
+            token = (self._get_token() + ":" + str(self.agent_count) +
+                     ":" + str(self.synchronous).lower())
+            if self._seed is not None:
+                token += ":{}".format(self._seed)
+            token = token.encode()
+
+            comms.send_message(self.client_socket, xml)
+            comms.send_message(self.client_socket, token)
+
+            reply = comms.recv_message(self.client_socket)
+            ok, = struct.unpack('!I', reply)
+            if ok != 1:
+                num_retries += 1
+                if num_retries > MAX_WAIT:
+                    raise socket.timeout()
+                logger.debug("Recieved a MALMOBUSY from Malmo; trying again.")
+                time.sleep(1)
 
     def _get_token(self):
         return self.exp_uid + ":" + str(self.role) + ":" + str(self.resets)
