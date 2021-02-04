@@ -26,7 +26,7 @@ def wrap_env(
         frame_skip,
         gray_scale, frame_stack,
         randomize_action, eval_epsilon,
-        encoder, device):
+        encoder, device, sampling):
     # wrap env: time limit...
     # Don't use `ContinuingTimeLimit` for testing, in order to avoid unexpected behavior on submissions.
     # (Submission utility regards "done" as an episode end, which will result in endless evaluation)
@@ -39,7 +39,7 @@ def wrap_env(
     # wrap env: observation...
     # NOTE: wrapping order matters!
 
-    env = ResetWrapper(env, encoder, test)
+    env = ResetWrapper(env, encoder, test, sampling)
 
     if test and monitor:
         env = Monitor(
@@ -79,23 +79,31 @@ class ResetWrapper(gym.Wrapper):
     """
     ResetWrapper
     """
-    def __init__(self, env, encoder, test):
+    def __init__(self, env, encoder, test, sampling):
         super().__init__(env)
         self.env = env
         self.model = encoder
         self.test = test
+        self.sampling = sampling
 
     def reset(self):
         ob = self.env.reset()
         # Sample goal state
         num_goal_states = self.model.num_goal_states
-        if self.test:
-            # goal_state = (self.env.resets - 1) % num_goal_states
-            goal_state = self.model.goals[(self.env.resets - 1) % num_goal_states]
+        if self.sampling == 'weighted':
+            goal_state = choice(self.model.goals, p=[0.12972549, 0.00556863, 0.0185098 , 0.01223529, 0.09945098, 0.10764706, 0.136, 0.09541176, 0.11784314, 0.08419608, 0.00894118, 0.06478431, 0.11968627])
+        elif self.sampling == 'uniform':
+            if self.test:
+                # goal_state = (self.env.resets - 1) % num_goal_states
+                goal_state = self.model.goals[(self.env.resets - 1) % num_goal_states]
 
+            else:
+                # goal_state = randint(0, num_goal_states-1)
+                goal_state = choice(self.model.goals)
         else:
-            # goal_state = randint(0, num_goal_states-1)
-            goal_state = choice(self.model.goals)
+            raise NotImplementedException()
+
+
 
         self.env.goal_state = goal_state
         return ob

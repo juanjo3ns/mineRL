@@ -9,6 +9,7 @@ demo: yes
 monitor: yes
 load: './results/train_rl.4.2.1/best/'
 eval_n_runs: 10
+sampling: 'uniform'
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'

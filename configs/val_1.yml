@@ -8,7 +8,8 @@ gpu: 0
 demo: yes
 monitor: yes
 load: './results/train_rl.5.2.3/best/'
-eval_n_runs: 80
+eval_n_runs: 10
+sampling: 'weighted'
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'

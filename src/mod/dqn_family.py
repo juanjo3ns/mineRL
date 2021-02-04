@@ -70,6 +70,7 @@ def dqn_family(conf, outdir):
     monitor = conf['monitor']
     load = conf['load']
     eval_n_runs = conf['eval_n_runs']
+    sampling = conf['sampling']
 
     agent_type = conf['agent']
     arch = conf['arch']
@@ -131,12 +132,12 @@ def dqn_family(conf, outdir):
             frame_skip=frame_skip,
             gray_scale=gray_scale, frame_stack=frame_stack,
             randomize_action=randomize_action, eval_epsilon=eval_epsilon,
-            encoder=encoder, device=device)
+            encoder=encoder, device=device, sampling=sampling)
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
 
-    core_env.make_interactive(port=6666, realtime=True)
+    # core_env.make_interactive(port=6666, realtime=True)
 
     # This seed controls which environment will be rendered
     core_env.seed(0)

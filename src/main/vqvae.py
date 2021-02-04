@@ -163,6 +163,7 @@ class VQVAE(VQVAE_PL):
 
         print("Get index from all data points...")
         values = pd.DataFrame(columns=['x', 'y', 'Code:'])
+        mask_embed = np.zeros(self.num_clusters)
         for i, (key, p) in enumerate(zip(train_dataloader, trajectories)):
 
             x = float(p[0])
@@ -170,10 +171,24 @@ class VQVAE(VQVAE_PL):
 
             e = self._encoder(key.cuda())
             k = self.compute_argmax(e)
+            mask_embed[k] += 1
             values = values.append({'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
 
+
         values['Code:'] = values['Code:'].astype('int32')
-        palette = sns.color_palette(n_colors=self.num_clusters)
+        num_real_skills = 9
+        idx_min = []
+        while not len(idx_min) == (self.num_clusters - num_real_skills):
+            m = min(mask_embed)
+            idx = list(mask_embed).index(m)
+            mask_embed[idx] = 9999999
+            idx_min.append(idx)
+
+        repl = {x:-1 for x in idx_min}
+        values['Code:'].replace(repl, inplace=True)
+
+
+        palette = sns.color_palette("Paired", n_colors= num_real_skills)
         plot_idx_maps(values, palette, "brief")
 
 

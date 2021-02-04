@@ -10,6 +10,7 @@ Given a dataframe of x,y,index columns and a palette of colors,
 plot points in their coordinates x,y and distinguish them by index.
 '''
 def plot_idx_maps(data, palette, legend):
+    palette.insert(0,(0,0,0))
     sns.scatterplot(x="x", y="y", hue="Code:", palette=palette, data=data, legend=legend)
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
