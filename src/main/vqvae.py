@@ -176,19 +176,19 @@ class VQVAE(VQVAE_PL):
 
 
         values['Code:'] = values['Code:'].astype('int32')
-        num_real_skills = 9
-        idx_min = []
-        while not len(idx_min) == (self.num_clusters - num_real_skills):
-            m = min(mask_embed)
-            idx = list(mask_embed).index(m)
-            mask_embed[idx] = 9999999
-            idx_min.append(idx)
+        # num_real_skills = 9
+        # idx_min = []
+        # while not len(idx_min) == (self.num_clusters - num_real_skills):
+        #     m = min(mask_embed)
+        #     idx = list(mask_embed).index(m)
+        #     mask_embed[idx] = 9999999
+        #     idx_min.append(idx)
+        #
+        # repl = {x:-1 for x in idx_min}
+        # values['Code:'].replace(repl, inplace=True)
 
-        repl = {x:-1 for x in idx_min}
-        values['Code:'].replace(repl, inplace=True)
 
-
-        palette = sns.color_palette("Paired", n_colors= num_real_skills)
+        palette = sns.color_palette("Paired", n_colors= self.num_clusters)
         plot_idx_maps(values, palette, "brief")
 
 

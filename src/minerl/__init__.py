@@ -1,4 +1,3 @@
-
 import minerl.utils
 import minerl.herobraine
 import minerl.data

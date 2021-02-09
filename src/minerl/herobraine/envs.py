@@ -12,6 +12,7 @@ import os
 import sys
 from config import getConfig
 
+
 # Must load non-obfuscated envs first!
 # Publish.py depends on this order for black-listing streams
 MINERL_TREECHOP_V0 = Treechop()
