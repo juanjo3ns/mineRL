@@ -55,6 +55,29 @@ def plot_reward_maps(data_list):
     fig.colorbar(g, ax=axn[:,-1])
     plt.show()
 
+def plot_q_maps(data_list):
+
+
+    num_plots = len(data_list)
+    if num_plots == 8:
+        x,y = 2,4
+    elif num_plots == 9:
+        x,y = 3,3
+    elif num_plots == 10:
+        x,y = 2,5
+    else:
+        x,y = 3,5
+
+    fig, axn = plt.subplots(x,y, sharex=True, sharey=True, constrained_layout=True)
+
+    for i, ax in enumerate(axn.flat):
+        if i < len(data_list):
+            ax.set_title('$q(s, z=z_{' + str(i) + '})$') # do not use f-string here
+            g = ax.scatter(data_list[i]['x'],data_list[i]['y'], c=data_list[i]['q_value'], marker='.')
+        # ax.axis('off')
+    fig.colorbar(g, ax=axn[:,-1])
+    plt.show()
+
 
 def compare_func():
     x = np.arange(0,1,0.01)
@@ -77,4 +100,4 @@ def skill_appearance():
     ax.set_xlabel('skill')
     plt.savefig('skills_histogram.png', transparent=True)
 
-skill_appearance()
+# skill_appearance()

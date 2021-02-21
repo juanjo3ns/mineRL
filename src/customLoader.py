@@ -44,11 +44,19 @@ class CustomMinecraftData(Dataset):
             print(f"\tTraj: {i}", end ='\r')
             obs = np.load(path / self.env / traj, allow_pickle=True)
             self.trj_length = obs.shape[0]
+            if len(obs.shape) == 3:
+                self.n_channels = 1
+            else:
+                self.n_channels = obs.shape[3]
+
             data.append(obs)
         print()
-
+        data = [y for x in data for y in x]
         data = np.array(data)
-        return data.reshape(-1, 64, 64, 3)
+        if self.n_channels == 1:
+            return data.reshape(-1, 64, 64)
+        else:
+            return data.reshape(-1, 64, 64, self.n_channels)
 
 
     def __len__(self) -> int:
@@ -78,12 +86,12 @@ class CustomMinecraftData(Dataset):
 
 
 class MultiMinecraftData(Dataset):
-    def __init__(self, env_list, mode, split, extra, transform=None, path='../data', **kwargs) -> None:
+    def __init__(self, env_list, mode, split, transform=None, path='../data', **kwargs) -> None:
         self.path = path
         self.env_list = env_list
         self.mode = mode
         self.split = split
-        self.extra = extra
+        self.extra = False
         self.dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
         self.data = self.loadData()
         # self.data_variance = np.var(self.data) / 255

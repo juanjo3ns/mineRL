@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from minerl.viewer.scaled_image_display import ScaledImageDisplay
 from minerl.viewer.primitives import Rect, Point
 import abc
-
+from imageio import imread
 from IPython import embed
 
 SZ = 35
@@ -42,16 +42,16 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         #     [49.76, 96.85, 36.43],
         #     [-45.50, 108, 1.45],
         # ]
-        self.goal_states = [
-            [0,20],
-            [20,20],
-            [20,0],
-            [20,-20],
-            [0,-20],
-            [-20,-20],
-            [-20,0],
-            [-20,20],
-        ]
+        # self.goal_states = [
+        #     [0,20],
+        #     [20,20],
+        #     [20,0],
+        #     [20,-20],
+        #     [0,-20],
+        #     [-20,-20],
+        #     [-20,0],
+        #     [-20,20],
+        # ]
         self.goal_state = goal_state
 
         # Set up camera control stuff.
@@ -108,14 +108,22 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         ax.spines['right'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
         ax.spines['left'].set_visible(False)
-
-        for i,(x,y) in enumerate(self.goal_states):
-            # if self.goal_state == i:
-            #     plt.plot(x, y, marker='o', color='blue', markersize=13)
-            # else:
-            plt.plot(x, y, marker='o', color='white', markersize=10)
+        x = -55
+        y = 55
+        ax.set_xlim(x, y)
+        ax.set_ylim(x, y)
+        image = imread("./CustomTrajectories7.png")
+        import cv2
+        image = cv2.resize(image, (64,64))
+        image = image[:,:,:3]
+        plt.imshow(image,extent=[x, y, x, y])
+        # for i,(x,y) in enumerate(self.goal_states):
+        #     # if self.goal_state == i:
+        #     #     plt.plot(x, y, marker='o', color='blue', markersize=13)
+        #     # else:
+        #     plt.plot(x, y, marker='o', color='white', markersize=10)
         plt.plot(self.coords[0,0], self.coords[0,1], marker='o', markersize=10)
-        plt.plot(self.coords[:,0], self.coords[:,1])
+        plt.plot(self.coords[:,0], self.coords[:,1], linewidth=4.0)
         plt.plot(self.coords[step,0], self.coords[step,1],marker='o', markersize=5, color='red')
         plt.xticks([])
         plt.yticks([])
@@ -186,11 +194,11 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         x,y = self.camera_rect.center
         y += int(self.reward_height//2 + SZ*2)
         x -= width//2
-        self.cum_reward_rect = Rect(x-1,y-1, width+2,height+2, color=(255, 255, 255))
+        self.cum_reward_rect = Rect(x-1,20-1, width+2,height+2, color=(255, 255, 255))
         self.cum_reward_label = pyglet.text.Label(
-            'Net Reward', font_size=SMALLER_FONT_SIZE, x=x+width//2, y=y+height+5,
+            'Net Reward', font_size=SMALLER_FONT_SIZE, x=x+width//2, y=20+height+5,
         anchor_x='center', align='center')
-        self.cum_reward_line = Rect(x, y, w=2, h=height, color=CAMERA_USING_COLOR)
+        self.cum_reward_line = Rect(x, 20, w=2, h=height, color=CAMERA_USING_COLOR)
         self.cum_reward_info_label = pyglet.text.Label('', multiline=True, width=width,
             font_size=SMALLER_FONT_SIZE/1.1, font_name='Courier New', x=x+3, y=y-3, anchor_x='left', anchor_y='top')
 
@@ -224,6 +232,20 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         #     self.process_actions(action)
         # self.process_observations(obs)
 
+        # ENV MAP
+
+
+        # image = imread("./CustomTrajectories7.png")
+        # import cv2
+        # image = cv2.resize(image, (64,64))
+        # image = image[:,:,:3]
+        # self.blit_texture(image,self.cum_reward_rect.x+1, 40, self.cum_reward_rect.width-2, self.cum_reward_rect.width-2)
+        # self.blit_texture(image,
+        #     20,
+        #     30,
+        #     width=self.cum_reward_rect.width-2,
+        #     height= self.cum_reward_rect.height-2)
+
         # INSTRUCTIONS
         if self.instructions:
             for label in self.instructions_labels:
@@ -240,7 +262,7 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
             self.cum_reward_rect.draw()
             self.blit_texture(self.cum_reward_image,
                 self.cum_reward_rect.x+1,
-                self.cum_reward_rect.y+1,
+                20,
                 width=self.cum_reward_rect.width-2,
                 height= self.cum_reward_rect.height-2)
             self.cum_reward_line.draw()
@@ -258,11 +280,11 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
 
 
         # GOAL STATES
-        self.blit_texture(goal_state, self.cum_reward_rect.x+1, 40, self.cum_reward_rect.width-2, self.cum_reward_rect.width-2)
-        self.goal_state_label = pyglet.text.Label(
-            'Goal State', font_size=SMALLER_FONT_SIZE, x=self.cum_reward_rect.x+60, y=50+self.cum_reward_rect.width,
-            anchor_x='center', align='center')
-        self.goal_state_label.draw()
+        # self.blit_texture(goal_state, self.cum_reward_rect.x+1, 40, self.cum_reward_rect.width-2, self.cum_reward_rect.width-2)
+        # self.goal_state_label = pyglet.text.Label(
+        #     'Goal State', font_size=SMALLER_FONT_SIZE, x=self.cum_reward_rect.x+60, y=50+self.cum_reward_rect.width,
+        #     anchor_x='center', align='center')
+        # self.goal_state_label.draw()
 
 
         # Custom render loop.

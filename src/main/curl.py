@@ -26,7 +26,7 @@ import torch.nn.functional as F
 
 from torch.utils.data import DataLoader
 from torchvision.utils import make_grid
-from customLoader import CustomMinecraftData
+from customLoader import *
 from torchvision.transforms import transforms
 
 from models.CURL import CURL_PL
@@ -40,7 +40,7 @@ class CURL(CURL_PL):
         obs_shape = (3, img_size, img_size)
         conf['curl']['obs_shape'] = obs_shape
 
-        super(CURL, self).__init__(**conf['curl'])
+        super(CURL, self).__init__(z_dim=conf['curl']['z_dim'])
 
         self.batch_size = conf['batch_size']
         self.lr = conf['lr']
@@ -50,6 +50,8 @@ class CURL(CURL_PL):
 
         self.tau = conf['tau']
         self.soft_update = conf['soft_update']
+
+        self.conf = conf['curl']
 
         self.transform = transforms.Compose([
                                   transforms.ToTensor(),
@@ -62,8 +64,7 @@ class CURL(CURL_PL):
 
 
     def forward(self, data):
-        key, query = data
-
+        key, query = data[:,0], data[:,1]
         # Forward tensors through encoder
         z_a = self.encode(key)
         z_pos = self.encode(query, ema=True)
@@ -80,7 +81,7 @@ class CURL(CURL_PL):
 
         self.log('loss/train_epoch', loss, on_step=False, on_epoch=True)
 
-        if batch_idx%2==0:
+        if batch_idx % self.soft_update == 0:
             self.soft_update_params()
 
         return loss
@@ -97,12 +98,14 @@ class CURL(CURL_PL):
         return optim.Adam(self.parameters(), lr=self.lr, amsgrad=False)
 
     def train_dataloader(self):
-        train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay)
+        train_dataset = MultiMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, **self.conf)
+        # train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay)
         train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
         return train_dataloader
 
     def val_dataloader(self):
-        val_dataset = CustomMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, delay=self.delay)
+        val_dataset = MultiMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, **self.conf)
+        # val_dataset = CustomMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, delay=self.delay)
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 
