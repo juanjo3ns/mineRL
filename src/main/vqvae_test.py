@@ -29,5 +29,6 @@ else:
 vqvae = VQVAE(conf).cuda()
 checkpoint = torch.load(join(path_weights, conf['test']['path_weights']))
 vqvae.load_state_dict(checkpoint['state_dict'])
-vqvae.index_map()
+# vqvae.index_map()
 # vqvae.reward_map()
+vqvae.q_map()

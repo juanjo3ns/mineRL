@@ -29,6 +29,8 @@ from models.VQVAE import VQVAE_PL
 
 from pytorch_lightning.loggers import WandbLogger
 
+from mod.q_functions import parse_arch
+
 from IPython import embed
 
 class VQVAE(VQVAE_PL):
@@ -59,8 +61,10 @@ class VQVAE(VQVAE_PL):
 
 
     def training_step(self, batch, batch_idx):
-        x = batch
-        y = batch
+
+        x = batch.float()
+        y = batch.float()
+
         if self.delay:
             x,y = batch
 
@@ -73,8 +77,10 @@ class VQVAE(VQVAE_PL):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x = batch
-        y = batch
+
+        x = batch.float()
+        y = batch.float()
+
         if self.delay:
             x,y = batch
         vq_loss, data_recon, perplexity = self(x)
@@ -176,19 +182,19 @@ class VQVAE(VQVAE_PL):
 
 
         values['Code:'] = values['Code:'].astype('int32')
-        num_real_skills = 9
-        idx_min = []
-        while not len(idx_min) == (self.num_clusters - num_real_skills):
-            m = min(mask_embed)
-            idx = list(mask_embed).index(m)
-            mask_embed[idx] = 9999999
-            idx_min.append(idx)
+        # num_real_skills = 9
+        # idx_min = []
+        # while not len(idx_min) == (self.num_clusters - num_real_skills):
+        #     m = min(mask_embed)
+        #     idx = list(mask_embed).index(m)
+        #     mask_embed[idx] = 9999999
+        #     idx_min.append(idx)
+        #
+        # repl = {x:-1 for x in idx_min}
+        # values['Code:'].replace(repl, inplace=True)
 
-        repl = {x:-1 for x in idx_min}
-        values['Code:'].replace(repl, inplace=True)
 
-
-        palette = sns.color_palette("Paired", n_colors= num_real_skills)
+        palette = sns.color_palette("Paired", n_colors= self.num_clusters)
         plot_idx_maps(values, palette, "brief")
 
 
@@ -223,3 +229,37 @@ class VQVAE(VQVAE_PL):
 
         print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")
         plot_reward_maps(data_list)
+
+
+    def q_map(self):
+        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
+        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
+
+        trajectories = self.load_trajectories()
+        trajectories = trajectories.reshape(-1, 3)
+
+        q_func = parse_arch('distributed_dueling', 4, n_input_channels=3, embedding_dim=256).cuda()
+
+        print("Get q_value from all data points...")
+        data_list = []
+        ini = time.time()
+        print(self.goals)
+        for g in range(self.num_clusters):
+            goal_state = self.get_goal_state(g)
+            print(f"Getting q value for state s conditioned on goal state {g}", end="\r")
+            values = pd.DataFrame(columns=['x', 'y', 'q_value'])
+            for i, (key, p) in enumerate(zip(train_dataloader, trajectories)):
+                x = float(p[0])
+                y = float(p[2])
+                e = self.encode(key.cuda()).detach().cpu().numpy()
+                obs_gs = np.concatenate((e.reshape(-1), goal_state))
+                obs_gs = obs_gs.reshape(1,obs_gs.shape[0])
+
+                obs = torch.from_numpy(obs_gs).cuda()
+                q_value = q_func(obs).max.detach().cpu().item()
+
+                values = values.append({'x': x, 'y': y, 'q_value': q_value}, ignore_index=True)
+            data_list.append(values)
+
+        print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")
+        plot_q_maps(data_list)

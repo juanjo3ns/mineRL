@@ -1,15 +1,17 @@
-experiment: 'curl_test'
+experiment: 'curl_exp_0'
 environment: 'MineRLNavigate-v0'
-epochs: 400
+epochs: 300
 batch_size: 32
 lr: 0.001
-trajectories: 'CustomTrajectories4'
+trajectories: ['MineRLNavigate-v0']
 split: 0.90
 tau: 0.005
 soft_update: 2
 img_size: 64
 delay: yes
 curl:
+  k_std: 5
+  k_mean: 15
   z_dim: 128
 test:
   path_goal_states: './goal_states/flat_biome_curl_kmeans_2'

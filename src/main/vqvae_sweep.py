@@ -16,11 +16,10 @@ def main():
     import sys
     import wandb
 
-    from pathlib import Path
     from config import setSeed, getConfig
     from main.vqvae import VQVAE
-    import pytorch_lightning as pl
     from pytorch_lightning.loggers import WandbLogger
+    import pytorch_lightning as pl
 
     from IPython import embed
 
@@ -49,36 +48,36 @@ def main():
 
     trainer.fit(vqvae)
 
-# sweep_config = {
-#     "name": f"{alg}_2.sweep",
-#     "method": 'bayes',
-#     "metric": {
-#         "name": "loss/val",
-#         "goal": "minimize"
-#     },
-#     "parameters": {
-#         "vqvae.commitment_cost": {
-#               "distribution": "uniform",
-#               "max": 0.3,
-#               "min": 0.05
-#         },
-#         "lr": {
-#           "distribution": "uniform",
-#           "max": 0.005,
-#           "min": 0.00005
-#         }
-#   }
-# }
 sweep_config = {
-    "name": f"{alg}_sweep_0",
-    "method": 'grid',
+    "name": f"{alg}_2.sweep",
+    "method": 'bayes',
     "metric": {
         "name": "loss/val",
         "goal": "minimize"
     },
     "parameters": {
-        "vqvae.num_embeddings": {
-              "values": [10,11,12,13,14,15]
+        "vqvae.commitment_cost": {
+              "distribution": "uniform",
+              "max": 0.3,
+              "min": 0.05
+        },
+        "lr": {
+          "distribution": "uniform",
+          "max": 0.005,
+          "min": 0.00005
+        }
+  }
+}
+sweep_config = {
+    "name": f"{alg}_sweep_lunarlander",
+    "method": 'grid',
+    "metric": {
+        "name": "perplexity/train",
+        "goal": "maximize"
+    },
+    "parameters": {
+        "vqvae.commitment_cost": {
+              "values": [0.05,0.2,0.4,0.6,0.8]
         }
   }
 }
@@ -88,4 +87,4 @@ sweep_config = {
 # del os.environ["SLURM_JOB_NAME"]
 
 sweep_id = wandb.sweep(sweep_config, project="mineRL")
-wandb.agent(sweep_id, function=main, count=6)
+wandb.agent(sweep_id, function=main)

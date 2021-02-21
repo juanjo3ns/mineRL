@@ -63,6 +63,7 @@ class CURL_PL(pl.LightningModule):
         return logits
 
     def compute_train(self, z_a, z_pos):
+        
         """
         Uses logits trick for CURL:
         - compute (B,B) matrix z_a (W z_pos.T)

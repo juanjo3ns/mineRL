@@ -91,7 +91,7 @@ class ResetWrapper(gym.Wrapper):
         # Sample goal state
         num_goal_states = self.model.num_goal_states
         if self.sampling == 'weighted':
-            goal_state = choice(self.model.goals, p=[0.12972549, 0.00556863, 0.0185098 , 0.01223529, 0.09945098, 0.10764706, 0.136, 0.09541176, 0.11784314, 0.08419608, 0.00894118, 0.06478431, 0.11968627])
+            goal_state = np.random.choice(self.model.goals, p=[0.12972549, 0.00556863, 0.0185098 , 0.01223529, 0.09945098, 0.10764706, 0.136, 0.09541176, 0.11784314, 0.08419608, 0.00894118, 0.06478431, 0.11968627])
         elif self.sampling == 'uniform':
             if self.test:
                 # goal_state = (self.env.resets - 1) % num_goal_states
