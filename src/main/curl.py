@@ -42,6 +42,7 @@ class CURL(CURL_PL):
 
         super(CURL, self).__init__(z_dim=conf['curl']['z_dim'])
 
+        self.experiment = conf['experiment']
         self.batch_size = conf['batch_size']
         self.lr = conf['lr']
         self.split = conf['split']
@@ -121,17 +122,27 @@ class CURL(CURL_PL):
         return KMeans(n_clusters=num_clusters, random_state=0).fit(embeddings)
 
 
-    def compute_embeddings(self):
-        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
+    def compute_embeddings(self, limit):
+
+        train_dataset = MultiMinecraftData(self.trajectories, 'train', 1, transform=self.transform, **self.conf)
+        # train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
         train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
 
         # compute embeddings of all trajectories
         print("\nComputing embeddings from all data points...")
         embeddings = []
-        for key in train_dataloader:
-            embeddings.append(self.encode(key.cuda()).detach().cpu().numpy())
+        images = []
+        for traj in train_dataset.data:
+            for key in traj:
+                if len(embeddings) == limit:
+                    break
+                key = self.transform(key/255).float()
+                key = key.unsqueeze(dim=0)
+                embeddings.append(self.encode(key.cuda()).detach().cpu().numpy())
+                images.append(key)
         embeddings = np.array(embeddings).squeeze()
-        return embeddings, train_dataset
+        images = torch.cat(images)
+        return embeddings, images
 
     def compute_rewards(self):
 
@@ -237,3 +248,18 @@ class CURL(CURL_PL):
 
         print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")
         plot_reward_maps(data_list)
+
+    def show_embeddings(self):
+        import tensorflow
+        from torch.utils.tensorboard import SummaryWriter
+        import tensorboard
+
+        limit = 10000
+
+        tensorflow.io.gfile = tensorboard.compat.tensorflow_stub.io.gfile
+
+        embeddings, images = self.compute_embeddings(limit)
+        images += 0.5
+        writer = SummaryWriter(log_dir=os.path.join("./results", self.experiment))
+        writer.add_embedding(embeddings, label_img=images)
+        writer.close()
