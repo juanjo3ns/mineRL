@@ -86,9 +86,9 @@ class CustomMinecraftData(Dataset):
 
 
 class MultiMinecraftData(Dataset):
-    def __init__(self, env_list, mode, split, transform=None, path='../data', **kwargs) -> None:
+    def __init__(self, env, mode, split, transform=None, path='../data', **kwargs) -> None:
         self.path = path
-        self.env_list = env_list
+        self.env = env
         self.mode = mode
         self.split = split
         self.extra = False
@@ -105,36 +105,34 @@ class MultiMinecraftData(Dataset):
         print('Loading data...')
         path = Path(self.path)
 
-        self.num_vids = 0
+        env = self.env
+        print(f"\n\tLoading environment {env}")
+        self.num_vids = len(os.listdir(path / env))
+        video_list = os.listdir(path / env)
 
-        for env in self.env_list:
-            print(f"\n\tLoading environment {env}")
-            self.num_vids += len(os.listdir(path / env))
-            video_list = os.listdir(path / env)
+        if self.mode == 'train':
+            video_list = video_list[:int(self.split*self.num_vids)]
+        else:
+            video_list = video_list[int(self.split*self.num_vids):]
 
-            # if self.mode == 'train':
-            #     video_list = video_list[:int(self.split*num_vids)]
-            # else:
-            #     video_list = video_list[int(self.split*num_vids):]
+        for i, vid in enumerate(video_list):
+            print(f"\tVid: {i}", end ='\r')
+            video = []
+            if self.extra:
+                other_info = np.load(path / env / vid / 'rendered.npz')
 
-            for i, vid in enumerate(video_list):
-                print(f"\tVid: {i}", end ='\r')
-                video = []
-                if self.extra:
-                    other_info = np.load(path / env / vid / 'rendered.npz')
+            vid_path = path / env / vid / 'recording.mp4'
+            frames = cv2.VideoCapture(str(vid_path))
+            ret = True
+            fc = 0
+            while(frames.isOpened() and ret):
+                ret, frame = frames.read()
+                if ret and fc % 1 == 0:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    video.append(frame)
+                fc += 1
 
-                vid_path = path / env / vid / 'recording.mp4'
-                frames = cv2.VideoCapture(str(vid_path))
-                ret = True
-                fc = 0
-                while(frames.isOpened() and ret):
-                    ret, frame = frames.read()
-                    if ret and fc % 1 == 0:
-                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        video.append(frame)
-                    fc += 1
-
-                data.append(video)
+            data.append(video)
         print()
         return data
 

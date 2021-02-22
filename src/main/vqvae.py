@@ -22,7 +22,7 @@ import torch.nn.functional as F
 
 from torch.utils.data import DataLoader
 from torchvision.utils import make_grid
-from customLoader import CustomMinecraftData
+from customLoader import *
 from torchvision.transforms import transforms
 
 from models.VQVAE import VQVAE_PL
@@ -45,14 +45,14 @@ class VQVAE(VQVAE_PL):
         self.delay = conf['delay']
         self.trajectories = conf['trajectories']
         img_size = conf['img_size']
+        self.conf = {'k_std': conf['k_std'], 'k_mean': conf['k_mean']}
 
-
-        self.example_input_array = torch.rand(self.batch_size, 3, img_size, img_size)
-        if self.delay:
-            self.example_input_array = (
-                torch.rand(self.batch_size, 3, img_size, img_size),
-                torch.rand(self.batch_size, 3, img_size, img_size)
-                )
+        # self.example_input_array = torch.rand(self.batch_size, 3, img_size, img_size)
+        # if self.delay:
+        #     self.example_input_array = (
+        #         torch.rand(self.batch_size, 3, img_size, img_size),
+        #         torch.rand(self.batch_size, 3, img_size, img_size)
+        #         )
 
         self.transform = transforms.Compose([
                                   transforms.ToTensor(),
@@ -66,13 +66,15 @@ class VQVAE(VQVAE_PL):
         y = batch.float()
 
         if self.delay:
-            x,y = batch
+            x,y = batch[:,0], batch[:,1]
 
         vq_loss, data_recon, perplexity = self(x)
         recon_error = F.mse_loss(data_recon, y)
         loss = recon_error + vq_loss
-        self.log('loss/train', loss, on_step=False, on_epoch=True)
-        self.log('perplexity/train', perplexity, on_step=False, on_epoch=True)
+        self.logger.experiment.log({
+            'loss/train':loss,
+            'perplexity/train': perplexity
+        })
 
         return loss
 
@@ -82,13 +84,16 @@ class VQVAE(VQVAE_PL):
         y = batch.float()
 
         if self.delay:
-            x,y = batch
+            x,y = batch[:,0], batch[:,1]
+
         vq_loss, data_recon, perplexity = self(x)
         recon_error = F.mse_loss(data_recon, y)
         loss = recon_error + vq_loss
 
-        self.log('loss/val', loss, on_step=False, on_epoch=True)
-        self.log('perplexity/val', perplexity, on_step=False, on_epoch=True)
+        self.logger.experiment.log({
+            'loss/val':loss,
+            'perplexity/val': perplexity
+        })
 
         if batch_idx == 0:
             grid = make_grid(data_recon[:64].cpu().data)
@@ -101,12 +106,14 @@ class VQVAE(VQVAE_PL):
         return torch.optim.Adam(params=self.parameters(), lr=self.lr, weight_decay=1e-5)
 
     def train_dataloader(self):
-        train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay)
+        train_dataset = MultiMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, **self.conf)
+        # train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay)
         train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
         return train_dataloader
 
     def val_dataloader(self):
-        val_dataset = CustomMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, delay=self.delay)
+        val_dataset = MultiMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, **self.conf)
+        # val_dataset = CustomMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, delay=self.delay)
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 
