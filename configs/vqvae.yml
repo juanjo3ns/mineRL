@@ -1,6 +1,6 @@
 experiment: 'vqvae_exp_0'
 environment: 'MineRLNavigate-v0'
-epochs: 100
+epochs: 500
 delay: yes
 trajectories: 'MineRLNavigate-v0'
 split: 0.90

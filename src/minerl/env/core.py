@@ -773,13 +773,13 @@ class MineRLEnv(gym.Env):
             mod = str(mod, 'utf-8')
 
             # position
-            random_x = randint(-40,40)
-            random_z = randint(-40,40)
+            # random_x = randint(-40,40)
+            # random_z = randint(-40,40)
             
-            idx_x = mod.index('x=')+3
-            mod = mod[:idx_x] + str(random_x) + mod[idx_x+1:]
-            idx_z = mod.index('z=')+3
-            mod = mod[:idx_z] + str(random_z) + mod[idx_z+1:]
+            # idx_x = mod.index('x=')+3
+            # mod = mod[:idx_x] + str(random_x) + mod[idx_x+1:]
+            # idx_z = mod.index('z=')+3
+            # mod = mod[:idx_z] + str(random_z) + mod[idx_z+1:]
             # direction
             idx = mod.index('yaw')+5
             random_yaw = randint(-360,360)

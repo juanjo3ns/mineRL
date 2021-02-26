@@ -104,7 +104,7 @@ class ResetWrapper(gym.Wrapper):
             raise NotImplementedException()
 
 
-
+        self.env.current_step = 0
         self.env.goal_state = goal_state
         return ob
 
@@ -213,13 +213,23 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
     """Obtain embedding vector corresponding to current observation."""
     def __init__(self, env, encoder, device, test):
         super().__init__(env)
+        self.env = env
         self.model = encoder
         self.device = device
         self.test = test
         self.transform = Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
 
     def observation(self, observation):
+        # Uncomment only when testing on a sequence of skills
+        seq_num = int(self.env.current_step / 30)
+        if seq_num == 0:
+            self.env.goal_state = self.model.goals[(self.env.resets - 1 + seq_num) % self.model.num_goal_states]
+
+        self.env.current_step += 1
+        ###
+
         goal_state = self.env.goal_state
+        
         obs_anchor = torch.from_numpy(observation).float()
         # We don't need .ToTensor since shape already 3,64,64 but we need to divide by 255
         # Then, we substract the mean 0.5 and divide by 1 like in the encoder training

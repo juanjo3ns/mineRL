@@ -1,4 +1,4 @@
-outdir: 'rl.8.1.1_qvalues_0'
+outdir: 'rl.9.0.0_circle_0'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -6,8 +6,8 @@ seed: 0
 gpu: 0
 
 demo: yes
-monitor: no
-load: './results/train_rl.8.1.1/best/'
+monitor: yes
+load: './results/train_rl.9.0.0/best/'
 eval_n_runs: 8
 sampling: 'uniform'
 
