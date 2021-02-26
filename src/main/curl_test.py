@@ -36,6 +36,4 @@ curl.load_state_dict(checkpoint['state_dict'])
 
 # curl.store_goal_states()
 
-# curl.index_map()
-# curl.reward_map()
-curl.show_embeddings()
+curl._construct_map()

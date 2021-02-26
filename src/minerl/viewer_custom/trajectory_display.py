@@ -112,16 +112,20 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         y = 55
         ax.set_xlim(x, y)
         ax.set_ylim(x, y)
-        image = imread("./CustomTrajectories7.png")
-        import cv2
-        image = cv2.resize(image, (64,64))
-        image = image[:,:,:3]
-        plt.imshow(image,extent=[x, y, x, y])
+
+        # image = imread("./CustomTrajectories7.png")
+        # import cv2
+        # image = cv2.resize(image, (64,64))
+        # image = image[:,:,:3]
+        # plt.imshow(image,extent=[x, y, x, y])
+
+
         # for i,(x,y) in enumerate(self.goal_states):
         #     # if self.goal_state == i:
         #     #     plt.plot(x, y, marker='o', color='blue', markersize=13)
         #     # else:
         #     plt.plot(x, y, marker='o', color='white', markersize=10)
+        
         plt.plot(self.coords[0,0], self.coords[0,1], marker='o', markersize=10)
         plt.plot(self.coords[:,0], self.coords[:,1], linewidth=4.0)
         plt.plot(self.coords[step,0], self.coords[step,1],marker='o', markersize=5, color='red')

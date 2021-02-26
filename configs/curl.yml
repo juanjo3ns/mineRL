@@ -1,9 +1,9 @@
-experiment: 'curl_exp_0_embeddings'
+experiment: 'curl_exp_1'
 environment: 'MineRLNavigate-v0'
+trajectories: ['MineRLNavigate-v0', 'MineRLTreechopVectorObf-v0']
 epochs: 300
 batch_size: 32
 lr: 0.001
-trajectories: 'MineRLNavigate-v0'
 split: 0.90
 tau: 0.005
 soft_update: 2
@@ -14,6 +14,9 @@ curl:
   k_mean: 15
   z_dim: 128
 test:
-  path_goal_states: './goal_states/flat_biome_curl_kmeans_2'
+  type: 'reward'  # [index, reward, embed]
+  shuffle: no
+  limit: null
+  path_goal_states: './goal_states/CT8_real_biome_curl_kmeans_10'
   # path_weights: './curl_1.0/mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'
   path_weights: './curl_exp_0/mineRL/10d8jeqr/checkpoints/epoch=299-step=2099.ckpt'
