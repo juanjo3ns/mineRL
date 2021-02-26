@@ -20,7 +20,8 @@ class CURL_PL(pl.LightningModule):
             load_goal_states=False,
             device=None,
             path_goal_states=None,
-            goals=[]
+            goals=[],
+            **kwargs
             ):
         super(CURL_PL, self).__init__()
 
@@ -63,7 +64,7 @@ class CURL_PL(pl.LightningModule):
         return logits
 
     def compute_train(self, z_a, z_pos):
-        
+
         """
         Uses logits trick for CURL:
         - compute (B,B) matrix z_a (W z_pos.T)

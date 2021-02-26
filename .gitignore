@@ -1,5 +1,6 @@
 images/
 src/results/
+src/goal_states/
 src/wandb/
 weights/
 tensorboard/

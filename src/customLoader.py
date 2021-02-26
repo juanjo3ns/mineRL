@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import matplotlib.pylab as plt
 
-from random import choice, randint
+from random import choice, randint, shuffle
 from os.path import join
 from pathlib import Path
 from torchvision import transforms
@@ -15,203 +15,101 @@ from IPython import embed
 
 
 class CustomMinecraftData(Dataset):
-    def __init__(self, env, mode, split, transform=None, path='../data', delay=False, **kwargs) -> None:
-        self.path = path
-        self.env = env
-        self.mode = mode
-        self.split = split
+    def __init__(self, traj_list, transform=None, path='../data', delay=False, **kwargs) -> None:
+        self.path = Path(path)
+        self.traj_list = traj_list
         self.delay = delay
         self.dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-        self.data = self.loadData()
-        self.transform = transform
-
-    def loadData(self) -> list:
-        data = []
-
-        print('Loading data...')
-        path = Path(self.path)
-
-        print(f"\n\tLoading environment {self.env}")
-        num_traj = len(os.listdir(path / self.env))
-        traj_list = sorted(os.listdir(path / self.env), key=lambda x: int(x.split('.')[0].split('_')[1]))
-
-        if self.mode == 'train':
-            traj_list = traj_list[:int(self.split*num_traj)]
-        else:
-            traj_list = traj_list[int(self.split*num_traj):]
-
-        for i, traj in enumerate(traj_list):
-            print(f"\tTraj: {i}", end ='\r')
-            obs = np.load(path / self.env / traj, allow_pickle=True)
-            self.trj_length = obs.shape[0]
-            if len(obs.shape) == 3:
-                self.n_channels = 1
-            else:
-                self.n_channels = obs.shape[3]
-
-            data.append(obs)
-        print()
-        data = [y for x in data for y in x]
-        data = np.array(data)
-        if self.n_channels == 1:
-            return data.reshape(-1, 64, 64)
-        else:
-            return data.reshape(-1, 64, 64, self.n_channels)
-
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __getitem__(self, index):
-        # Pick trajectory
-        if self.delay:
-            if index + 1 == len(self.data):
-                index -= 1
-            if index%self.trj_length==0 and index>0:
-                key = self.data[index-1]
-                query = self.data[index]
-            else:
-                key = self.data[index]
-                query = self.data[index+1]
-
-            if self.transform is not None:
-                key = self.transform(key)
-                query = self.transform(query)
-            return key, query
-
-        obs = self.data[index]
-        if self.transform is not None:
-            obs = self.transform(obs)
-        return obs
-
-
-class MultiMinecraftData(Dataset):
-    def __init__(self, env, mode, split, transform=None, path='../data', **kwargs) -> None:
-        self.path = path
-        self.env = env
-        self.mode = mode
-        self.split = split
-        self.extra = False
-        self.dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-        self.data = self.loadData()
-        # self.data_variance = np.var(self.data) / 255
         self.transform = transform
         self.k_std = kwargs['k_std']
         self.k_mean = kwargs['k_mean']
+        self.loadData()
 
-    def loadData(self) -> list:
-        data = []
+    """
+    Given an index from self.data it returns the last index
+    of the trajectory that it belongs to.
+    """
+    def getTrajLastIdx(self, idx):
+        list_idxs = self.list_idxs
+        idx_acc = 0
+        for i in list_idxs:
+            if idx >= idx_acc and idx < (idx_acc + i):
+                return idx_acc + i - 1
+            idx_acc += i
+        return None
 
-        print('Loading data...')
-        path = Path(self.path)
 
-        env = self.env
-        print(f"\n\tLoading environment {env}")
-        self.num_vids = len(os.listdir(path / env))
-        video_list = os.listdir(path / env)
+    def customLoad(self):
+        data, list_idxs = [], []
 
-        if self.mode == 'train':
-            video_list = video_list[:int(self.split*self.num_vids)]
-        else:
-            video_list = video_list[int(self.split*self.num_vids):]
+        for i, traj in enumerate(self.traj_list):
+            print(f"\tTraj: {i}", end ='\r')
+            obs = np.load(traj, allow_pickle=True)
+            data.append(obs)
+            list_idxs.append(obs.shape[0])
 
-        for i, vid in enumerate(video_list):
+        print()
+        data = np.array(data).reshape(-1, 64, 64, 3)
+        self.data = data
+        self.list_idxs = list_idxs
+
+    def expertLoad(self):
+        data, list_idxs = [], []
+
+        for i, vid in enumerate(self.traj_list):
             print(f"\tVid: {i}", end ='\r')
             video = []
-            if self.extra:
-                other_info = np.load(path / env / vid / 'rendered.npz')
 
-            vid_path = path / env / vid / 'recording.mp4'
+            vid_path = vid / 'recording.mp4'
             frames = cv2.VideoCapture(str(vid_path))
             ret = True
             fc = 0
             while(frames.isOpened() and ret):
                 ret, frame = frames.read()
-                if ret and fc % 1 == 0:
+                if ret and fc % 3 == 0:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     video.append(frame)
                 fc += 1
 
             data.append(video)
-        print()
-        return data
+            list_idxs.append(len(video))
+        data = [y for x in data for y in x]
+        self.data = np.array(data)
+        self.list_idxs = list_idxs
+
+    def loadData(self) -> list:
+        print('Loading data...')
+        if 'Custom' in str(self.traj_list[0]):
+            self.customLoad()
+        else:
+            self.expertLoad()
+
 
 
     def __len__(self) -> int:
         return len(self.data)
 
     def __getitem__(self, index):
-        # Pick trajectory
-        trajectory = self.data[index]
-        # Get query index uniformly
-        num_frames = len(trajectory)-1
-        query_idx = randint(0, num_frames)
-        # Pick frame from trajectory
-        query = trajectory[query_idx]
-        # Compute key index by adding a normal distribution
-        key_idx = query_idx + int(np.random.rand()*self.k_std + self.k_mean)
-        # Get key frame
-        key = trajectory[min(key_idx, num_frames)]
+        # Get query obs
+        query = self.data[index]
+        if self.delay:
+            # Make sure that we pick a frame from the same trajectory
+            fin_idx = self.getTrajLastIdx(index)
+            key_idx = index + int(np.random.rand()*self.k_std + self.k_mean)
+
+            # Get key obs
+            key = self.data[min(key_idx, fin_idx)]
+        else:
+            key = self.data[index]
+
+
         if self.transform is not None:
-            query = self.transform(query)
             key = self.transform(key)
+            query = self.transform(query)
 
         # Stack query and key to return [2,3,64,64]
         return torch.stack((query, key))
 
-
-class MinecraftData(Dataset):
-    def __init__(self, env, mode, split, extra, transform=None, path='../data') -> None:
-        self.path = path
-        self.environment = env
-        self.mode = mode
-        self.split = split
-        self.extra = extra
-        self.dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-        self.data = self.loadData()
-        # self.data_variance = np.var(self.data) / 255
-        self.transform = transform
-
-    def loadData(self) -> list:
-        data = []
-
-        print('Loading data...')
-        path = Path(self.path)
-
-        num_vids = len(os.listdir(path / self.environment))
-        video_list = os.listdir(path / self.environment)
-
-        if self.mode == 'train':
-            video_list = video_list[:int(self.split*num_vids)]
-        else:
-            video_list = video_list[int(self.split*num_vids):]
-
-        for vid in video_list:
-            if self.extra:
-                other_info = np.load(path / self.environment / vid / 'rendered.npz')
-
-            vid_path = path / self.environment / vid / 'recording.mp4'
-            frames = cv2.VideoCapture(str(vid_path))
-            ret = True
-            fc = 0
-            while(frames.isOpened() and ret):
-                ret, frame = frames.read()
-                if ret and fc % 1 == 0:
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    data.append(frame)
-                fc += 1
-        return data
-
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __getitem__(self, index):
-        img = self.data[index]
-        # img = torch.from_numpy(img).type(self.dtype)
-        if self.transform is not None:
-            img = self.transform(img)
-        return img
 
 class LatentDataset(Dataset):
     """
