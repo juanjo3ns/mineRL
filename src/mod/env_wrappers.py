@@ -1,7 +1,7 @@
 import torch
 import copy
 from logging import getLogger
-from collections import deque
+from collections import deque, Counter
 import os
 import csv
 
@@ -69,6 +69,10 @@ def wrap_env(
     # NEW
     env = TransformReward(env, encoder)
 
+    ngs = encoder.num_goal_states
+    env.skill_probs = np.ones(ngs)/ngs
+
+
     if randomize_action:
         env = RandomizeAction(env, eval_epsilon)
 
@@ -85,17 +89,39 @@ class ResetWrapper(gym.Wrapper):
         self.model = encoder
         self.test = test
         self.sampling = sampling
+        self.env.idx_buffer = []
+        self.env.idx_buffer_size = 10000
+
+    def update_probs(self):
+
+        ngs = self.model.num_goal_states
+        ibs = self.env.idx_buffer_size
+
+        if len(self.env.idx_buffer) < ibs:
+            # if buffer not full return maximum entropy
+            return np.ones(ngs)/ngs
+        else:
+            probs = []
+            probs = np.zeros(ngs)
+            # compute probability of each skill
+            d = dict(Counter(self.env.idx_buffer))
+            for i, (k,v) in enumerate(sorted(d.items())):
+                probs[k] = v/ibs
+            # update skill probs
+            return probs
 
     def reset(self):
         ob = self.env.reset()
+        probs = self.update_probs()
         # Sample goal state
-        num_goal_states = self.model.num_goal_states
+        # num_goal_states = self.model.num_goal_states
+        num_goal_states = 8
         if self.sampling == 'weighted':
-            goal_state = np.random.choice(self.model.goals, p=[0.12972549, 0.00556863, 0.0185098 , 0.01223529, 0.09945098, 0.10764706, 0.136, 0.09541176, 0.11784314, 0.08419608, 0.00894118, 0.06478431, 0.11968627])
+            goal_state = np.random.choice(self.model.goals, p=probs)
         elif self.sampling == 'uniform':
             if self.test:
-                # goal_state = (self.env.resets - 1) % num_goal_states
-                goal_state = self.model.goals[(self.env.resets - 1) % num_goal_states]
+                goal_state = (self.env.resets - 1) % num_goal_states
+                # goal_state = self.model.goals[(self.env.resets - 1) % num_goal_states]
 
             else:
                 # goal_state = randint(0, num_goal_states-1)
@@ -106,6 +132,7 @@ class ResetWrapper(gym.Wrapper):
 
         self.env.current_step = 0
         self.env.goal_state = goal_state
+        self.env.current_step = 0
         return ob
 
 
@@ -219,17 +246,28 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         self.test = test
         self.transform = Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
 
+
+    def store_idx(self, idx):
+        ibs = self.env.idx_buffer_size
+
+        # if buffer full remove random element
+        if len(self.env.idx_buffer) >= ibs:
+            self.env.idx_buffer.pop(randint(0, ibs - 1))
+
+        self.env.idx_buffer.append(idx)
+
+
     def observation(self, observation):
         # Uncomment only when testing on a sequence of skills
-        seq_num = int(self.env.current_step / 30)
-        if seq_num == 0:
-            self.env.goal_state = self.model.goals[(self.env.resets - 1 + seq_num) % self.model.num_goal_states]
-
-        self.env.current_step += 1
+        # seq_num = int(self.env.current_step / 30)
+        # if seq_num == 0:
+        #     self.env.goal_state = self.model.goals[(self.env.resets - 1 + seq_num) % num_goal_states]
+        #
+        # self.env.current_step += 1
         ###
 
         goal_state = self.env.goal_state
-        
+
         obs_anchor = torch.from_numpy(observation).float()
         # We don't need .ToTensor since shape already 3,64,64 but we need to divide by 255
         # Then, we substract the mean 0.5 and divide by 1 like in the encoder training
@@ -247,11 +285,20 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         g = self.model.compute_argmax(z_a)
         reward = 0
         if self.env.goal_state == g:
-            distances = self.model._vq_vae.compute_distances(z_a).squeeze()
-            max = distances[g].detach().cpu().item()
-            reward = 1/(1+max)
+            #CURL
+            first, second = self.model.compute_first_second_argmax(z_a)
+            reward = 1 + (first-second)/first
+
+            #VQVAE
+            # distances = self.model._vq_vae.compute_distances(z_a).squeeze()
+            # max = distances[g].detach().cpu().item()
+            # reward = 1/(1+max)
+
 
         self.model.reward = reward
+
+        self.store_idx(g)
+
         if self.test:
             csvfile = open(os.path.join(self.outdir, f"rewards_{self.env.goal_state}.{self.env.resets-1}.csv"), 'a')
             csvwriter = csv.writer(csvfile, delimiter=',')
@@ -471,7 +518,7 @@ class ClusteredActionWrapper(gym.ActionWrapper):
         if not frame_skip == None:
             self.delta_degree /= frame_skip
 
-        self.action_space = gym.spaces.Discrete(4)
+        self.action_space = gym.spaces.Discrete(5)
 
         base = self.env.action_space.no_op()
 
@@ -485,7 +532,10 @@ class ClusteredActionWrapper(gym.ActionWrapper):
         left = forward.copy()
         left['camera'] = np.array([0,-self.delta_degree], dtype=np.float32)
 
-        self.actions = [base, forward, right, left]
+        jump_forward = forward.copy()
+        jump_forward['jump'] = np.array(1)
+
+        self.actions = [base, forward, right, left, jump_forward]
 
     def action(self, action):
         return self.actions[action]

@@ -1,8 +1,8 @@
 experiment: 'vqvae_exp_0'
 environment: 'MineRLNavigate-v0'
-epochs: 500
+trajectories: ['MineRLNavigate-v0']
+epochs: 100
 delay: yes
-trajectories: 'MineRLNavigate-v0'
 split: 0.90
 lr: 0.001
 batch_size: 256
@@ -18,6 +18,9 @@ vqvae:
   commitment_cost: 0.25
   decay: 0.99
 test:
+  type: 'index'  # [index, reward, embed]
+  shuffle: no
+  limit: null
   # path_weights: './vqvae_0.3/mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'
   # path_weights: './vqvae_1.0/mineRL/32lwarh6/checkpoints/epoch=199-step=21599.ckpt'
   # path_weights: './vqvae_1.1/mineRL/315ksn7x/checkpoints/epoch=203-step=22031.ckpt'
@@ -25,4 +28,5 @@ test:
   # path_weights: './vqvae_2.0/mineRL/kbsmulhw/checkpoints/epoch=49-step=4499.ckpt'
   # path_weights: './vqvae_sweep_1/mineRL/96qj9btc/checkpoints/epoch=44-step=4859.ckpt'
   # path_weights: 'vqvae_3.1/mineRL/8ykl37mx/checkpoints/epoch=59-step=5399.ckpt'
-  path_weights: 'vqvae_sweep_0/mineRL/8bbcrmgb/checkpoints/epoch=34-step=3149.ckpt'
+  # path_weights: 'vqvae_sweep_0/mineRL/8bbcrmgb/checkpoints/epoch=34-step=3149.ckpt'
+  path_weights: 'vqvae_exp_0/mineRL/2n13fn6b/checkpoints/epoch=499-step=499.ckpt'

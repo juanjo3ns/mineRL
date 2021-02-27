@@ -29,14 +29,14 @@ from IPython import embed
 
 setSeed(0)
 
-episodes = 500
-steps = 500
+episodes = 250
+steps = 700
 frame_skip = 10
 
 MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLNavigate-v0')
 env = gym.make('MineRLNavigate-v0')
 
-folder = 'CustomTrajectories7'
+folder = 'CustomTrajectories12'
 outdir = f"./results/{folder}"
 
 if not os.path.exists(outdir):

@@ -1,4 +1,4 @@
-outdir: 'rl.8.1.0'
+outdir: 'rl.10.1.0'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -8,13 +8,13 @@ gpu: 0
 demo: no
 monitor: no
 load: null
-eval_n_runs: 13
+eval_n_runs: 10
 sampling: 'weighted'
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
-max_episode_steps: 500
+max_episode_steps: 700
 batch_size: 64
 update_interval: 4
 frame_skip: 10
@@ -38,7 +38,7 @@ prioritized: yes
 target_update_interval: 2.e+4
 
 encoder:
-  type: 'vqvae'
+  type: 'curl'
   img_size: 64
   vqvae:
     encoder_version: 'vqvae_sweep_0'
@@ -51,8 +51,8 @@ encoder:
     commitment_cost: 0.25
     goals: [0,1,2,3,4,5,6,7,8,9,10,11,12]
   curl:
-    encoder_version: 'curl_1.0'
-    load_epoch: 'mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'
-    embedding_dim: 50
-    path_goal_states: './goal_states/flat_biome_curl_kmeans_0'
-    goals: [0,2,3,5,7,8,9]
+    encoder_version: 'curl_exp_0'
+    load_epoch: 'mineRL/10d8jeqr/checkpoints/epoch=299-step=2099.ckpt'
+    embedding_dim: 128
+    path_goal_states: './goal_states/CT8_real_biome_curl_kmeans_10'
+    goals: [0,1,2,3,4,5,6,7,8,9]

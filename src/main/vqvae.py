@@ -37,6 +37,7 @@ class VQVAE(VQVAE_PL):
     def __init__(self, conf):
         super(VQVAE, self).__init__(**conf['vqvae'])
 
+        self.experiment = conf['experiment']
         self.batch_size = conf['batch_size']
         self.lr = conf['lr']
         self.split = conf['split']
@@ -47,13 +48,6 @@ class VQVAE(VQVAE_PL):
         img_size = conf['img_size']
         self.conf = {'k_std': conf['k_std'], 'k_mean': conf['k_mean']}
 
-        # self.example_input_array = torch.rand(self.batch_size, 3, img_size, img_size)
-        # if self.delay:
-        #     self.example_input_array = (
-        #         torch.rand(self.batch_size, 3, img_size, img_size),
-        #         torch.rand(self.batch_size, 3, img_size, img_size)
-        #         )
-
         self.transform = transforms.Compose([
                                   transforms.ToTensor(),
                                   transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
@@ -62,11 +56,7 @@ class VQVAE(VQVAE_PL):
 
     def training_step(self, batch, batch_idx):
 
-        x = batch.float()
-        y = batch.float()
-
-        if self.delay:
-            x,y = batch[:,0], batch[:,1]
+        x,y = batch[:,0], batch[:,1]
 
         vq_loss, data_recon, perplexity = self(x)
         recon_error = F.mse_loss(data_recon, y)
@@ -80,11 +70,7 @@ class VQVAE(VQVAE_PL):
 
     def validation_step(self, batch, batch_idx):
 
-        x = batch.float()
-        y = batch.float()
-
-        if self.delay:
-            x,y = batch[:,0], batch[:,1]
+        x,y = batch[:,0], batch[:,1]
 
         vq_loss, data_recon, perplexity = self(x)
         recon_error = F.mse_loss(data_recon, y)
@@ -106,14 +92,12 @@ class VQVAE(VQVAE_PL):
         return torch.optim.Adam(params=self.parameters(), lr=self.lr, weight_decay=1e-5)
 
     def train_dataloader(self):
-        train_dataset = MultiMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, **self.conf)
-        # train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay)
+        train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay, **self.conf)
         train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
         return train_dataloader
 
     def val_dataloader(self):
-        val_dataset = MultiMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, **self.conf)
-        # val_dataset = CustomMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, delay=self.delay)
+        val_dataset = CustomMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, delay=self.delay, **self.conf)
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 
@@ -189,24 +173,13 @@ class VQVAE(VQVAE_PL):
 
 
         values['Code:'] = values['Code:'].astype('int32')
-        # num_real_skills = 9
-        # idx_min = []
-        # while not len(idx_min) == (self.num_clusters - num_real_skills):
-        #     m = min(mask_embed)
-        #     idx = list(mask_embed).index(m)
-        #     mask_embed[idx] = 9999999
-        #     idx_min.append(idx)
-        #
-        # repl = {x:-1 for x in idx_min}
-        # values['Code:'].replace(repl, inplace=True)
-
 
         palette = sns.color_palette("Paired", n_colors= self.num_clusters)
         plot_idx_maps(values, palette, "brief")
 
 
     def reward_map(self):
-        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
+        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False, **self.conf)
         train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
 
         trajectories = self.load_trajectories()
@@ -270,3 +243,36 @@ class VQVAE(VQVAE_PL):
 
         print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")
         plot_q_maps(data_list)
+
+    def compute_embeddings(self):
+        import tensorflow
+        from torch.utils.tensorboard import SummaryWriter
+        import tensorboard
+
+        limit = 10000
+
+        tensorflow.io.gfile = tensorboard.compat.tensorflow_stub.io.gfile
+
+        train_dataset = MultiMinecraftData(self.trajectories, 'train', 1, transform=self.transform, **self.conf)
+        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
+
+        embeddings = []
+        images = []
+        for traj in train_dataset.data:
+            for key in traj:
+                if len(embeddings) == limit:
+                    break
+                key = self.transform(key/255).float()
+                key = key.unsqueeze(dim=0)
+                embeddings.append(self.encode(key.cuda()).detach().cpu().numpy())
+                images.append(key)
+
+        embeddings = np.array(embeddings).squeeze()
+        images = torch.cat(images)
+
+        embeddings = embeddings.reshape(embeddings.shape[0], -1)
+        images += 0.5
+
+        writer = SummaryWriter(log_dir=os.path.join("./results", self.experiment))
+        writer.add_embedding(embeddings, label_img=images)
+        writer.close()

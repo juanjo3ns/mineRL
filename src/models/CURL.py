@@ -79,11 +79,14 @@ class CURL_PL(pl.LightningModule):
         logits = self.compute_logits(z_a)
         return torch.argmax(logits).cpu().item()
 
-    def compute_second_argmax(self, z_a):
+    def compute_first_second_argmax(self, z_a):
         logits = self.compute_logits(z_a)
         first = torch.argmax(logits).cpu().item()
-        logits[first] = 0
-        return torch.argmax(logits).cpu().item()
+        first_value = logits[0,first].cpu().item()
+        logits[0,first] = 0
+        second = torch.argmax(logits).cpu().item()
+        second_value = logits[0,second].cpu().item()
+        return first_value, second_value
 
     def load_goal_states(self):
         goal_states = []

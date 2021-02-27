@@ -1,4 +1,4 @@
-outdir: 'rl.9.0.0'
+outdir: 'rl.CT11_test'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -6,10 +6,10 @@ seed: 0
 gpu: 0
 
 demo: yes
-monitor: no
-load: './results/train_rl.9.0.0/best/'
-eval_n_runs: 120
-sampling: 'weighted'
+monitor: yes
+load: null
+eval_n_runs: 10
+sampling: 'uniform'
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
