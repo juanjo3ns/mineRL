@@ -1,4 +1,4 @@
-outdir: 'rl.4.2.1'
+outdir: 'rl.CT11_test'
 env: 'MineRLNavigate-v0'
 logging_level: 20
 
@@ -7,7 +7,7 @@ gpu: 0
 
 demo: yes
 monitor: yes
-load: './results/train_rl.4.2.1/best/'
+load: null
 eval_n_runs: 10
 sampling: 'uniform'
 

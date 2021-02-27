@@ -773,8 +773,8 @@ class MineRLEnv(gym.Env):
             mod = str(mod, 'utf-8')
 
             # position
-            # random_x = randint(-30,30)
-            # random_z = randint(-30,30)
+            # random_x = randint(-45,45)
+            # random_z = randint(-45,45)
             #
             # idx_x = mod.index('x=')+3
             # mod = mod[:idx_x] + str(random_x) + mod[idx_x+1:]

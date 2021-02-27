@@ -64,8 +64,8 @@ def construct_map(enc):
         enc.conf,
         shuffle=enc.shuffle,
         limit=enc.limit)
-    if 'Custom' in enc.trajectories:
-        trajectories = load_trajectories(enc.trajectories)
+    if 'Custom' in enc.trajectories[0]:
+        trajectories = load_trajectories(enc.trajectories[0])
     embeddings = compute_embeddings(loader, enc.encoder)
 
     if enc.type == "index":
