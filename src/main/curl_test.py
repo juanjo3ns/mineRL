@@ -26,6 +26,9 @@ conf['curl']['path_goal_states'] = conf['test']['path_goal_states']
 conf['curl']['load_goal_states'] = True
 conf['curl']['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+if not os.path.exists(conf['test']['path_goal_states']):
+    os.mkdir(conf['test']['path_goal_states'])
+
 curl = CURL(conf).cuda()
 checkpoint = torch.load(join(path_weights, conf['test']['path_weights']))
 curl.load_state_dict(checkpoint['state_dict'])

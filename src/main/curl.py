@@ -129,17 +129,13 @@ class CURL(CURL_PL):
         loader = get_loader(
             self.trajectories,
             self.transform,
-            self.conf,
-            shuffle=self.shuffle,
-            limit=self.limit)
+            self.conf)
 
         embeddings = compute_embeddings(loader, self.encode)
 
-        kmeans = self.kmeans(embeddings, num_clusters)
-        if not os.path.exists(f"{self.path_goal_states}{num_clusters}"):
-            os.mkdir(f"{self.path_goal_states}{num_clusters}")
+        kmeans = compute_kmeans(embeddings, num_clusters)
         for i, k in enumerate(kmeans.cluster_centers_):
-            with open(f'{self.path_goal_states}{num_clusters}/{i}.npy', 'wb') as f:
+            with open(f'{self.path_goal_states}/{i}.npy', 'wb') as f:
                 np.save(f, k)
 
     def _construct_map(self):

@@ -379,7 +379,7 @@ class MineRLEnv(gym.Env):
             obs_dict = self.env_spec.wrap_observation(obs_dict)
 
         # add coordinates to observation and remove offset
-        obs_dict['coords'] = [info['XPos'] - self.custom_config['x'], info['YPos'], info['ZPos'] - self.config['z']]
+        obs_dict['coords'] = [info['XPos'] - self.custom_config['x'], info['YPos'], info['ZPos'] - self.custom_config['z']]
 
         return obs_dict
 

@@ -27,7 +27,7 @@ def get_loader(trajectories, transform, conf, shuffle=False, limit=None):
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=shuffle, num_workers=0)
     return train_dataloader
 
-def kmeans(embeddings, num_clusters):
+def compute_kmeans(embeddings, num_clusters):
     return KMeans(n_clusters=num_clusters, random_state=0).fit(embeddings)
 
 def compute_embeddings(loader, encode):
