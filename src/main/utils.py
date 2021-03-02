@@ -15,10 +15,6 @@ from torch.utils.data import DataLoader, Subset
 from customLoader import *
 from torchvision.transforms import transforms
 
-import tensorflow
-from torch.utils.tensorboard import SummaryWriter
-import tensorboard
-
 from IPython import embed
 
 
@@ -119,6 +115,10 @@ def reward_map(trajectories, embeddings, enc):
     plot_reward_maps(data_list)
 
 def embed_map(embeddings, images, exp):
+    import tensorflow
+    from torch.utils.tensorboard import SummaryWriter
+    import tensorboard
+
     tensorflow.io.gfile = tensorboard.compat.tensorflow_stub.io.gfile
     writer = SummaryWriter(log_dir=os.path.join("./results", exp))
     writer.add_embedding(embeddings, label_img=images)

@@ -1,0 +1,21 @@
+num: 0
+x: 0
+y: 73
+z: 0
+
+# """
+# Direction types:
+#   'random': 360 possible directions
+#   'single': 1 possible direction
+#   'cardinal': north/south/west/east
+# """
+
+direction: 'random'  # random/single/discrete
+
+# """
+# random_position: False -> starts at (x,z)
+# random_position: True -> starts at random position in range: (x-range, z-range) to (x+range, z+range)
+# """
+
+random_position: False
+range: 45

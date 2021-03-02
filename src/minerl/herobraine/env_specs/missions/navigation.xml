@@ -19,7 +19,7 @@
             <AllowSpawning>false</AllowSpawning>
         </ServerInitialConditions>
         <ServerHandlers>
-            <FileWorldGenerator src="/home/juanjo/Documents/minecraft/mineRL/src/minerl/env/Malmo/Minecraft/run/saves/CustomWorld_0"/>
+            <FileWorldGenerator src="/CustomWorld_"/>
             <DrawingDecorator>
               <DrawCuboid x1="-50" y1="4" z1="-50" x2="50" y2="100" z2="-50" type="barrier"/>
               <DrawCuboid x1="-50" y1="4" z1="-50" x2="-50" y2="100" z2="50" type="barrier"/>
@@ -33,7 +33,7 @@
     <AgentSection mode="Survival">
         <Name>MineRLAgent</Name>
         <AgentStart>
-            <Placement pitch="0" x="0" y="73.0" z="0" yaw="0"/>
+            <Placement pitch="0" x="0" y="0" z="0" yaw="0"/>
             <Inventory>
                     <InventoryObject slot="0" type="compass" quantity="1"/>
             </Inventory>

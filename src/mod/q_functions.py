@@ -7,6 +7,7 @@ from pfrl.q_function import StateQFunction
 from pfrl.q_functions.dueling_dqn import constant_bias_initializer
 from pfrl.initializers import init_chainer_default
 
+from IPython import embed
 
 def parse_arch(arch, n_actions, n_input_channels, embedding_dim):
     if arch == 'dueling':
@@ -99,6 +100,5 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
         ys = self.v_stream(h_v).reshape((batch_size, 1, self.n_atoms))
         ya, ys = torch.broadcast_tensors(ya, ys)
         q = F.softmax(ya + ys, dim=2)
-
         self.z_values = self.z_values.to(x.device)
         return action_value.DistributionalDiscreteActionValue(q, self.z_values)

@@ -61,6 +61,7 @@ def main():
 
 def dqn_family(conf, outdir):
     env_id = conf['env']
+    world = conf['world']
     logging_level = conf['logging_level']
 
     seed = conf['seed']
@@ -100,6 +101,8 @@ def dqn_family(conf, outdir):
 
     enc_conf = conf['encoder']
 
+    world_conf = getConfig('CustomWorlds/' + world)
+
     os.environ['MALMO_MINECRAFT_OUTPUT_LOGDIR'] = outdir
 
     # Set a random seed used in PFRL.
@@ -112,8 +115,10 @@ def dqn_family(conf, outdir):
     # Load encoder #####################################
     if os.getenv('USER') == 'juanjo':
         path_weights = Path('./results/')
+        world_conf['path_world'] = Path('/home/juanjo/Documents/minecraft/mineRL/src/minerl/env/Malmo/Minecraft/run/saves/')
     elif os.getenv('USER') == 'juan.jose.nieto':
         path_weights = Path('/home/usuaris/imatge/juan.jose.nieto/mineRL/src/results')
+        world_conf['path_world'] = Path('/home/usuaris/imatge/juan.jose.nieto/mineRL/src/minerl/env/Malmo/Minecraft/run/saves/')
     else:
         raise Exception("Sorry, user not identified!")
 
@@ -136,6 +141,8 @@ def dqn_family(conf, outdir):
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
+
+    core_env.custom_update(world_conf)
 
     # core_env.make_interactive(port=6666, realtime=True)
 
@@ -165,7 +172,7 @@ def dqn_family(conf, outdir):
     embedding_dim = enc_conf[enc_conf['type']]['embedding_dim']
 
     agent = get_agent(
-        n_actions=4, arch=arch, n_input_channels=env.observation_space.shape[0],
+        n_actions=5, arch=arch, n_input_channels=env.observation_space.shape[0],
         noisy_net_sigma=noisy_net_sigma, final_epsilon=final_epsilon,
         final_exploration_frames=final_exploration_frames, explorer_sample_func=env.action_space.sample,
         lr=lr, adam_eps=adam_eps,

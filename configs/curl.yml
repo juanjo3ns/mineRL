@@ -1,6 +1,6 @@
-experiment: 'curl_exp_1_embeddings'
+experiment: 'curl_exp_2_embeddings_1'
 environment: 'MineRLNavigate-v0'
-trajectories: ['CustomTrajectories12']
+trajectories: ['MineRLObtainDiamondVectorObf-v0']
 epochs: 300
 batch_size: 32
 lr: 0.001
@@ -14,10 +14,10 @@ curl:
   k_mean: 15
   z_dim: 128
 test:
-  type: 'index'  # [index, reward, embed]
-  shuffle: no
-  limit: null
+  type: 'embed'  # [index, reward, embed]
+  shuffle: yes
+  limit: 8000
   path_goal_states: './goal_states/CT8_real_biome_curl_kmeans_10'
   # path_weights: './curl_1.0/mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'
   # path_weights: './curl_exp_0/mineRL/10d8jeqr/checkpoints/epoch=299-step=2099.ckpt'
-  path_weights: './curl_exp_1/mineRL/zop6q07k/checkpoints/epoch=0-step=2124.ckpt'
+  path_weights: './curl_exp_2/mineRL/h7yt76lr/checkpoints/epoch=76-step=1643025.ckpt'

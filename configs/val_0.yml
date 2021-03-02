@@ -1,21 +1,22 @@
-outdir: 'rl.CT11_test'
+outdir: 'rl.10.0.0'
 env: 'MineRLNavigate-v0'
+world: 'CustomWorld_0'
 logging_level: 20
 
 seed: 0
 gpu: 0
 
 demo: yes
-monitor: yes
-load: null
-eval_n_runs: 10
-sampling: 'uniform'
+monitor: no
+load: './results/train_rl.10.0.0/best/'
+eval_n_runs: 300
+sampling: 'weighted'
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
-max_episode_steps: 500
-batch_size: 32
+max_episode_steps: 700
+batch_size: 64
 update_interval: 4
 frame_skip: 10
 gamma: 0.99
@@ -39,21 +40,21 @@ target_update_interval: 2.e+4
 
 
 encoder:
-  type: 'vqvae'
+  type: 'curl'
   img_size: 64
   vqvae:
-    encoder_version: 'vqvae_0.3'
-    load_epoch: 'mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'
+    encoder_version: 'vqvae_sweep_0'
+    load_epoch: 'mineRL/8bbcrmgb/checkpoints/epoch=34-step=3149.ckpt'
     num_hiddens: 64
     num_residual_hiddens: 32
     num_residual_layers: 2
     embedding_dim: 256
-    num_embeddings: 10
+    num_embeddings: 13
     commitment_cost: 0.25
-    goals: [0,2,3,5,7,8,9]
+    goals: [0,1,2,3,4,5,6,7,8,9,10,11,12]
   curl:
-    encoder_version: 'curl_1.0'
-    load_epoch: 'mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'
-    embedding_dim: 50
-    path_goal_states: './goal_states/flat_biome_curl_kmeans_0'
-    goals: [0,2,3,5,7,8,9]
+    encoder_version: 'curl_exp_0'
+    load_epoch: 'mineRL/10d8jeqr/checkpoints/epoch=299-step=2099.ckpt'
+    embedding_dim: 128
+    path_goal_states: './goal_states/CT8_real_biome_curl_kmeans_10'
+    goals: [0,1,2,3,4,5,6,7,8,9]

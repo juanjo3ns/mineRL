@@ -1,5 +1,6 @@
 outdir: 'rl.10.0.0'
 env: 'MineRLNavigate-v0'
+world: 'CustomWorld_0'
 logging_level: 20
 
 seed: 0
@@ -33,7 +34,7 @@ final_epsilon: 0.01
 eval_epsilon: 0.001
 noisy_net_sigma: null
 replay_capacity: 10.e+6
-replay_start_size: 2.e+4
+replay_start_size: 1.e+4
 prioritized: yes
 target_update_interval: 2.e+4
 

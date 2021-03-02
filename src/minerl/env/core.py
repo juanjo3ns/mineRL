@@ -143,6 +143,10 @@ class MineRLEnv(gym.Env):
 
         self.resets = 0
         self.done = True
+        self.custom_config = {}
+
+    def custom_update(self, config):
+        self.custom_config.update(config)
 
     def _get_new_instance(self, port=None, instance_id=None):
         """
@@ -374,7 +378,8 @@ class MineRLEnv(gym.Env):
         if isinstance(self.env_spec, EnvWrapper):
             obs_dict = self.env_spec.wrap_observation(obs_dict)
 
-        obs_dict['coords'] = [info['XPos'], info['YPos'], info['ZPos']]
+        # add coordinates to observation and remove offset
+        obs_dict['coords'] = [info['XPos'] - self.custom_config['x'], info['YPos'], info['ZPos'] - self.config['z']]
 
         return obs_dict
 
@@ -772,19 +777,39 @@ class MineRLEnv(gym.Env):
             mod = etree.tostring(self.xml)
             mod = str(mod, 'utf-8')
 
-            # position
-            # random_x = randint(-45,45)
-            # random_z = randint(-45,45)
-            #
-            # idx_x = mod.index('x=')+3
-            # mod = mod[:idx_x] + str(random_x) + mod[idx_x+1:]
-            # idx_z = mod.index('z=')+3
-            # mod = mod[:idx_z] + str(random_z) + mod[idx_z+1:]
-            # direction
+            # CUSTOM WORLD
+            idx_path = mod.index("src=\"") + 5
+            mod = mod[:idx_path] + str(self.custom_config['path_world']) + mod[idx_path:]
+            idx_w = mod.index('CustomWorld_') + 12
+            mod = mod[:idx_w] + str(self.custom_config['num']) + mod[idx_w:]
+
+            # POSITION
+            x = self.custom_config['x']
+            y = self.custom_config['y']
+            z = self.custom_config['z']
+
+            if self.custom_config['random_position']:
+                range = self.custom_config['range']
+                x = randint(x-range, x+range)
+                z = randint(z-range, z+range)
+
+            idx_x = mod.index('x=')+3
+            mod = mod[:idx_x] + str(x) + mod[idx_x+1:]
+            idx_y = mod.index('y=')+3
+            mod = mod[:idx_y] + str(y) + mod[idx_y+1:]
+            idx_z = mod.index('z=')+3
+            mod = mod[:idx_z] + str(z) + mod[idx_z+1:]
+
+            # DIRECTION
             idx = mod.index('yaw')+5
-            random_yaw = randint(-360,360)
-            # random_yaw = choice([0,90,180,270])
-            mod = mod[:idx] + str(random_yaw) + mod[idx+1:]
+            if self.custom_config['direction'] == "random":
+                yaw = randint(-360,360)
+            elif self.custom_config['direction'] == "cardinal":
+                yaw = choice([0,90,180,270])
+            else:
+                yaw = 0
+
+            mod = mod[:idx] + str(yaw) + mod[idx+1:]
             mod = etree.fromstring(mod)
             #######
 
