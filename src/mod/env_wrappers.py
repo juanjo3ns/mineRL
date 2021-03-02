@@ -131,7 +131,7 @@ class ResetWrapper(gym.Wrapper):
             raise NotImplementedException()
 
 
-
+        self.env.current_step = 0
         self.env.goal_state = goal_state
         self.env.current_step = 0
         return ob
