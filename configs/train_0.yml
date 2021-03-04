@@ -1,4 +1,4 @@
-outdir: 'rl.10.0.0'
+outdir: 'rl.10.0.1'
 env: 'MineRLNavigate-v0'
 world: 'CustomWorld_0'
 logging_level: 20

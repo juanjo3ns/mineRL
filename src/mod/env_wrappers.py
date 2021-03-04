@@ -1,18 +1,20 @@
-import torch
-import copy
-from logging import getLogger
-from collections import deque, Counter
 import os
 import csv
-
 import gym
-import numpy as np
 import cv2
-from random import randint, choice
+import copy
+import wandb
+import torch
 
+import numpy as np
+import matplotlib.pyplot as plt
+
+from logging import getLogger
+from random import randint, choice
+from collections import deque, Counter
 from torchvision.transforms import Normalize
-from pfrl.wrappers import ContinuingTimeLimit, RandomizeAction, Monitor
 from pfrl.wrappers.atari_wrappers import ScaledFloatFrame, LazyFrames
+from pfrl.wrappers import ContinuingTimeLimit, RandomizeAction, Monitor
 
 from IPython import embed
 
@@ -76,7 +78,7 @@ def wrap_env(
     if randomize_action:
         env = RandomizeAction(env, eval_epsilon)
 
-    
+
     return env
 
 
@@ -111,12 +113,21 @@ class ResetWrapper(gym.Wrapper):
             # update skill probs
             return probs
 
+    def plot_histogram(self, data):
+        fig, ax = plt.subplots()
+        ngs_rng = range(self.model.num_goal_states)
+        plt.bar(ngs_rng, data)
+        plt.xticks(ngs_rng)
+        ax.set_ylim(0,1)
+        wandb.log({'Skills probabilities': fig})
+
     def reset(self):
         ob = self.env.reset()
         probs = self.update_probs()
+        self.plot_histogram(probs)
         # Sample goal state
-        # num_goal_states = self.model.num_goal_states
-        num_goal_states = 8
+        num_goal_states = self.model.num_goal_states
+        # num_goal_states = 8
         if self.sampling == 'weighted':
             goal_state = np.random.choice(self.model.goals, p=probs)
         elif self.sampling == 'uniform':
