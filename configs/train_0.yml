@@ -1,6 +1,6 @@
-outdir: 'rl.10.0.1'
+outdir: 'rl.10.2.0'
 env: 'MineRLNavigate-v0'
-world: 'CustomWorld_0'
+world: 'CustomWorld_2'
 logging_level: 20
 
 seed: 0

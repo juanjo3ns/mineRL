@@ -19,9 +19,12 @@
             <AllowSpawning>false</AllowSpawning>
         </ServerInitialConditions>
         <ServerHandlers>
-            <FileWorldGenerator src="/CustomWorld_"/>
+            <FileWorldGenerator src="/home/juanjo/Documents/minecraft/mineRL/src/minerl/env/Malmo/Minecraft/run/saves/CustomWorld_4"/>
             <DrawingDecorator>
-              barrier
+              <DrawCuboid x1="117" y1="4" z1="-66" x2="217" y2="100" z2="-66" type="barrier"/>
+              <DrawCuboid x1="117" y1="4" z1="-66" x2="117" y2="100" z2="34" type="barrier"/>
+              <DrawCuboid x1="217" y1="4" z1="-66" x2="217" y2="100" z2="34" type="barrier"/>
+              <DrawCuboid x1="117" y1="4" z1="34" x2="217" y2="100" z2="34" type="barrier"/>
             </DrawingDecorator>
             <ServerQuitFromTimeUp timeLimitMs="300000" description="out_of_time"/>
             <ServerQuitWhenAnyAgentFinishes/>
@@ -30,7 +33,7 @@
     <AgentSection mode="Survival">
         <Name>MineRLAgent</Name>
         <AgentStart>
-            <Placement pitch="0" x="0" y="0" z="0" yaw="0"/>
+            <Placement pitch="0" x="167" y="69" z="-16" yaw="0"/>
             <Inventory>
                     <InventoryObject slot="0" type="compass" quantity="1"/>
             </Inventory>

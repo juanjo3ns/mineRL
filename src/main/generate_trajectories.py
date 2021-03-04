@@ -29,7 +29,7 @@ from IPython import embed
 
 setSeed(0)
 
-episodes = 250
+episodes = 500
 steps = 700
 frame_skip = 10
 

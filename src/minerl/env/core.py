@@ -777,41 +777,63 @@ class MineRLEnv(gym.Env):
             mod = etree.tostring(self.xml)
             mod = str(mod, 'utf-8')
 
-            # CUSTOM WORLD
-            idx_path = mod.index("src=\"") + 5
-            mod = mod[:idx_path] + str(self.custom_config['path_world']) + mod[idx_path:]
-            idx_w = mod.index('CustomWorld_') + 12
-            mod = mod[:idx_w] + str(self.custom_config['num']) + mod[idx_w:]
-
-            # POSITION
-            x = self.custom_config['x']
-            y = self.custom_config['y']
-            z = self.custom_config['z']
-
-            if self.custom_config['random_position']:
-                range = self.custom_config['range']
-                x = randint(x-range, x+range)
-                z = randint(z-range, z+range)
-
-            idx_x = mod.index('x=')+3
-            mod = mod[:idx_x] + str(x) + mod[idx_x+1:]
-            idx_y = mod.index('y=')+3
-            mod = mod[:idx_y] + str(y) + mod[idx_y+1:]
-            idx_z = mod.index('z=')+3
-            mod = mod[:idx_z] + str(z) + mod[idx_z+1:]
-
-            # DIRECTION
-            idx = mod.index('yaw')+5
-            if self.custom_config['direction'] == "random":
+            if self.custom_config == {}:
+                # DIRECTION
+                idx = mod.index('yaw')+5
                 yaw = randint(-360,360)
-            elif self.custom_config['direction'] == "cardinal":
-                yaw = choice([0,90,180,270])
+                mod = mod[:idx] + str(yaw) + mod[idx+1:]
+                mod = etree.fromstring(mod)
             else:
-                yaw = 0
+                # CUSTOM WORLD
+                idx_path = mod.index("src=\"") + 5
+                mod = mod[:idx_path] + str(self.custom_config['path_world']) + mod[idx_path:]
+                idx_w = mod.index('CustomWorld_') + 12
+                mod = mod[:idx_w] + str(self.custom_config['num']) + mod[idx_w:]
 
-            mod = mod[:idx] + str(yaw) + mod[idx+1:]
-            mod = etree.fromstring(mod)
-            #######
+                # COORDINATES
+                x = self.custom_config['x']
+                y = self.custom_config['y']
+                z = self.custom_config['z']
+                barrier = self.custom_config['barrier']
+
+                xmax = x + barrier
+                xmin = x - barrier
+                zmax = z + barrier
+                zmin = z - barrier
+
+                b1 = f"<DrawCuboid x1=\"{xmin}\" y1=\"4\" z1=\"{zmin}\" x2=\"{xmax}\" y2=\"150\" z2=\"{zmin}\" type=\"barrier\"/>\n"
+                b2 = f"              <DrawCuboid x1=\"{xmin}\" y1=\"4\" z1=\"{zmin}\" x2=\"{xmin}\" y2=\"150\" z2=\"{zmax}\" type=\"barrier\"/>\n"
+                b3 = f"              <DrawCuboid x1=\"{xmax}\" y1=\"4\" z1=\"{zmin}\" x2=\"{xmax}\" y2=\"150\" z2=\"{zmax}\" type=\"barrier\"/>\n"
+                b4 = f"              <DrawCuboid x1=\"{xmin}\" y1=\"4\" z1=\"{zmax}\" x2=\"{xmax}\" y2=\"150\" z2=\"{zmax}\" type=\"barrier\"/>"
+
+                idx = mod.index('barrier')
+                mod = mod[:idx] + b1 + b2 + b3 + b4 + mod[(idx+7):]
+
+                # POSITION
+                if self.custom_config['random_position']:
+                    range = self.custom_config['range']
+                    x = randint(x-range, x+range)
+                    z = randint(z-range, z+range)
+
+                idx_x = mod.index('x=')+3
+                mod = mod[:idx_x] + str(x) + mod[idx_x+1:]
+                idx_y = mod.index('y=')+3
+                mod = mod[:idx_y] + str(y) + mod[idx_y+1:]
+                idx_z = mod.index('z=')+3
+                mod = mod[:idx_z] + str(z) + mod[idx_z+1:]
+
+                # DIRECTION
+                idx = mod.index('yaw')+5
+                if self.custom_config['direction'] == "random":
+                    yaw = randint(-360,360)
+                elif self.custom_config['direction'] == "cardinal":
+                    yaw = choice([0,90,180,270])
+                else:
+                    yaw = 0
+
+                mod = mod[:idx] + str(yaw) + mod[idx+1:]
+                mod = etree.fromstring(mod)
+                #######
 
             xml = etree.tostring(mod)
             token = (self._get_token() + ":" + str(self.agent_count) +

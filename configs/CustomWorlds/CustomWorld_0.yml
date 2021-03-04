@@ -2,6 +2,7 @@ num: 0
 x: 0
 y: 73
 z: 0
+barrier: 50
 
 # """
 # Direction types:
