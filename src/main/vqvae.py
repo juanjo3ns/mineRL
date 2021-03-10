@@ -100,12 +100,12 @@ class VQVAE(VQVAE_PL):
         return torch.optim.Adam(params=self.parameters(), lr=self.lr, weight_decay=1e-5)
 
     def train_dataloader(self):
-        train_dataset = CustomMinecraftData(self.trajectories, 'train', self.split, transform=self.transform, delay=self.delay, **self.conf)
+        train_dataset = CustomMinecraftData(self.trajectories_train, transform=self.transform, delay=self.delay, **self.conf)
         train_dataloader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
         return train_dataloader
 
     def val_dataloader(self):
-        val_dataset = CustomMinecraftData(self.trajectories, 'val', self.split, transform=self.transform, delay=self.delay, **self.conf)
+        val_dataset = CustomMinecraftData(self.trajectories_val, transform=self.transform, delay=self.delay, **self.conf)
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 
