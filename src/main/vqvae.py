@@ -12,8 +12,9 @@ from plot import *
 from os.path import join
 from pathlib import Path
 from pprint import pprint
-from collections import Counter, defaultdict
 from config import setSeed, getConfig
+from collections import Counter, defaultdict
+from main.utils import *
 
 import torch
 import torch.nn as nn
@@ -45,6 +46,8 @@ class VQVAE(VQVAE_PL):
 
         self.delay = conf['delay']
         self.trajectories = conf['trajectories']
+        self.trajectories_train, self.trajectories_val = get_train_val_split(self.trajectories, self.split)
+
         img_size = conf['img_size']
         self.conf = {'k_std': conf['k_std'], 'k_mean': conf['k_mean']}
 
@@ -52,6 +55,11 @@ class VQVAE(VQVAE_PL):
                                   transforms.ToTensor(),
                                   transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
                                 ])
+
+        self.test = conf['test']
+        self.type = self.test['type']
+        self.shuffle = self.test['shuffle']
+        self.limit = self.test['limit']
 
 
     def training_step(self, batch, batch_idx):
@@ -101,178 +109,5 @@ class VQVAE(VQVAE_PL):
         val_dataloader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return val_dataloader
 
-    def compute_similarity(self):
-        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
-        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
-
-        # compute embeddings of all trajectories
-        csvfiles = []
-        traj = -1
-
-        folder = 'VQVAE_CENTROIDS_2'
-        gs = 8
-        if not os.path.exists(f"./results/{folder}"):
-            os.mkdir(f"./results/{folder}")
-        for i in range(gs):
-            if not os.path.exists(f"./results/{folder}/vqvae_{i}"):
-                os.mkdir(f"./results/{folder}/vqvae_{i}")
-
-        print("\nComputing embeddings from all data points...")
-        for i, key in enumerate(train_dataloader):
-            if i % train_dataset.trj_length == 0:
-                if len(csvfiles) > 0:
-                    for c in csvfiles:
-                        c.close()
-                traj += 1
-                csvfiles = []
-                for k in range(gs):
-                    csvfiles.append(open( f"./results/{folder}/vqvae_{k}/rewards_{k}.{traj}.csv", 'a'))
-
-            print(f"\tTrajectory {traj}", end = '\r')
-            z = self._encoder(key.cuda())
-            distances = self._vq_vae.compute_distances(z)
-            distances = distances.squeeze().detach().cpu().numpy()
-            for j, d in enumerate(distances):
-                csvwriter = csv.writer(csvfiles[j], delimiter=',')
-                csvwriter.writerow([-d])
-
-    def load_trajectories(self):
-        print("Loading trajectories...")
-
-        all_trajectories = []
-        files = sorted([x for x in os.listdir(f"./results/{self.trajectories}/") if 'coords' in x], key=lambda x: int(x.split('.')[1]))
-        for file in files:
-            with open(f"./results/{self.trajectories}/{file}") as csv_file:
-                trajectory = []
-                csv_reader = csv.reader(csv_file, delimiter=',')
-                line_count = 0
-                for i, row in enumerate(csv_reader):
-                    trajectory.append(row)
-                all_trajectories.append(trajectory)
-        return np.array(all_trajectories)
-
-    def index_map(self):
-        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
-        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
-
-        trajectories = self.load_trajectories()
-        trajectories = trajectories.reshape(-1, 3)
-
-        print("Get index from all data points...")
-        values = pd.DataFrame(columns=['x', 'y', 'Code:'])
-        mask_embed = np.zeros(self.num_clusters)
-        for i, (key, p) in enumerate(zip(train_dataloader, trajectories)):
-
-            x = float(p[0])
-            y = float(p[2])
-
-            e = self._encoder(key.cuda())
-            k = self.compute_argmax(e)
-            mask_embed[k] += 1
-            values = values.append({'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
-
-
-        values['Code:'] = values['Code:'].astype('int32')
-
-        palette = sns.color_palette("Paired", n_colors= self.num_clusters)
-        plot_idx_maps(values, palette, "brief")
-
-
-    def reward_map(self):
-        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False, **self.conf)
-        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
-
-        trajectories = self.load_trajectories()
-        trajectories = trajectories.reshape(-1, 3)
-
-        print("Get index from all data points...")
-        data_list = []
-        ini = time.time()
-        for g in range(self.num_clusters):
-            print(f"Comparing data points with goal state {g}", end="\r")
-            values = pd.DataFrame(columns=['x', 'y', 'reward'])
-            for i, (key, p) in enumerate(zip(train_dataloader, trajectories)):
-                x = float(p[0])
-                y = float(p[2])
-                e = self._encoder(key.cuda())
-                k = self.compute_argmax(e)
-                r = 0
-                if k == g:
-                    # k2 = self.compute_second_argmax(e)
-                    distances = self._vq_vae.compute_distances(e).squeeze()
-                    max = distances[k].detach().cpu().item()
-                    # sec_max = distances[k2].detach().cpu().item()
-                    # r = (sec_max-max)/sec_max
-                    r=1/(1+max)
-                values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
-            data_list.append(values)
-
-        print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")
-        plot_reward_maps(data_list)
-
-
-    def q_map(self):
-        train_dataset = CustomMinecraftData(self.trajectories, 'train', 1, transform=self.transform, delay=False)
-        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
-
-        trajectories = self.load_trajectories()
-        trajectories = trajectories.reshape(-1, 3)
-
-        q_func = parse_arch('distributed_dueling', 4, n_input_channels=3, embedding_dim=256).cuda()
-
-        print("Get q_value from all data points...")
-        data_list = []
-        ini = time.time()
-        print(self.goals)
-        for g in range(self.num_clusters):
-            goal_state = self.get_goal_state(g)
-            print(f"Getting q value for state s conditioned on goal state {g}", end="\r")
-            values = pd.DataFrame(columns=['x', 'y', 'q_value'])
-            for i, (key, p) in enumerate(zip(train_dataloader, trajectories)):
-                x = float(p[0])
-                y = float(p[2])
-                e = self.encode(key.cuda()).detach().cpu().numpy()
-                obs_gs = np.concatenate((e.reshape(-1), goal_state))
-                obs_gs = obs_gs.reshape(1,obs_gs.shape[0])
-
-                obs = torch.from_numpy(obs_gs).cuda()
-                q_value = q_func(obs).max.detach().cpu().item()
-
-                values = values.append({'x': x, 'y': y, 'q_value': q_value}, ignore_index=True)
-            data_list.append(values)
-
-        print(f"\nTook {time.time()-ini} seconds to compute {self.num_clusters} dataframes")
-        plot_q_maps(data_list)
-
-    def compute_embeddings(self):
-        import tensorflow
-        from torch.utils.tensorboard import SummaryWriter
-        import tensorboard
-
-        limit = 10000
-
-        tensorflow.io.gfile = tensorboard.compat.tensorflow_stub.io.gfile
-
-        train_dataset = MultiMinecraftData(self.trajectories, 'train', 1, transform=self.transform, **self.conf)
-        train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=2)
-
-        embeddings = []
-        images = []
-        for traj in train_dataset.data:
-            for key in traj:
-                if len(embeddings) == limit:
-                    break
-                key = self.transform(key/255).float()
-                key = key.unsqueeze(dim=0)
-                embeddings.append(self.encode(key.cuda()).detach().cpu().numpy())
-                images.append(key)
-
-        embeddings = np.array(embeddings).squeeze()
-        images = torch.cat(images)
-
-        embeddings = embeddings.reshape(embeddings.shape[0], -1)
-        images += 0.5
-
-        writer = SummaryWriter(log_dir=os.path.join("./results", self.experiment))
-        writer.add_embedding(embeddings, label_img=images)
-        writer.close()
+    def _construct_map(self):
+        construct_map(self)

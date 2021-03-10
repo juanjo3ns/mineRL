@@ -49,16 +49,16 @@ def main():
     trainer.fit(vqvae)
 
 sweep_config = {
-    "name": f"{alg}_2.sweep",
+    "name": f"{alg}_exp_1.sweep",
     "method": 'bayes',
     "metric": {
-        "name": "loss/val",
-        "goal": "minimize"
+        "name": "perplexity/train",
+        "goal": "maximize"
     },
     "parameters": {
         "vqvae.commitment_cost": {
               "distribution": "uniform",
-              "max": 0.3,
+              "max": 0.35,
               "min": 0.05
         },
         "lr": {
@@ -68,23 +68,11 @@ sweep_config = {
         }
   }
 }
-sweep_config = {
-    "name": f"{alg}_sweep_lunarlander",
-    "method": 'grid',
-    "metric": {
-        "name": "perplexity/train",
-        "goal": "maximize"
-    },
-    "parameters": {
-        "vqvae.commitment_cost": {
-              "values": [0.05,0.2,0.4,0.6,0.8]
-        }
-  }
-}
 
-# import os
-# del os.environ["SLURM_NTASKS"]
-# del os.environ["SLURM_JOB_NAME"]
+
+import os
+del os.environ["SLURM_NTASKS"]
+del os.environ["SLURM_JOB_NAME"]
 
 sweep_id = wandb.sweep(sweep_config, project="mineRL")
-wandb.agent(sweep_id, function=main)
+wandb.agent(sweep_id, function=main, count=30)

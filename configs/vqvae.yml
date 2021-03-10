@@ -1,8 +1,8 @@
-experiment: 'vqvae_exp_0'
+experiment: 'vqvae_exp_1'
 environment: 'MineRLNavigate-v0'
 trajectories: ['MineRLNavigate-v0']
 epochs: 100
-delay: yes
+delay: no
 split: 0.90
 lr: 0.001
 batch_size: 256

@@ -1,6 +1,6 @@
 experiment: 'curl_exp_2_embeddings_1'
 environment: 'MineRLNavigate-v0'
-trajectories: ['CustomTrajectories10']
+trajectories: ['CustomTrajectories8']
 epochs: 300
 batch_size: 32
 lr: 0.001

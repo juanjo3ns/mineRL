@@ -62,7 +62,7 @@ def construct_map(enc):
         limit=enc.limit)
     if 'Custom' in enc.trajectories[0]:
         trajectories = load_trajectories(enc.trajectories[0])
-    embeddings = compute_embeddings(loader, enc.encoder)
+    embeddings = compute_embeddings(loader, enc.encode)
 
     if enc.type == "index":
         index_map(trajectories, embeddings, enc)
@@ -77,14 +77,13 @@ def construct_map(enc):
 def index_map(trajectories, embeddings, enc):
 
     palette = sns.color_palette("Paired", n_colors=enc.num_clusters)
-
     print("Get index from all data points...")
     values = pd.DataFrame(columns=['x', 'y', 'Code:'])
     for i, (e, p) in enumerate(zip(embeddings, trajectories)):
         x = float(p[2])
         y = float(p[0])
-        e = torch.from_numpy(e.squeeze()).cuda()
-        k = enc.compute_argmax(e)
+        e = torch.from_numpy(e).cuda()
+        k = enc.compute_argmax(e.unsqueeze(dim=0))
         values = values.append({'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
 
     values['Code:'] = values['Code:'].astype('int32')
@@ -99,8 +98,8 @@ def reward_map(trajectories, embeddings, enc):
         for i, (e, p) in enumerate(zip(embeddings, trajectories)):
             x = float(p[2])
             y = float(p[0])
-            e = torch.from_numpy(e.squeeze()).cuda()
-            logits = enc.compute_logits(e)
+            e = torch.from_numpy(e).cuda()
+            logits = enc.compute_logits(e.unsqueeze(dim=0))
             k = torch.argmax(logits).cpu().item()
             r = 0
             if k == g:
