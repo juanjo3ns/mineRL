@@ -297,16 +297,7 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         g = self.model.compute_argmax(z_a)
         reward = 0
         if self.env.goal_state == g:
-            #CURL
-            first, second = self.model.compute_first_second_argmax(z_a)
-            reward = 1 + (first-second)/first
-
-            #VQVAE
-            # distances = self.model._vq_vae.compute_distances(z_a).squeeze()
-            # max = distances[g].detach().cpu().item()
-            # reward = 1/(1+max)
-
-
+            reward = self.model.compute_reward(z_a)
         self.model.reward = reward
 
         self.store_idx(g)

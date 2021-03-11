@@ -87,7 +87,7 @@ def index_map(trajectories, embeddings, enc):
         values = values.append({'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
 
     values['Code:'] = values['Code:'].astype('int32')
-    plot_idx_maps(values, palette, "brief")
+    plot_idx_maps(values, palette, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0])
 
 def reward_map(trajectories, embeddings, enc):
     print("Get index from all data points...")
@@ -99,19 +99,14 @@ def reward_map(trajectories, embeddings, enc):
             x = float(p[2])
             y = float(p[0])
             e = torch.from_numpy(e).cuda()
-            logits = enc.compute_logits(e.unsqueeze(dim=0))
-            k = torch.argmax(logits).cpu().item()
+            k = enc.compute_argmax(e.unsqueeze(dim=0))
             r = 0
             if k == g:
-                max = logits[k].detach().cpu().item()
-                logits[k] = 0
-                k2 = torch.argmax(logits).cpu().item()
-                sec_max = logits[k2].detach().cpu().item()
-                r = (max-sec_max)/max
+                r = enc.compute_reward(e.unsqueeze(dim=0))
             values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
         data_list.append(values)
 
-    plot_reward_maps(data_list)
+    plot_reward_maps(data_list, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0])
 
 def embed_map(embeddings, images, exp):
     import tensorflow
@@ -147,3 +142,20 @@ def get_train_val_split(trajectories, split):
             items = [path / t / x for x in items]
             total_t.extend(items)
     return trainValSplit(total_t, split)
+
+
+'''
+Mapping from Trajectories to Worlds.
+We can have multiple datasets of trajectories that belong to a unique world.
+'''
+def getWorld(t):
+    if '8' in t or '9' in t:
+        return 0
+    elif '10' in t:
+        return 1
+    elif '11' in t:
+        return 2
+    elif '12' in t:
+        return 4
+    else:
+        raise NotImplementedError()

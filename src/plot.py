@@ -6,35 +6,32 @@ import matplotlib.pyplot as plt
 
 from IPython import embed
 
-COLOR = 'white'
+COLOR = 'gray'
 matplotlib.rcParams['text.color'] = COLOR
 matplotlib.rcParams['axes.labelcolor'] = COLOR
 matplotlib.rcParams['xtick.color'] = COLOR
 matplotlib.rcParams['ytick.color'] = COLOR
-plt.rcParams['axes.facecolor'] = '#303030'
+# plt.rcParams['axes.facecolor'] = '#303030'
 
 
 '''
 Given a dataframe of x,y,index columns and a palette of colors,
 plot points in their coordinates x,y and distinguish them by index.
 '''
-def plot_idx_maps(data, palette, legend):
-    fig, ax = plt.subplots(figsize=(10,9))
+def plot_idx_maps(data, palette, id="0", alg="curl"):
+    fig, ax = plt.subplots(figsize=(9,9))
     sns.scatterplot(x="x", y="y", hue="Code:", palette=palette, data=data)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    # ax.get_legend().remove()
-    # ax.set_title(f"#Clusters: {len(palette)}")
-    # ax.axis('off')
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.get_legend().remove()
+    ax.axis('off')
     plt.tight_layout()
-    # plt.show()
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW_4_indexmap.png', transparent=True)
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW_{id}_{alg}_indexmap.png', transparent=True)
 
 '''
 Given a list of dataframes, plot index map for each goal state where the instead
 of index we have a reward for each point.
 '''
-def plot_reward_maps(data_list):
-
+def plot_reward_maps(data_list, id="0", alg="curl"):
 
     num_plots = len(data_list)
     if num_plots == 8:
@@ -54,9 +51,7 @@ def plot_reward_maps(data_list):
             g = ax.scatter(data_list[i]['x'],data_list[i]['y'], c=data_list[i]['reward'], marker='.')
         ax.axis('off')
     fig.colorbar(g, ax=axn[:,-1])
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW_4_rewardmaps.png', transparent=True)
-    # embed()
-    # plt.show()
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW_{id}_{alg}_rewardmaps.png', transparent=True)
 
 def plot_q_maps(data_list):
 

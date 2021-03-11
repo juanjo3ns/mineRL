@@ -14,7 +14,7 @@ curl:
   k_mean: 15
   z_dim: 128
 test:
-  type: 'index'  # [index, reward, embed]
+  type: 'reward'  # [index, reward, embed]
   shuffle: no
   limit: null
   path_goal_states: './goal_states/CT8_real_biome_curl_kmeans_10'
