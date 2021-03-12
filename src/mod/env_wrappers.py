@@ -28,7 +28,7 @@ def wrap_env(
         frame_skip,
         gray_scale, frame_stack,
         randomize_action, eval_epsilon,
-        encoder, device, sampling):
+        encoder, device, sampling, train_encoder):
     # wrap env: time limit...
     # Don't use `ContinuingTimeLimit` for testing, in order to avoid unexpected behavior on submissions.
     # (Submission utility regards "done" as an episode end, which will result in endless evaluation)
@@ -40,8 +40,8 @@ def wrap_env(
 
     # wrap env: observation...
     # NOTE: wrapping order matters!
-
-    env = ResetWrapper(env, encoder, test, sampling)
+    if not train_encoder:
+        env = ResetWrapper(env, encoder, test, sampling)
 
     if test and monitor:
         env = Monitor(
@@ -58,27 +58,27 @@ def wrap_env(
     env = MoveAxisWrapper(env, source=-1, destination=0)  # convert hwc -> chw as Pytorch requires.
 
     # NEW
-    env = ObtainEmbeddingWrapper(env, encoder, device, test)
-    env = ConcatenateWrapper(env, encoder)
+    if not train_encoder:
+        env = ObtainEmbeddingWrapper(env, encoder, device, test)
+        env = ConcatenateWrapper(env, encoder)
+        ngs = encoder.num_goal_states
+        env.skill_probs = np.ones(ngs)/ngs
+    else:
+        env = ScaledFloatFrame(env)
 
     # Since we have our own encoder, we won't use scaling
-    # env = ScaledFloatFrame(env)
     if frame_stack is not None and frame_stack > 0:
         env = FrameStack(env, frame_stack, channel_order='chw')
 
     env = ClusteredActionWrapper(env, frame_skip)
 
     # NEW
-    env = TransformReward(env, encoder)
-
-    ngs = encoder.num_goal_states
-    env.skill_probs = np.ones(ngs)/ngs
-
+    if not train_encoder:
+        env = TransformReward(env, encoder)
 
     if randomize_action:
         env = RandomizeAction(env, eval_epsilon)
-
-
+    env.goal_state = 0
     return env
 
 
@@ -241,7 +241,6 @@ class ObtainCoordWrapper(gym.ObservationWrapper):
 
     def observation(self, observation):
         if 'coords' in observation:
-
             csvfile = open(os.path.join(self.outdir, f"coords_{self.env.goal_state}.{self.env.resets-1}.csv"), 'a')
             csvwriter = csv.writer(csvfile, delimiter=',')
             csvwriter.writerow(observation['coords'])

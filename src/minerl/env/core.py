@@ -825,6 +825,14 @@ class MineRLEnv(gym.Env):
                 yaw = 0
 
             mod = mod[:idx] + str(yaw) + mod[idx+1:]
+
+            # DIAMOND BLOCK
+            dx = self.custom_config['dx']
+            dy = self.custom_config['dy']
+            dz = self.custom_config['dz']
+            idx = mod.index('origin')+6
+            mod = mod[:idx] + f" x=\"{str(dx)}\" y=\"{str(dy)}\" z=\"{str(dz)}\"" + mod[idx:]
+
             mod = etree.fromstring(mod)
             #######
 

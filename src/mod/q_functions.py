@@ -9,7 +9,7 @@ from pfrl.initializers import init_chainer_default
 
 from IPython import embed
 
-def parse_arch(arch, n_actions, n_input_channels, embedding_dim):
+def parse_arch(arch, n_actions, n_input_channels, input_dim=1024, train_encoder=False):
     if arch == 'dueling':
         # Conv2Ds of (channel, kernel, stride): [(32, 8, 4), (64, 4, 2), (64, 3, 1)]
         # return DuelingDQN(n_actions, n_input_channels=n_input_channels, hiddens=[256])
@@ -24,10 +24,29 @@ def parse_arch(arch, n_actions, n_input_channels, embedding_dim):
             v_min,
             v_max,
             n_input_channels=n_input_channels,
-            embedding_dim=embedding_dim
+            input_dim=input_dim,
+            train_encoder=train_encoder
             )
     else:
         raise RuntimeError('Unsupported architecture name: {}'.format(arch))
+
+class Encoder(nn.Module):
+    def __init__(self):
+        super(Encoder, self).__init__()
+
+        self.conv_layers = nn.ModuleList(
+            [
+                nn.Conv2d(3, 32, 8, stride=4),
+                nn.Conv2d(32, 64, 4, stride=2),
+                nn.Conv2d(64, 64, 3, stride=1),
+            ]
+        )
+        self.activation = torch.relu
+
+    def forward(self, x):
+        for l in self.conv_layers:
+            x = self.activation(l(x))
+        return x.view(x.shape[0], -1)
 
 
 class DistributionalDuelingDQN(nn.Module, StateQFunction):
@@ -42,7 +61,8 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
         n_input_channels=4,
         activation=torch.relu,
         bias=0.1,
-        embedding_dim=64
+        input_dim=64,
+        train_encoder=False
     ):
         assert n_atoms >= 2
         assert v_min < v_max
@@ -51,26 +71,14 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
         self.n_input_channels = n_input_channels
         self.activation = activation
         self.n_atoms = n_atoms
+        self.train_encoder = train_encoder
 
         super().__init__()
         self.z_values = torch.linspace(v_min, v_max, n_atoms, dtype=torch.float32)
+        if self.train_encoder:
+            self.encoder = Encoder()
 
-        # self.conv_layers = nn.ModuleList(
-        #     [
-        #         nn.Conv2d(n_input_channels, 32, 8, stride=4),
-        #         nn.Conv2d(32, 64, 4, stride=2),
-        #         nn.Conv2d(64, 64, 3, stride=1),
-        #     ]
-        # )
-
-        # ここだけ変える必要があった
-        # self.main_stream = nn.Linear(3136, 1024)
-
-        # before
-        # self.main_stream = nn.Linear(1024, 1024)
-        # new
-        self.main_stream_1 = nn.Linear(embedding_dim*2, 512)
-        self.main_stream_2 = nn.Linear(512, 1024)
+        self.linear = nn.Linear(input_dim, 1024)
 
         self.a_stream = nn.Linear(512, n_actions * n_atoms)
         self.v_stream = nn.Linear(512, n_atoms)
@@ -79,17 +87,17 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
         # self.conv_layers.apply(constant_bias_initializer(bias=bias))
 
     def forward(self, x):
-        # h = x
-        # for l in self.conv_layers:
-        #     h = self.activation(l(h))
+        h = x
+        if self.train_encoder:
+            h = self.encoder(h)
 
-        # Advantage
-        batch_size = x.shape[0]
+        bs = h.shape[0]
+        h = self.activation(self.linear(h))
+        # h = self.activation(self.main_stream_2(h))
 
-        h = self.activation(self.main_stream_1(x.view(batch_size, -1)))
-        h = self.activation(self.main_stream_2(h))
+
         h_a, h_v = torch.chunk(h, 2, dim=1)
-        ya = self.a_stream(h_a).reshape((batch_size, self.n_actions, self.n_atoms))
+        ya = self.a_stream(h_a).reshape((bs, self.n_actions, self.n_atoms))
 
         mean = ya.sum(dim=1, keepdim=True) / self.n_actions
 
@@ -97,8 +105,9 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
         ya -= mean
 
         # State value
-        ys = self.v_stream(h_v).reshape((batch_size, 1, self.n_atoms))
+        ys = self.v_stream(h_v).reshape((bs, 1, self.n_atoms))
         ya, ys = torch.broadcast_tensors(ya, ys)
+
         q = F.softmax(ya + ys, dim=2)
         self.z_values = self.z_values.to(x.device)
         return action_value.DistributionalDiscreteActionValue(q, self.z_values)

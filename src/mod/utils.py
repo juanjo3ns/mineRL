@@ -17,16 +17,16 @@ def log_versions():
     logger.info(','.join(freeze.freeze()))  # pip freeze
 
 def load_encoder(conf, path_weights):
-
-    img_size = conf['img_size']
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     enc_type = conf['type']
+
     conf = conf[enc_type]
+    img_size = conf['img_size']
 
     encoder_version = conf['encoder_version']
     load_epoch = conf['load_epoch']
     embedding_dim = conf['embedding_dim']
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if enc_type == 'curl':
         obs_shape = (3, img_size, img_size)

@@ -1,7 +1,8 @@
-outdir: 'rl.test'
+outdir: 'rl.dt.0'
 env: 'MineRLNavigate-v0'
 world: 'CustomWorld_0'
 logging_level: 20
+interactor: no
 
 seed: 0
 gpu: 0
@@ -33,13 +34,13 @@ final_exploration_frames: 10.e+6
 final_epsilon: 0.01
 eval_epsilon: 0.001
 noisy_net_sigma: null
-replay_capacity: 10.e+6
+replay_capacity: 10.e+5
 replay_start_size: 1.e+4
 prioritized: yes
 target_update_interval: 2.e+4
 
 encoder:
-  type: 'curl'
+  type: 'random'
   img_size: 64
   vqvae:
     encoder_version: 'vqvae_sweep_0'

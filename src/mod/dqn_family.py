@@ -63,6 +63,7 @@ def dqn_family(conf, outdir):
     env_id = conf['env']
     world = conf['world']
     logging_level = conf['logging_level']
+    interactor = conf['interactor']
 
     seed = conf['seed']
     gpu = conf['gpu']
@@ -122,8 +123,16 @@ def dqn_family(conf, outdir):
     else:
         raise Exception("Sorry, user not identified!")
 
-    encoder = utils.load_encoder(enc_conf, path_weights)
-    print("Encoder loaded!")
+
+    if enc_conf['type'] == 'random':
+        train_encoder = True
+        input_dim = 1024
+        encoder = None
+    else:
+        train_encoder = False
+        input_dim = enc_conf[enc_conf['type']]['embedding_dim'] * 2
+        encoder = utils.load_encoder(enc_conf, path_weights)
+
 
     ######################################################
 
@@ -137,14 +146,14 @@ def dqn_family(conf, outdir):
             frame_skip=frame_skip,
             gray_scale=gray_scale, frame_stack=frame_stack,
             randomize_action=randomize_action, eval_epsilon=eval_epsilon,
-            encoder=encoder, device=device, sampling=sampling)
+            encoder=encoder, device=device, sampling=sampling, train_encoder=train_encoder)
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
 
     core_env.custom_update(world_conf)
 
-    # core_env.make_interactive(port=6666, realtime=True)
+    if interactor: core_env.make_interactive(port=6666, realtime=True)
 
     # This seed controls which environment will be rendered
     core_env.seed(0)
@@ -152,7 +161,6 @@ def dqn_family(conf, outdir):
     # training env
     env = wrap_env_partial(env=core_env, test=False)
     # env.seed(int(train_seed))
-
 
     # evaluation env
     eval_env = wrap_env_partial(env=core_env, test=True)
@@ -169,7 +177,6 @@ def dqn_family(conf, outdir):
         steps = maximum_frames // frame_skip
         eval_interval = 2000 * 30 // frame_skip  # (approx.) every 100 episode (counts "1 episode = 6000 steps")
 
-    embedding_dim = enc_conf[enc_conf['type']]['embedding_dim']
 
     agent = get_agent(
         n_actions=5, arch=arch, n_input_channels=env.observation_space.shape[0],
@@ -180,7 +187,8 @@ def dqn_family(conf, outdir):
         replay_capacity=replay_capacity, num_step_return=num_step_return,
         agent_type=agent_type, gpu=gpu, gamma=gamma, replay_start_size=replay_start_size,
         target_update_interval=target_update_interval, clip_delta=clip_delta,
-        batch_accumulator=batch_accumulator, batch_size=batch_size, embedding_dim=embedding_dim
+        batch_accumulator=batch_accumulator, batch_size=batch_size, input_dim=input_dim,
+        train_encoder=train_encoder
     )
 
     if load:
@@ -216,10 +224,10 @@ def get_agent(
         lr, adam_eps,
         prioritized, steps, update_interval, replay_capacity, num_step_return,
         agent_type, gpu, gamma, replay_start_size, target_update_interval, clip_delta,
-        batch_accumulator,batch_size, embedding_dim
+        batch_accumulator,batch_size, input_dim, train_encoder
 ):
     # Q function
-    q_func = parse_arch(arch, n_actions, n_input_channels=n_input_channels, embedding_dim=embedding_dim)
+    q_func = parse_arch(arch, n_actions, n_input_channels=n_input_channels, input_dim=input_dim, train_encoder=train_encoder)
 
     # explorer
     if noisy_net_sigma is not None:
@@ -230,7 +238,7 @@ def get_agent(
         explorer = pfrl.explorers.LinearDecayEpsilonGreedy(
             1.0, final_epsilon, final_exploration_frames, explorer_sample_func)
 
-    opt = torch.optim.Adam(q_func.parameters(), lr, eps=adam_eps)  # NOTE: mirrors DQN implementation in MineRL paper
+    opt = torch.optim.Adam(q_func.parameters(), lr, eps=adam_eps)
 
     # Select a replay buffer to use
     if prioritized:
