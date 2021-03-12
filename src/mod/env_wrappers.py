@@ -78,7 +78,7 @@ def wrap_env(
 
     if randomize_action:
         env = RandomizeAction(env, eval_epsilon)
-    env.goal_state = 0
+
     return env
 
 
@@ -236,6 +236,7 @@ class ObtainCoordWrapper(gym.ObservationWrapper):
     def __init__(self, env, outdir):
         super().__init__(env)
         self.env = env
+        self.env.goal_state = 0
         self.outdir = outdir
 
 
