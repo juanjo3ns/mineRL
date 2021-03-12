@@ -830,6 +830,11 @@ class MineRLEnv(gym.Env):
             dx = self.custom_config['dx']
             dy = self.custom_config['dy']
             dz = self.custom_config['dz']
+
+            # if we are not training with extrinsic reward just push the block further away
+            if not self.custom_config['downstream_task']:
+                dx += 1000
+
             idx = mod.index('origin')+6
             mod = mod[:idx] + f" x=\"{str(dx)}\" y=\"{str(dy)}\" z=\"{str(dz)}\"" + mod[idx:]
 

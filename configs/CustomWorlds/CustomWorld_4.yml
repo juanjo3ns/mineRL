@@ -4,6 +4,13 @@ y: 69
 z: -16
 barrier: 50
 
+#
+# Diamond Block location. y coordinate will be overwrited by surface's y
+#
+dx: -16
+dy: 0
+dz: 14
+
 # """
 # Direction types:
 #   'random': 360 possible directions

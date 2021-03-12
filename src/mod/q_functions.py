@@ -88,11 +88,12 @@ class DistributionalDuelingDQN(nn.Module, StateQFunction):
 
     def forward(self, x):
         h = x
+
         if self.train_encoder:
             h = self.encoder(h)
 
         bs = h.shape[0]
-        h = self.activation(self.linear(h))
+        h = self.activation(self.linear(h.view(bs,-1)))
         # h = self.activation(self.main_stream_2(h))
 
 

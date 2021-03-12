@@ -28,7 +28,8 @@ def wrap_env(
         frame_skip,
         gray_scale, frame_stack,
         randomize_action, eval_epsilon,
-        encoder, device, sampling, train_encoder):
+        encoder, device, sampling,
+        train_encoder, downstream_task):
     # wrap env: time limit...
     # Don't use `ContinuingTimeLimit` for testing, in order to avoid unexpected behavior on submissions.
     # (Submission utility regards "done" as an episode end, which will result in endless evaluation)
@@ -73,8 +74,7 @@ def wrap_env(
     env = ClusteredActionWrapper(env, frame_skip)
 
     # NEW
-    if not train_encoder:
-        env = TransformReward(env, encoder)
+    env = TransformReward(env, encoder, train_encoder, downstream_task)
 
     if randomize_action:
         env = RandomizeAction(env, eval_epsilon)
@@ -236,7 +236,6 @@ class ObtainCoordWrapper(gym.ObservationWrapper):
     def __init__(self, env, outdir):
         super().__init__(env)
         self.env = env
-        self.env.goal_state = 0
         self.outdir = outdir
 
 
@@ -551,10 +550,19 @@ class TransformReward(gym.RewardWrapper):
         Args:
             env (Env): environment
     """
-    def __init__(self, env, encoder):
+    def __init__(self, env, encoder, train_enc, downstream_task):
         super(TransformReward, self).__init__(env)
 
         self.model = encoder
+        self.train_encoder = train_enc
+        self.downstream_task = downstream_task
 
     def reward(self, reward):
-        return self.model.reward
+        if self.train_encoder:
+            return reward
+        elif not self.train_encoder and not self.downstream_task:
+            return self.model.reward
+        elif not self.train_encoder and self.downstream_task:
+            return self.model.reward + reward
+        else:
+            return reward

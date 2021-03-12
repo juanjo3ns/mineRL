@@ -2,6 +2,8 @@ outdir: 'rl.10.1.0'
 env: 'MineRLNavigate-v0'
 world: 'CustomWorld_1'
 logging_level: 20
+interactor: no
+downstream_task: no
 
 seed: 0
 gpu: 0

@@ -1,7 +1,9 @@
-outdir: 'rl.5.1'
+outdir: 'rl.11.2.0'
 env: 'MineRLNavigate-v0'
+world: 'CustomWorld_2'
 logging_level: 20
 interactor: no
+downstream_task: no
 
 seed: 0
 gpu: 0
@@ -33,23 +35,23 @@ final_epsilon: 0.01
 eval_epsilon: 0.001
 noisy_net_sigma: null
 replay_capacity: 10.e+6
-replay_start_size: 2.e+4
+replay_start_size: 1.e+4
 prioritized: yes
 target_update_interval: 2.e+4
 
 encoder:
-  type: 'curl'
+  type: 'vqvae'
   img_size: 64
   vqvae:
-    encoder_version: 'vqvae_0.3'
-    load_epoch: 'mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'
+    encoder_version: 'vqvae_exp_1'
+    load_epoch: 'mineRL/mlq3n3be/checkpoints/epoch=39-step=11679.ckpt'
     num_hiddens: 64
     num_residual_hiddens: 32
     num_residual_layers: 2
     embedding_dim: 256
     num_embeddings: 10
     commitment_cost: 0.25
-    goals: [0,2,3,5,7,8,9]
+    goals: [0,1,2,3,4,5,6,7,8,9]
   curl:
     encoder_version: 'curl_1.0'
     load_epoch: 'mineRL/1042bq9w/checkpoints/epoch=499-step=302999.ckpt'

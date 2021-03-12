@@ -1,6 +1,8 @@
 outdir: 'rl.5.1'
 env: 'MineRLNavigate-v0'
 logging_level: 20
+interactor: no
+downstream_task: no
 
 seed: 0
 gpu: 0

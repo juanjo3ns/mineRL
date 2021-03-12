@@ -19,9 +19,9 @@ def log_versions():
 def load_encoder(conf, path_weights):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     enc_type = conf['type']
+    img_size = conf['img_size']
 
     conf = conf[enc_type]
-    img_size = conf['img_size']
 
     encoder_version = conf['encoder_version']
     load_epoch = conf['load_epoch']

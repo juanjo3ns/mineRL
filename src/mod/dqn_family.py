@@ -64,6 +64,7 @@ def dqn_family(conf, outdir):
     world = conf['world']
     logging_level = conf['logging_level']
     interactor = conf['interactor']
+    downstream_task = conf['downstream_task']
 
     seed = conf['seed']
     gpu = conf['gpu']
@@ -103,6 +104,7 @@ def dqn_family(conf, outdir):
     enc_conf = conf['encoder']
 
     world_conf = getConfig('CustomWorlds/' + world)
+    world_conf['downstream_task'] = downstream_task
 
     os.environ['MALMO_MINECRAFT_OUTPUT_LOGDIR'] = outdir
 
@@ -146,7 +148,8 @@ def dqn_family(conf, outdir):
             frame_skip=frame_skip,
             gray_scale=gray_scale, frame_stack=frame_stack,
             randomize_action=randomize_action, eval_epsilon=eval_epsilon,
-            encoder=encoder, device=device, sampling=sampling, train_encoder=train_encoder)
+            encoder=encoder, device=device, sampling=sampling,
+            train_encoder=train_encoder, downstream_task=downstream_task)
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)
