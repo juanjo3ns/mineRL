@@ -1,6 +1,6 @@
-outdir: 'rl.11.2.0'
+outdir: 'rl.11.4.0'
 env: 'MineRLNavigate-v0'
-world: 'CustomWorld_2'
+world: 'CustomWorld_4'
 logging_level: 20
 interactor: no
 downstream_task: no
