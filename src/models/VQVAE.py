@@ -343,10 +343,11 @@ class VQVAE_PL(pl.LightningModule):
         distances[0][first] = 100
         return torch.argmin(distances).cpu().item()
 
-    def compute_reward(self, z_a):
+    def compute_reward(self, z_a, goal):
         distances = self._vq_vae.compute_distances(z_a).squeeze()
-        min = torch.min(distances).detach().cpu().item()
-        return 1 / (1 + min)
+        return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
+
+
 
     def get_goal_state(self, idx):
         z_idx = torch.tensor(idx).cuda()

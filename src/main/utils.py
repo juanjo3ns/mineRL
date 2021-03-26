@@ -92,21 +92,63 @@ def index_map(trajectories, embeddings, enc):
 def reward_map(trajectories, embeddings, enc):
     print("Get index from all data points...")
     data_list = []
+    data_list_ = []
+    reward_list = []
+    traj_list = []
     for g in range(enc.num_clusters):
         print(f"Comparing data points with goal state {g}", end="\r")
         values = pd.DataFrame(columns=['x', 'y', 'reward'])
+        values_ = pd.DataFrame(columns=['x', 'y', 'reward'])
         for i, (e, p) in enumerate(zip(embeddings, trajectories)):
+            # if i > 71:
+            #     break
             x = float(p[2])
             y = float(p[0])
             e = torch.from_numpy(e).cuda()
-            k = enc.compute_argmax(e.unsqueeze(dim=0))
-            r = 0
-            if k == g:
-                r = enc.compute_reward(e.unsqueeze(dim=0))
-            values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
+
+            # normal approach
+            # k = enc.compute_argmax(e.unsqueeze(dim=0))
+            # r = 0
+            # if k == g:
+            #     r = enc.compute_reward(e.unsqueeze(dim=0))
+
+            # second approach
+            # r = enc.compute_reward_mod(e.unsqueeze(dim=0), g)
+            # if not (i+1) % 71 == 0:
+            #     e2 = torch.from_numpy(embeddings[i+1]).cuda()
+            #     r_next_state = enc.compute_reward_mod(e2.unsqueeze(dim=0), g)
+            #     r -= r_next_state
+            #     values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
+
+            # G (return) approach
+            # if i>71:
+            r = enc.compute_reward(e.unsqueeze(dim=0), g)
+
+                # values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
+
+            reward_list.append(r)
+            traj_list.append((x,y))
+
+            if (i+1) % 71 == 0:
+                G = 0
+                gamma = 0.9
+                for j, (r, c) in enumerate(zip(reward_list[::-1], traj_list[::-1])):
+                    if not j==(len(reward_list)-1):
+                        r -= reward_list[::-1][j+1]
+                    G = r + gamma*G
+                    values = values.append({'x': c[0], 'y': c[1], 'reward': r}, ignore_index=True)
+                    values_ = values_.append({'x': c[0], 'y': c[1], 'reward': G}, ignore_index=True)
+                reward_list = []
+                traj_list = []
+
+
         data_list.append(values)
+        data_list_.append(values_)
 
     plot_reward_maps(data_list, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0])
+    plot_reward_maps(data_list_, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0], is_return=True)
+    # plot_return_values(data_list, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0])
+    # plot_return_values(data_list_, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0], is_return=True)
 
 def embed_map(embeddings, images, exp):
     import tensorflow

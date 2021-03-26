@@ -100,6 +100,7 @@ class CURL_PL(pl.LightningModule):
     def get_goal_state(self, idx):
         return self.goal_states[idx].detach().cpu().numpy()
 
-    def compute_reward(self, z_a):
-        first, second = self.compute_first_second_argmax(z_a)
-        return 1 + (first-second)/first
+    def compute_reward(self, z_a, goal):
+        logits = self.compute_logits(z_a).squeeze()
+        logits = logits/z_a.shape[1]
+        return logits[goal].detach().cpu().numpy()

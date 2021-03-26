@@ -25,13 +25,13 @@ def plot_idx_maps(data, palette, id="0", alg="curl"):
     ax.get_legend().remove()
     ax.axis('off')
     plt.tight_layout()
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW_{id}_{alg}_indexmap.png', transparent=True)
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_indexmap.png', transparent=True)
 
 '''
 Given a list of dataframes, plot index map for each goal state where the instead
 of index we have a reward for each point.
 '''
-def plot_reward_maps(data_list, id="0", alg="curl"):
+def plot_reward_maps(data_list, id="0", alg="curl", is_return=False):
 
     num_plots = len(data_list)
     if num_plots == 8:
@@ -45,13 +45,48 @@ def plot_reward_maps(data_list, id="0", alg="curl"):
 
     fig, axn = plt.subplots(x,y, sharex=True, sharey=True, constrained_layout=True, figsize=(15,6))
 
+    is_return = 'return' if is_return else ''
+
     for i, ax in enumerate(axn.flat):
         if i < len(data_list):
-            ax.set_title('$r(s, z=z_{' + str(i) + '})$') # do not use f-string here
+            if is_return=='return':
+                ax.set_title('$G(s, z=z_{' + str(i) + '})$') # do not use f-string here
+            else:
+                ax.set_title('$r(s, z=z_{' + str(i) + '})$') # do not use f-string here
             g = ax.scatter(data_list[i]['x'],data_list[i]['y'], c=data_list[i]['reward'], marker='.')
-        ax.axis('off')
+        # ax.axis('off')
     fig.colorbar(g, ax=axn[:,-1])
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW_{id}_{alg}_rewardmaps.png', transparent=True)
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_rewardmaps_alternative_{is_return}.png', transparent=True)
+
+'''
+Given a list of dataframes, plot return values for each timestep
+'''
+def plot_return_values(data_list, id="0", alg="curl", is_return=False):
+    num_plots = len(data_list)
+    if num_plots == 8:
+        x,y = 2,4
+    elif num_plots == 9:
+        x,y = 3,3
+    elif num_plots == 10:
+        x,y = 2,5
+    else:
+        x,y = 3,5
+
+    is_return = 'return' if is_return else 'reward'
+
+    fig, axn = plt.subplots(x,y, figsize=(15,6), sharex=True, sharey=True, constrained_layout=True)
+    for i, ax in enumerate(axn.flat):
+        if i < len(data_list):
+            data = data_list[i]
+            data.columns = ['x','y', is_return]
+            sns.lineplot(x=data.index, y=is_return, data=data, ax=ax)
+            if is_return=='return':
+                ax.set_title('$G_{t}(z=z_{' + str(i) + '})$')
+            else:
+                ax.set_title('$r_{t}(z=z_{' + str(i) + '})$')
+
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_returnvalues_single_{is_return}.png', transparent=True)
+
 
 def plot_q_maps(data_list):
 

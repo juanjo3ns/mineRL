@@ -145,6 +145,7 @@ class ResetWrapper(gym.Wrapper):
         self.env.current_step = 0
         self.env.goal_state = goal_state
         self.env.current_step = 0
+        self.env.prev_reward = None
         return ob
 
 
@@ -286,18 +287,14 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         obs = obs_norm.unsqueeze(dim=0).to(self.device)
 
         z_a = self.model.encode(obs)
-
+        g = self.model.compute_argmax(z_a)
         # Compute reward as distance similarity in the embedding space - baseline reward (max)
         # r = self.model.compute_logits_(z_a, goal_state)
         # reward = int(r > self.model.threshold)
 
         # Compute reward as a classification problem. If the goal state with highest similarity
         # is the current selected, give reward of 1.
-        g = self.model.compute_argmax(z_a)
-        reward = 0
-        if self.env.goal_state == g:
-            reward = self.model.compute_reward(z_a)
-        self.model.reward = reward
+        self.model.reward = self.model.compute_reward(z_a, goal_state)
 
         self.store_idx(g)
 
@@ -556,13 +553,22 @@ class TransformReward(gym.RewardWrapper):
         self.model = encoder
         self.train_encoder = train_enc
         self.downstream_task = downstream_task
+        self.env = env
+        self.env.prev_reward = None
 
     def reward(self, reward):
         if self.train_encoder:
             return reward
+
         elif not self.train_encoder and not self.downstream_task:
-            return self.model.reward
+            reward = self.model.reward
+            if not self.env.prev_reward == None:
+                reward -= self.env.prev_reward
+            self.env.prev_reward = self.model.reward
+            return reward
+
         elif not self.train_encoder and self.downstream_task:
             return self.model.reward + reward
+
         else:
             return reward
