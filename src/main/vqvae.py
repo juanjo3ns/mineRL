@@ -72,13 +72,13 @@ class VQVAE(VQVAE_PL):
         img_recon_error = F.mse_loss(img_recon, i2)
         coord_recon_error = F.mse_loss(coord_recon, c2)
 
-        loss = img_recon_error + coord_recon_error + vq_loss
+        loss = img_recon_error + 0.1*coord_recon_error + vq_loss
         self.logger.experiment.log({
             'loss/train': loss,
             'perplexity/train': perplexity,
             'loss_img_recon/train': img_recon_error,
             'loss_coord_recon/train': coord_recon_error,
-            'loss_vq_loss': vq_loss
+            'loss_vq_loss/train': vq_loss
         })
 
         return loss
@@ -109,14 +109,14 @@ class VQVAE(VQVAE_PL):
         img_recon_error = F.mse_loss(img_recon, i2)
         coord_recon_error = F.mse_loss(coord_recon, c2)
         
-        loss = img_recon_error + coord_recon_error + vq_loss
+        loss = img_recon_error + 0.1*coord_recon_error + vq_loss
         
         self.logger.experiment.log({
-            'loss/train': loss,
-            'perplexity/train': perplexity,
-            'loss_img_recon/train': img_recon_error,
-            'loss_coord_recon/train': coord_recon_error,
-            'loss_vq_loss': vq_loss
+            'loss/val': loss,
+            'perplexity/val': perplexity,
+            'loss_img_recon/val': img_recon_error,
+            'loss_coord_recon/val': coord_recon_error,
+            'loss_vq_loss/val': vq_loss
         })
 
         if batch_idx == 0:
