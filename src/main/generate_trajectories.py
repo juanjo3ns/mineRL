@@ -30,7 +30,7 @@ from IPython import embed
 setSeed(0)
 
 episodes = 500
-steps = 700
+steps = 400
 frame_skip = 10
 
 MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLNavigate-v0')
@@ -39,9 +39,11 @@ env = gym.make('MineRLNavigate-v0')
 conf = getConfig(sys.argv[1])
 world_conf = getConfig('CustomWorlds/' + conf['world'])
 world_conf['path_world'] = Path('/home/juanjo/Documents/minecraft/mineRL/src/minerl/env/Malmo/Minecraft/run/saves/')
+world_conf['downstream_task'] = conf['downstream_task']
+
 env.custom_update(world_conf)
 
-folder = 'CustomTrajectories12'
+folder = 'CustomTrajectories13'
 outdir = f"./results/{folder}"
 
 if not os.path.exists(outdir):

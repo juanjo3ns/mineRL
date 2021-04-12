@@ -26,7 +26,7 @@ from torchvision.utils import make_grid
 from customLoader import *
 from torchvision.transforms import transforms
 
-from models.VQVAE import VQVAE_PL
+from models.CustomVQVAE import VQVAE_PL
 
 from pytorch_lightning.loggers import WandbLogger
 
@@ -61,8 +61,26 @@ class VQVAE(VQVAE_PL):
         self.shuffle = self.test['shuffle']
         self.limit = self.test['limit']
 
-
     def training_step(self, batch, batch_idx):
+        img, coords = batch
+        
+        i1, i2 = img[:, 0], img[:, 1]
+        c1, c2 = coords[:, 0], coords[:, 1]
+
+        vq_loss, img_recon, coord_recon, perplexity = self(i1, c1)
+        
+        img_recon_error = F.mse_loss(img_recon, i2)
+        coord_recon_error = F.mse_loss(coord_recon, c2)
+
+        loss = img_recon_error + coord_recon_error + vq_loss
+        self.logger.experiment.log({
+            'loss/train': loss,
+            'perplexity/train': perplexity
+        })
+
+        return loss
+
+    def old_training_step(self, batch, batch_idx):
 
         x,y = batch[:,0], batch[:,1]
 
@@ -78,11 +96,17 @@ class VQVAE(VQVAE_PL):
 
     def validation_step(self, batch, batch_idx):
 
-        x,y = batch[:,0], batch[:,1]
+        img, coords = batch
 
-        vq_loss, data_recon, perplexity = self(x)
-        recon_error = F.mse_loss(data_recon, y)
-        loss = recon_error + vq_loss
+        i1, i2 = img[:, 0], img[:, 1]
+        c1, c2 = coords[:, 0], coords[:, 1]
+
+        vq_loss, img_recon, coord_recon, perplexity = self(i1, c1)
+        
+        img_recon_error = F.mse_loss(img_recon, i2)
+        coord_recon_error = F.mse_loss(coord_recon, c2)
+        
+        loss = img_recon_error + coord_recon_error + vq_loss
 
         self.logger.experiment.log({
             'loss/val':loss,
@@ -90,8 +114,28 @@ class VQVAE(VQVAE_PL):
         })
 
         if batch_idx == 0:
-            grid = make_grid(data_recon[:64].cpu().data)
+            grid = make_grid(img_recon[:64].cpu().data)
             grid = grid.permute(1,2,0)
+            self.logger.experiment.log({"Images": [wandb.Image(grid.numpy())]})
+
+        return loss
+
+    def old_validation_step(self, batch, batch_idx):
+
+        x, y = batch[:, 0], batch[:, 1]
+
+        vq_loss, data_recon, perplexity = self(x)
+        recon_error = F.mse_loss(data_recon, y)
+        loss = recon_error + vq_loss
+
+        self.logger.experiment.log({
+            'loss/val': loss,
+            'perplexity/val': perplexity
+        })
+
+        if batch_idx == 0:
+            grid = make_grid(data_recon[:64].cpu().data)
+            grid = grid.permute(1, 2, 0)
             self.logger.experiment.log({"Images": [wandb.Image(grid.numpy())]})
 
         return loss
