@@ -1,7 +1,7 @@
-experiment: 'vqvae_CW_Simple_0'
+experiment: 'vqvae_CW_Simple_1'
 environment: 'MineRLNavigate-v0'
 trajectories: ['CustomTrajectories13']
-epochs: 100
+epochs: 40
 delay: no
 split: 0.90
 lr: 0.001
@@ -9,6 +9,7 @@ batch_size: 256
 img_size: 64
 k_std: 5
 k_mean: 15
+coord_cost: 0.1
 vqvae:
   num_hiddens: 64
   num_residual_hiddens: 32

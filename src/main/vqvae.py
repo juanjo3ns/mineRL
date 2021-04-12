@@ -43,6 +43,7 @@ class VQVAE(VQVAE_PL):
         self.lr = conf['lr']
         self.split = conf['split']
         self.num_clusters = conf['vqvae']['num_embeddings']
+        self.coord_cost = conf['coord_cost']
 
         self.delay = conf['delay']
         self.trajectories = conf['trajectories']
@@ -72,7 +73,7 @@ class VQVAE(VQVAE_PL):
         img_recon_error = F.mse_loss(img_recon, i2)
         coord_recon_error = F.mse_loss(coord_recon, c2)
 
-        loss = img_recon_error + 0.1*coord_recon_error + vq_loss
+        loss = img_recon_error + self.coord_cost*coord_recon_error + vq_loss
         self.logger.experiment.log({
             'loss/train': loss,
             'perplexity/train': perplexity,
@@ -109,7 +110,7 @@ class VQVAE(VQVAE_PL):
         img_recon_error = F.mse_loss(img_recon, i2)
         coord_recon_error = F.mse_loss(coord_recon, c2)
         
-        loss = img_recon_error + 0.1*coord_recon_error + vq_loss
+        loss = img_recon_error + self.coord_cost*coord_recon_error + vq_loss
         
         self.logger.experiment.log({
             'loss/val': loss,
