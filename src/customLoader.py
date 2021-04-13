@@ -100,7 +100,7 @@ class CustomMinecraftData(Dataset):
                     trajectory.append(row)
                 all_trajectories.append(trajectory)
         coords = np.array(all_trajectories, dtype=np.float32).reshape(-1, 3)
-        self.coords = coords/coords.max(axis=0)
+        self.coords = (coords - coords.mean(axis=0))/coords.var(axis=0)
 
     def loadData(self) -> list:
         print('Loading data...')

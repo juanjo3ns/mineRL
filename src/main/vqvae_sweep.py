@@ -49,7 +49,7 @@ def main():
     trainer.fit(vqvae)
 
 sweep_config = {
-    "name": f"{alg}_exp_2.sweep",
+    "name": f"{alg}_exp_3.sweep",
     "method": 'bayes',
     "metric": {
         "name": "perplexity/train",
@@ -69,9 +69,8 @@ sweep_config = {
         "coord_cost": {
             "distribution": "uniform",
             "max": 0.5,
-            "min": 0.05
+            "min": 0.01
         }
-
   }
 }
 

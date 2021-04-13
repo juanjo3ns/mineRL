@@ -73,7 +73,10 @@ class VQVAE(VQVAE_PL):
         img_recon_error = F.mse_loss(img_recon, i2)
         coord_recon_error = F.mse_loss(coord_recon, c2)
 
-        loss = img_recon_error + self.coord_cost*coord_recon_error + vq_loss
+        coord_recon_error = self.coord_cost*coord_recon_error
+
+        loss = img_recon_error + coord_recon_error + vq_loss
+
         self.logger.experiment.log({
             'loss/train': loss,
             'perplexity/train': perplexity,

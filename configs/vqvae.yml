@@ -1,4 +1,4 @@
-experiment: 'vqvae_CW_Simple_1'
+experiment: 'vqvae_CW_Simple_2'
 environment: 'MineRLNavigate-v0'
 trajectories: ['CustomTrajectories13']
 epochs: 40

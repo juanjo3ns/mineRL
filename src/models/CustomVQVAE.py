@@ -242,6 +242,8 @@ class VQVAE_PL(pl.LightningModule):
 
         self.coord_mlp = nn.Sequential(
             nn.Linear(3, int(embedding_dim/2)),
+            nn.ReLU(),
+            nn.Linear(int(embedding_dim/2), embedding_dim),
             nn.ReLU()
         )
 
@@ -254,6 +256,8 @@ class VQVAE_PL(pl.LightningModule):
         )
 
         self.coord_mlp_inv = nn.Sequential(
+            nn.Linear(embedding_dim, int(embedding_dim/2)),
+            nn.ReLU(),
             nn.Linear(int(embedding_dim/2), 3),
             nn.ReLU()
         )
@@ -268,22 +272,24 @@ class VQVAE_PL(pl.LightningModule):
         z_1 = self._encoder(img)
         z_1_shape = z_1.shape
         z_1 = z_1.view(z_1_shape[0], -1)
-        z_1 = self.img_mlp(z_1)
+        #z_1 = self.img_mlp(z_1)
 
         z_2 = self.coord_mlp(coords)
+        #z = torch.cat((z_1, z_2), dim=1)
+        
+        z = torch.add(z_1, z_2)
 
-        z = torch.cat((z_1, z_2), dim=1)
         
         loss, quantized, perplexity, _ = self._vq_vae(z)
-        h_i, h_c = torch.chunk(quantized, 2, dim=1)
+        #h_i, h_c = torch.chunk(quantized, 2, dim=1)
 
-        h_i = self.img_mlp_inv(h_i)
+        #h_i = self.img_mlp_inv(quantized)
 
 
-        h_i = h_i.view(z_1_shape)
+        h_i = quantized.view(z_1_shape)
 
         img_recon = self._decoder(h_i)
-        coord_recon = self.coord_mlp_inv(h_c)
+        coord_recon = self.coord_mlp_inv(quantized)
 
         return loss, img_recon, coord_recon, perplexity
 
