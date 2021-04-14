@@ -37,13 +37,13 @@ class VectorQuantizerEMA(nn.Module):
         return quantized.permute(0, 3, 1, 2).contiguous()
 
     def compute_distances(self, inputs):
-        inputs = inputs.permute(0, 2, 3, 1).contiguous() # [1,16,16,64]
-        input_shape = inputs.shape
-        flat_input = inputs.view(-1, self._embedding_dim) # [256,64]
+        # inputs = inputs.permute(0, 2, 3, 1).contiguous() # [1,16,16,64]
+        # input_shape = inputs.shape
+        # flat_input = inputs.view(-1, self._embedding_dim) # [256,64]
 
-        distances = (torch.sum(flat_input**2, dim=1, keepdim=True)
+        distances = (torch.sum(inputs**2, dim=1, keepdim=True)
                     + torch.sum(self._embedding.weight**2, dim=1)
-                    - 2 * torch.matmul(flat_input, self._embedding.weight.t()))
+                    - 2 * torch.matmul(inputs, self._embedding.weight.t()))
         return distances
 
     def forward(self, inputs):
@@ -307,8 +307,14 @@ class VQVAE_PL(pl.LightningModule):
         _, _, _, encoding_indices = self._vq_vae(z)
         return encoding_indices
 
-    def encode(self, x):
-        return self._encoder(x)
+    def encode(self, img, coords):
+        z_1 = self._encoder(img)
+        z_1_shape = z_1.shape
+        z_1 = z_1.view(z_1_shape[0], -1)
+
+        z_2 = self.coord_mlp(coords)
+
+        return torch.add(z_1, z_2)
 
     def compute_logits_(self, z_a, z_pos):
         distances = self._vq_vae.compute_distances(z_a)

@@ -1,7 +1,7 @@
-experiment: 'vqvae_CW_Simple_2'
+experiment: 'vqvae_CW0_Realistic.Sweep'
 environment: 'MineRLNavigate-v0'
-trajectories: ['CustomTrajectories13']
-epochs: 40
+trajectories: ['CustomTrajectories8']
+epochs: 30
 delay: no
 split: 0.90
 lr: 0.001
@@ -9,7 +9,7 @@ batch_size: 256
 img_size: 64
 k_std: 5
 k_mean: 15
-coord_cost: 0.1
+coord_cost: 1
 vqvae:
   num_hiddens: 64
   num_residual_hiddens: 32
@@ -19,7 +19,7 @@ vqvae:
   commitment_cost: 0.25
   decay: 0.99
 test:
-  type: 'reward'  # [index, reward, embed]
+  type: 'index'  # [index, reward, embed]
   shuffle: no
   limit: null
   # path_weights: './vqvae_0.3/mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'
@@ -31,4 +31,6 @@ test:
   # path_weights: 'vqvae_3.1/mineRL/8ykl37mx/checkpoints/epoch=59-step=5399.ckpt'
   # path_weights: 'vqvae_sweep_0/mineRL/8bbcrmgb/checkpoints/epoch=34-step=3149.ckpt'
   # path_weights: 'vqvae_exp_0/mineRL/2n13fn6b/checkpoints/epoch=499-step=499.ckpt'
-  path_weights: 'vqvae_exp_1/mineRL/mlq3n3be/checkpoints/epoch=39-step=11679.ckpt'
+  # path_weights: 'vqvae_exp_1/mineRL/mlq3n3be/checkpoints/epoch=39-step=11679.ckpt'
+  path_weights: 'vqvae_CW_Simple_2/mineRL/l4ctccfy/checkpoints/epoch=39-step=4999.ckpt'
+

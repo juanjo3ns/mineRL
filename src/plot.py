@@ -25,7 +25,7 @@ def plot_idx_maps(data, palette, id="0", alg="curl"):
     ax.get_legend().remove()
     ax.axis('off')
     plt.tight_layout()
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_indexmap.png', transparent=True)
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_indexmap_wcoord.png', transparent=True)
 
 '''
 Given a list of dataframes, plot index map for each goal state where the instead

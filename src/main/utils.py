@@ -31,10 +31,10 @@ def compute_kmeans(embeddings, num_clusters):
     return KMeans(n_clusters=num_clusters, random_state=0).fit(embeddings)
 
 def compute_embeddings(loader, encode):
-    return np.array([encode(data[:,0].cuda()).detach().cpu().numpy() for data in loader]).squeeze()
+    return np.array([encode(data[:,0].cuda(), coord[:,0].cuda()).detach().cpu().numpy() for data, coord in loader]).squeeze()
 
 def get_images(loader):
-    return torch.cat([data[:,0] for data in loader])
+    return torch.cat([data[:,0] for data, coord in loader])
 
 
 def load_trajectories(trajectories):

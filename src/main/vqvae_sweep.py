@@ -49,7 +49,7 @@ def main():
     trainer.fit(vqvae)
 
 sweep_config = {
-    "name": f"{alg}_exp_3.sweep",
+    "name": f"{alg}_CW0_Realistic.Sweep",
     "method": 'bayes',
     "metric": {
         "name": "perplexity/train",
@@ -65,11 +65,6 @@ sweep_config = {
           "distribution": "uniform",
           "max": 0.01,
           "min": 0.0001
-        },
-        "coord_cost": {
-            "distribution": "uniform",
-            "max": 0.5,
-            "min": 0.01
         }
   }
 }
@@ -80,4 +75,4 @@ del os.environ["SLURM_NTASKS"]
 del os.environ["SLURM_JOB_NAME"]
 
 sweep_id = wandb.sweep(sweep_config, project="mineRL")
-wandb.agent(sweep_id, function=main, count=30)
+wandb.agent(sweep_id, function=main, count=30, project="mineRL", entity="juanjo3ns")
