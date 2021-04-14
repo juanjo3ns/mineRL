@@ -58,8 +58,8 @@ sweep_config = {
     "parameters": {
         "vqvae.commitment_cost": {
               "distribution": "uniform",
-              "max": 0.35,
-              "min": 0.05
+              "max": 0.5,
+              "min": 0.01
         },
         "lr": {
           "distribution": "uniform",
