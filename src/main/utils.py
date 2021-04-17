@@ -10,7 +10,7 @@ from plot import *
 from os.path import join
 from pathlib import Path
 from sklearn.cluster import KMeans
-
+from collections import Counter
 from torch.utils.data import DataLoader, Subset
 from customLoader import *
 from torchvision.transforms import transforms
@@ -31,7 +31,9 @@ def compute_kmeans(embeddings, num_clusters):
     return KMeans(n_clusters=num_clusters, random_state=0).fit(embeddings)
 
 def compute_embeddings(loader, encode):
-    return np.array([encode(data[:,0].cuda(), coord[:,0].cuda()).detach().cpu().numpy() for data, coord in loader]).squeeze()
+    # return np.array([encode(data[:, 0].cuda()).detach().cpu().numpy() for data, coord in loader]).squeeze()
+    return np.array([encode(data[:, 0].cuda(), coord[:, 0].cuda()).detach().cpu().numpy() for data, coord in loader]).squeeze()
+    # return np.array([encode(coord[:, 0].cuda()).detach().cpu().numpy() for data, coord in loader]).squeeze()
 
 def get_images(loader):
     return torch.cat([data[:,0] for data, coord in loader])
@@ -76,7 +78,6 @@ def construct_map(enc):
 
 def index_map(trajectories, embeddings, enc):
 
-    palette = sns.color_palette("Paired", n_colors=enc.num_clusters)
     print("Get index from all data points...")
     values = pd.DataFrame(columns=['x', 'y', 'Code:'])
     for i, (e, p) in enumerate(zip(embeddings, trajectories)):
@@ -87,7 +88,12 @@ def index_map(trajectories, embeddings, enc):
         values = values.append({'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
 
     values['Code:'] = values['Code:'].astype('int32')
+    code_list = values['Code:'].tolist()
+    codes_count = Counter(code_list)
+    palette = sns.color_palette("Paired", n_colors=len(list(set(code_list))))
     plot_idx_maps(values, palette, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0])
+    skill_appearance(codes_count, palette, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0])
+
 
 def reward_map(trajectories, embeddings, enc):
     print("Get index from all data points...")

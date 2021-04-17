@@ -26,11 +26,12 @@ from torchvision.utils import make_grid
 from customLoader import *
 from torchvision.transforms import transforms
 
-from models.CoordVQVAE import VQVAE_PL
+from models.CustomVQVAE import VQVAE_PL
 
 from pytorch_lightning.loggers import WandbLogger
 
 from mod.q_functions import parse_arch
+from sklearn.cluster import KMeans
 
 from IPython import embed
 
@@ -62,27 +63,53 @@ class VQVAE(VQVAE_PL):
         self.shuffle = self.test['shuffle']
         self.limit = self.test['limit']
 
+
+    def on_train_start(self):
+        embeddings = []
+
+        print("Computing embeddings...")
+        for imgs, coords in self.trainer.train_dataloader:
+            imgs = imgs.to(self.device)
+            coords = coords.to(self.device)
+            z_1 = self.encode(imgs[:,0], coords[:,0])
+            z_1_shape = z_1.shape
+            z_1 = z_1.view(z_1_shape[0], -1)
+            embeddings.append(z_1.detach().cpu().numpy())
+
+        e = np.concatenate(np.array(embeddings))
+
+        print("Computing kmeans...")
+        kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(e)
+
+        kmeans_tensor = torch.from_numpy(kmeans.cluster_centers_).to(self.device)
+        self._vq_vae._embedding.weight = nn.Parameter(kmeans_tensor)
+        self._vq_vae._ema_w = nn.Parameter(kmeans_tensor)
+        
+    # def on_train_epoch_start(self):
+
+
     def training_step(self, batch, batch_idx):
         img, coords = batch
+        # img = batch
         
         i1, i2 = img[:, 0], img[:, 1]
         c1, c2 = coords[:, 0], coords[:, 1]
 
-        # vq_loss, img_recon, coord_recon, perplexity = self(i1, c1)
-        vq_loss, coord_recon, perplexity = self(c1)
-        
-        # img_recon_error = F.mse_loss(img_recon, i2)
+        vq_loss, img_recon, coord_recon, perplexity = self(i1, c1)
+        # vq_loss, img_recon, perplexity = self(i1)
+            
+        img_recon_error = F.mse_loss(img_recon, i2)
         coord_recon_error = F.mse_loss(coord_recon, c2)
 
         coord_recon_error = self.coord_cost*coord_recon_error
 
-        # loss = img_recon_error + coord_recon_error + vq_loss
-        loss = coord_recon_error + vq_loss
+        loss = img_recon_error + coord_recon_error + vq_loss
+        # loss = img_recon_error + vq_loss
 
         self.logger.experiment.log({
             'loss/train': loss,
             'perplexity/train': perplexity,
-            # 'loss_img_recon/train': img_recon_error,
+            'loss_img_recon/train': img_recon_error,
             'loss_coord_recon/train': coord_recon_error,
             'loss_vq_loss/train': vq_loss
         })
@@ -106,31 +133,35 @@ class VQVAE(VQVAE_PL):
     def validation_step(self, batch, batch_idx):
 
         img, coords = batch
+        # img = batch
 
         i1, i2 = img[:, 0], img[:, 1]
         c1, c2 = coords[:, 0], coords[:, 1]
 
-        # vq_loss, img_recon, coord_recon, perplexity = self(i1, c1)
-        vq_loss, coord_recon, perplexity = self(c1)
+        vq_loss, img_recon, coord_recon, perplexity = self(i1, c1)
+        # vq_loss, img_recon, perplexity = self(i1)
         
-        # img_recon_error = F.mse_loss(img_recon, i2)
+        img_recon_error = F.mse_loss(img_recon, i2)
         coord_recon_error = F.mse_loss(coord_recon, c2)
+
+        coord_recon_error = self.coord_cost*coord_recon_error
         
-        # loss = img_recon_error + self.coord_cost*coord_recon_error + vq_loss
-        loss = self.coord_cost*coord_recon_error + vq_loss
+        loss = img_recon_error + coord_recon_error + vq_loss
+        # loss = img_recon_error + vq_loss
+        # loss = self.coord_cost*coord_recon_error + vq_loss
         
         self.logger.experiment.log({
             'loss/val': loss,
             'perplexity/val': perplexity,
-            # 'loss_img_recon/val': img_recon_error,
+            'loss_img_recon/val': img_recon_error,
             'loss_coord_recon/val': coord_recon_error,
             'loss_vq_loss/val': vq_loss
         })
 
-        # if batch_idx == 0:
-        #     grid = make_grid(img_recon[:64].cpu().data)
-        #     grid = grid.permute(1,2,0)
-        #     self.logger.experiment.log({"Images": [wandb.Image(grid.numpy())]})
+        if batch_idx == 0:
+            grid = make_grid(img_recon[:64].cpu().data)
+            grid = grid.permute(1,2,0)
+            self.logger.experiment.log({"Images": [wandb.Image(grid.numpy())]})
 
         return loss
 

@@ -13,6 +13,26 @@ matplotlib.rcParams['xtick.color'] = COLOR
 matplotlib.rcParams['ytick.color'] = COLOR
 # plt.rcParams['axes.facecolor'] = '#303030'
 
+def compute_entropy(c):
+    counts = np.array(list(c.values()), dtype=float)
+    prob = counts/counts.sum()
+    return (-prob*np.log2(prob)).sum()
+
+def skill_appearance(codes, palette, id="0", alg="curl"):
+
+    entropy = compute_entropy(codes)
+
+    df = pd.DataFrame([dict(codes)]).T
+    df = df.sort_values(0, ascending=False)
+    df['skill'] = df.index
+    palette = [palette[x] for x in df['skill'].tolist()]
+    df.columns = ['count', 'skill']
+    fig, ax = plt.subplots()
+    sns.barplot(x='skill', y='count', palette=palette, data=df, order=df['skill'])
+    t1 = '$p(z=z_{i})$'
+    ax.set_title(f"{t1}   Entropy={round(entropy,2)}")
+    ax.set_xlabel('skill')
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_skillhistogram_cw0_pixels_coords.3.png', transparent=True)
 
 '''
 Given a dataframe of x,y,index columns and a palette of colors,
@@ -25,7 +45,7 @@ def plot_idx_maps(data, palette, id="0", alg="curl"):
     ax.get_legend().remove()
     ax.axis('off')
     plt.tight_layout()
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_indexmap_wcoord.png', transparent=True)
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_indexmap_cw0_pixels_coords.3.png', transparent=True)
 
 '''
 Given a list of dataframes, plot index map for each goal state where the instead
@@ -123,14 +143,14 @@ def compare_func():
 
 # compare_func()
 
-def skill_appearance():
-    fig, ax = plt.subplots()
-    x = [0.12972549, 0.00556863, 0.0185098 , 0.01223529, 0.09945098, 0.10764706, 0.136, 0.09541176, 0.11784314, 0.08419608, 0.00894118, 0.06478431, 0.11968627]
-    palette = sns.color_palette("Paired", n_colors=12)
-    palette.append((48/255,48/255,48/255))
-    sns.barplot(np.arange(len(x)),x, palette=palette)
-    ax.set_title('$p(z=z_{i})$')
-    ax.set_xlabel('skill')
-    plt.savefig('skills_histogram.png', transparent=True)
+# def skill_appearance():
+#     fig, ax = plt.subplots()
+#     x = [0.12972549, 0.00556863, 0.0185098 , 0.01223529, 0.09945098, 0.10764706, 0.136, 0.09541176, 0.11784314, 0.08419608, 0.00894118, 0.06478431, 0.11968627]
+#     palette = sns.color_palette("Paired", n_colors=12)
+#     palette.append((48/255,48/255,48/255))
+#     sns.barplot(np.arange(len(x)),x, palette=palette)
+#     ax.set_title('$p(z=z_{i})$')
+#     ax.set_xlabel('skill')
+#     plt.savefig('skills_histogram.png', transparent=True)
 
 # skill_appearance()

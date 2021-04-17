@@ -100,7 +100,7 @@ class CustomMinecraftData(Dataset):
                     trajectory.append(row)
                 all_trajectories.append(trajectory)
         coords = np.array(all_trajectories, dtype=np.float32).reshape(-1, 3)
-        self.coords = (coords - coords.mean(axis=0))/coords.var(axis=0)
+        self.coords = (coords - coords.mean(axis=0))/coords.std(axis=0)
 
     def loadData(self) -> list:
         print('Loading data...')
@@ -109,7 +109,10 @@ class CustomMinecraftData(Dataset):
             self.load_trajectories()
         else:
             self.expertLoad()
+            self.coords = None
 
+    def getCoords(self, idx, key_idx):
+        return self.coords[idx], self.coords[key_idx]
 
 
     def __len__(self) -> int:
@@ -118,29 +121,33 @@ class CustomMinecraftData(Dataset):
     def __getitem__(self, index):
         # Get query obs
         query = self.data[index]
-        coord_query = self.coords[index]
         if self.delay:
             # Make sure that we pick a frame from the same trajectory
             fin_idx = self.getTrajLastIdx(index)
             key_idx = index + int(np.random.rand()*self.k_std + self.k_mean)
 
             # Get key obs
-            key = self.data[min(key_idx, fin_idx)]
-            coord_key = self.coords[min(key_idx, fin_idx)]
+            key_idx = min(key_idx, fin_idx)
         else:
-            key = self.data[index]
-            coord_key = self.coords[index]
+            key_idx = index
+
+        key = self.data[key_idx]
 
 
         if self.transform is not None:
             key = self.transform(key)
             query = self.transform(query)
 
-        coord_query = torch.from_numpy(coord_query)
-        coord_key = torch.from_numpy(coord_key)
+        if self.coords is not None:
+            coord_key, coord_query = self.getCoords(index, key_idx)
 
-        # Stack query and key to return [2,3,64,64]
-        return torch.stack((query, key)), torch.stack((coord_query, coord_key))
+            coord_query = torch.from_numpy(coord_query)
+            coord_key = torch.from_numpy(coord_key)
+
+            # Stack query and key to return [2,3,64,64]
+            return torch.stack((query, key)), torch.stack((coord_query, coord_key))
+        else:
+            return torch.stack((query, key))
 
 
 class LatentDataset(Dataset):

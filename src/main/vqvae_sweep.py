@@ -49,22 +49,15 @@ def main():
     trainer.fit(vqvae)
 
 sweep_config = {
-    "name": f"{alg}_CW0_Realistic.Sweep",
-    "method": 'bayes',
+    "name": f"{alg}_vqvae_CW4_pixels_coords.sweep",
+    "method": 'grid',
     "metric": {
         "name": "perplexity/train",
         "goal": "maximize"
     },
     "parameters": {
-        "vqvae.commitment_cost": {
-              "distribution": "uniform",
-              "max": 0.5,
-              "min": 0.01
-        },
-        "lr": {
-          "distribution": "uniform",
-          "max": 0.01,
-          "min": 0.0001
+        "coord_cost": {
+              "values": [1,0.5,0.2,0.1,0.05]
         }
   }
 }

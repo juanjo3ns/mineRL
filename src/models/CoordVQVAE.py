@@ -103,7 +103,6 @@ class VQVAE_PL(pl.LightningModule):
             nn.Linear(3, int(embedding_dim/2)),
             nn.ReLU(),
             nn.Linear(int(embedding_dim/2), embedding_dim),
-            nn.ReLU()
         )
 
         self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
@@ -114,7 +113,6 @@ class VQVAE_PL(pl.LightningModule):
             nn.Linear(embedding_dim, int(embedding_dim/2)),
             nn.ReLU(),
             nn.Linear(int(embedding_dim/2), 3),
-            nn.ReLU()
         )
 
         self.goals = goals
