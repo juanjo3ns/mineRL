@@ -91,8 +91,12 @@ def index_map(trajectories, embeddings, enc):
     code_list = values['Code:'].tolist()
     codes_count = Counter(code_list)
     palette = sns.color_palette("Paired", n_colors=len(list(set(code_list))))
-    plot_idx_maps(values, palette, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0])
-    skill_appearance(codes_count, palette, getWorld(enc.trajectories[0]), enc.experiment.split('_')[0])
+
+    experiment = enc.test['path_weights'].split('/')[0]
+    world = getWorld(enc.trajectories[0])
+    param = enc.coord_cost
+    plot_idx_maps(values, palette, experiment, world, param)
+    skill_appearance(codes_count, palette, experiment, world, param)
 
 
 def reward_map(trajectories, embeddings, enc):

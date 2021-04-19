@@ -18,7 +18,7 @@ def compute_entropy(c):
     prob = counts/counts.sum()
     return (-prob*np.log2(prob)).sum()
 
-def skill_appearance(codes, palette, id="0", alg="curl"):
+def skill_appearance(codes, palette, experiment, world):
 
     entropy = compute_entropy(codes)
 
@@ -32,20 +32,20 @@ def skill_appearance(codes, palette, id="0", alg="curl"):
     t1 = '$p(z=z_{i})$'
     ax.set_title(f"{t1}   Entropy={round(entropy,2)}")
     ax.set_xlabel('skill')
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_skillhistogram_cw0_pixels_coords.3.png', transparent=True)
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/skillhistogram_{experiment}.png', transparent=True)
 
 '''
 Given a dataframe of x,y,index columns and a palette of colors,
 plot points in their coordinates x,y and distinguish them by index.
 '''
-def plot_idx_maps(data, palette, id="0", alg="curl"):
+def plot_idx_maps(data, palette, experiment, world, param):
     fig, ax = plt.subplots(figsize=(9,9))
     sns.scatterplot(x="x", y="y", hue="Code:", palette=palette, data=data)
     # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     ax.get_legend().remove()
     ax.axis('off')
     plt.tight_layout()
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_indexmap_cw0_pixels_coords.3.png', transparent=True)
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}.png', transparent=True)
 
 '''
 Given a list of dataframes, plot index map for each goal state where the instead

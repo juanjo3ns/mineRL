@@ -118,14 +118,14 @@ class VQVAE_PL(pl.LightningModule):
         self.goals = goals
         self.num_goal_states = len(goals)
 
-    def forward(self, coords):
+    def forward(self, _, coords):
         z = self.coord_mlp(coords)
         
         loss, quantized, perplexity, _ = self._vq_vae(z)
 
         coord_recon = self.coord_mlp_inv(quantized)
 
-        return loss, coord_recon, perplexity
+        return loss, 0, coord_recon, perplexity
 
     def get_centroids(self, idx):
         z_idx = torch.tensor(idx).cuda()
@@ -141,7 +141,7 @@ class VQVAE_PL(pl.LightningModule):
         _, _, _, encoding_indices = self._vq_vae(z)
         return encoding_indices
 
-    def encode(self, coords):
+    def encode(self, imgs, coords):
 
         return self.coord_mlp(coords)
 

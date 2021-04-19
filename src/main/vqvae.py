@@ -33,8 +33,6 @@ from pytorch_lightning.loggers import WandbLogger
 from mod.q_functions import parse_arch
 from sklearn.cluster import KMeans
 
-from IPython import embed
-
 class VQVAE(VQVAE_PL):
     def __init__(self, conf):
         super(VQVAE, self).__init__(**conf['vqvae'])
@@ -103,6 +101,7 @@ class VQVAE(VQVAE_PL):
 
         coord_recon_error = self.coord_cost*coord_recon_error
 
+        # loss = coord_recon_error + vq_loss
         loss = img_recon_error + coord_recon_error + vq_loss
         # loss = img_recon_error + vq_loss
 
@@ -146,6 +145,7 @@ class VQVAE(VQVAE_PL):
 
         coord_recon_error = self.coord_cost*coord_recon_error
         
+        # loss = coord_recon_error + vq_loss
         loss = img_recon_error + coord_recon_error + vq_loss
         # loss = img_recon_error + vq_loss
         # loss = self.coord_cost*coord_recon_error + vq_loss
