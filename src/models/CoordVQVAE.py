@@ -102,7 +102,7 @@ class VQVAE_PL(pl.LightningModule):
         self.coord_mlp = nn.Sequential(
             nn.Linear(3, int(embedding_dim/2)),
             nn.ReLU(),
-            nn.Linear(int(embedding_dim/2), embedding_dim),
+            nn.Linear(int(embedding_dim/2), embedding_dim)
         )
 
         self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
@@ -112,7 +112,7 @@ class VQVAE_PL(pl.LightningModule):
         self.coord_mlp_inv = nn.Sequential(
             nn.Linear(embedding_dim, int(embedding_dim/2)),
             nn.ReLU(),
-            nn.Linear(int(embedding_dim/2), 3),
+            nn.Linear(int(embedding_dim/2), 3)
         )
 
         self.goals = goals
@@ -127,6 +127,17 @@ class VQVAE_PL(pl.LightningModule):
 
         return loss, 0, coord_recon, perplexity
 
+    def decode(self, img=True, coords=True):
+        img_list = []
+        coord_list = []
+        for e in self._vq_vae._embedding.weight:
+            if img:
+                h_i = e.view(1, 64, 2, 2)
+                img_list.append(self._decoder(h_i).detach().cpu().numpy())
+            if coords:
+                coord_list.append(self.coord_mlp_inv(e).detach().cpu().numpy())
+        return img_list, coord_list
+        
     def get_centroids(self, idx):
         z_idx = torch.tensor(idx).cuda()
         embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)

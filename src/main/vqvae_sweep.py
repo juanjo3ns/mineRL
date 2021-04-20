@@ -12,7 +12,6 @@ def update_custom(conf, d):
     return conf
 
 def main():
-    import os
     import sys
     import wandb
 
@@ -29,7 +28,7 @@ def main():
     conf = update_custom(conf, run.config)
     wandb_logger = WandbLogger(
         project='mineRL',
-        name=run.name,
+        name=conf['experiment'],
         tags=[alg, 'sweep']
     )
 
@@ -49,7 +48,7 @@ def main():
     trainer.fit(vqvae)
 
 sweep_config = {
-    "name": f"{alg}_vqvae_CW4_pixels_coords.sweep",
+    "name": f"{alg}_CW0_pixels_coords.sweep",
     "method": 'grid',
     "metric": {
         "name": "perplexity/train",
@@ -57,7 +56,7 @@ sweep_config = {
     },
     "parameters": {
         "coord_cost": {
-              "values": [1,0.5,0.2,0.1,0.05]
+              "values": [0.5,0.3,0.2,0.1,0.05]
         }
   }
 }

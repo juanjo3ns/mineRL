@@ -1,7 +1,7 @@
-experiment: 'vqvae_CW1_coords.0'
+experiment: 'vqvae_CW0_pixels_coords.sweep'
 environment: 'MineRLNavigate-v0'
-trajectories: ['CustomTrajectories10']
-epochs: 33
+trajectories: ['CustomTrajectories8']
+epochs: 25
 delay: no
 split: 0.90
 lr: 0.001
@@ -19,7 +19,7 @@ vqvae:
   commitment_cost: 0.25
   decay: 0.99
 test:
-  type: 'index'  # [index, reward, embed]
+  type: 'centroides'  # [index, reward, embed]
   shuffle: no
   limit: null
   # path_weights: './vqvae_0.3/mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'

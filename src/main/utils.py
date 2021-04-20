@@ -64,20 +64,25 @@ def construct_map(enc):
         limit=enc.limit)
     if 'Custom' in enc.trajectories[0]:
         trajectories = load_trajectories(enc.trajectories[0])
+
     embeddings = compute_embeddings(loader, enc.encode)
 
     if enc.type == "index":
-        index_map(trajectories, embeddings, enc)
+        indexes = get_indexes(trajectories, embeddings, enc)
+        index_map(enc, indexes)
     elif enc.type == "reward":
         reward_map(trajectories, embeddings, enc)
     elif enc.type == "embed":
         images = get_images(loader) + 0.5
         embed_map(embeddings, images, enc.experiment)
+    elif enc.type == "centroides":
+        indexes = get_indexes(trajectories, embeddings, enc)
+        centroides_map(enc, loader, indexes)
     else:
         raise NotImplementedError()
 
-def index_map(trajectories, embeddings, enc):
 
+def get_indexes(trajectories, embeddings, enc):
     print("Get index from all data points...")
     values = pd.DataFrame(columns=['x', 'y', 'Code:'])
     for i, (e, p) in enumerate(zip(embeddings, trajectories)):
@@ -85,18 +90,40 @@ def index_map(trajectories, embeddings, enc):
         y = float(p[0])
         e = torch.from_numpy(e).cuda()
         k = enc.compute_argmax(e.unsqueeze(dim=0))
-        values = values.append({'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
+        values = values.append(
+            {'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
 
     values['Code:'] = values['Code:'].astype('int32')
-    code_list = values['Code:'].tolist()
+    return values
+
+def centroides_map(encoder, loader, indexes):
+    experiment = encoder.experiment
+    _, coords = encoder.decode(img=False)
+
+    # unnormalize coordinates
+    mu = loader.dataset.coord_mean
+    std = loader.dataset.coord_std
+    coords = np.array([ x*std + mu for x in coords])
+    
+    df = pd.DataFrame(coords, columns=['x', 'y', 'z'])
+
+    world = getWorld(encoder.trajectories[0])
+    palette = sns.color_palette("Paired", n_colors=encoder.num_clusters)
+
+    experiment = encoder.test['path_weights'].split('/')[0]
+
+    show_centroides_inmap(df, indexes, palette, experiment, world)
+
+def index_map(enc, indexes):
+    code_list = indexes['Code:'].tolist()
     codes_count = Counter(code_list)
     palette = sns.color_palette("Paired", n_colors=len(list(set(code_list))))
 
     experiment = enc.test['path_weights'].split('/')[0]
     world = getWorld(enc.trajectories[0])
-    param = enc.coord_cost
-    plot_idx_maps(values, palette, experiment, world, param)
-    skill_appearance(codes_count, palette, experiment, world, param)
+
+    plot_idx_maps(indexes, palette, experiment, world)
+    skill_appearance(codes_count, palette, experiment, world)
 
 
 def reward_map(trajectories, embeddings, enc):

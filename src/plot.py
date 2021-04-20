@@ -13,6 +13,47 @@ matplotlib.rcParams['xtick.color'] = COLOR
 matplotlib.rcParams['ytick.color'] = COLOR
 # plt.rcParams['axes.facecolor'] = '#303030'
 
+
+def show_centroides_inmap(centroides, data, palette, experiment, world):
+    centroides = centroides.reset_index()
+
+    fig, ax = plt.subplots(figsize=(9, 9))
+    sns.scatterplot(x="x", y="y", hue="Code:", palette=palette, data=data)
+    sns.scatterplot(x="z", y="x", hue="index", palette=palette, data=centroides, s=120)
+
+    ax.get_legend().remove()
+    ax.axis('off')
+    plt.tight_layout()
+    plt.savefig(
+        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}_wcentroides.png', transparent=True)
+    plt.close()
+
+
+
+    fig, ax = plt.subplots(figsize=(9, 9))
+
+    # load and show map image
+    map = plt.imread(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/CW_{world}.png')
+    plt.imshow(map)
+    h,w,c = map.shape
+
+    # insert centroides points
+    centroides['x'] = (centroides['x'] + 50)*(1/100)*h
+    centroides['z'] = (centroides['z'] + 50)*(1/100)*w
+
+    sns.scatterplot(x="z", y="x", hue="index",
+                    palette=palette, data=centroides, s=120)
+
+    ax.get_legend().remove()
+    ax.axis('off')
+    plt.tight_layout()
+    
+    # store image
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/centroides_{experiment}.png', transparent=True)
+    plt.close()
+    
+
+
 def compute_entropy(c):
     counts = np.array(list(c.values()), dtype=float)
     prob = counts/counts.sum()

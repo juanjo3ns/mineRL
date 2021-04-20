@@ -243,8 +243,7 @@ class VQVAE_PL(pl.LightningModule):
         self.coord_mlp = nn.Sequential(
             nn.Linear(3, int(embedding_dim/2)),
             nn.ReLU(),
-            nn.Linear(int(embedding_dim/2), embedding_dim),
-            nn.ReLU()
+            nn.Linear(int(embedding_dim/2), embedding_dim)
         )
 
         self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
@@ -258,8 +257,7 @@ class VQVAE_PL(pl.LightningModule):
         self.coord_mlp_inv = nn.Sequential(
             nn.Linear(embedding_dim, int(embedding_dim/2)),
             nn.ReLU(),
-            nn.Linear(int(embedding_dim/2), 3),
-            nn.ReLU()
+            nn.Linear(int(embedding_dim/2), 3)
         )
         self._decoder = Decoder(embedding_dim,
                                 num_hiddens,
@@ -315,6 +313,18 @@ class VQVAE_PL(pl.LightningModule):
         z_2 = self.coord_mlp(coords)
 
         return torch.add(z_1, z_2)
+
+    def decode(self, img=True, coords=True):
+        img_list = []
+        coord_list = []
+        for e in self._vq_vae._embedding.weight:
+            if img:
+                h_i = e.view(1,64,2,2)
+                img_list.append(self._decoder(h_i).detach().cpu().numpy())
+            if coords:
+                coord_list.append(self.coord_mlp_inv(e).detach().cpu().numpy())
+        return img_list, coord_list
+
 
     def compute_logits_(self, z_a, z_pos):
         distances = self._vq_vae.compute_distances(z_a)

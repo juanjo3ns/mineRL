@@ -165,6 +165,28 @@ class VQVAE(VQVAE_PL):
 
         return loss
 
+    def on_epoch_end(self):
+        _, coords = self.decode(img=False)
+
+
+        mu = self.trainer.train_dataloader.dataset.coord_mean
+        std = self.trainer.train_dataloader.dataset.coord_std
+        coords = np.array([x*std + mu for x in coords])
+
+        df = pd.DataFrame(coords, columns=['x', 'y', 'z'])
+
+        palette = sns.color_palette("Paired", n_colors=self.num_clusters)
+
+        df = df.reset_index()
+        fig, ax = plt.subplots(figsize=(7, 7))
+        sns.scatterplot(x="z", y="x", hue="index", palette=palette, data=df, s=120)
+        ax.set_xlim(-55, 55)
+        ax.set_ylim(-55, 55)
+        ax.get_legend().remove()
+
+        self.logger.experiment.log({'Centroides coordinates': fig})
+        plt.close()
+
     def old_validation_step(self, batch, batch_idx):
 
         x, y = batch[:, 0], batch[:, 1]
