@@ -19,38 +19,43 @@ def show_centroides_inmap(centroides, data, palette, experiment, world):
 
     fig, ax = plt.subplots(figsize=(9, 9))
     sns.scatterplot(x="x", y="y", hue="Code:", palette=palette, data=data)
-    sns.scatterplot(x="z", y="x", hue="index", palette=palette, data=centroides, s=120)
+    sns.scatterplot(x="z", y="x", hue="index", palette=palette, data=centroides, s=130)
+    ax.set_xlim(-50, 50)
+    ax.set_ylim(-50, 50)
 
     ax.get_legend().remove()
     ax.axis('off')
     plt.tight_layout()
     plt.savefig(
-        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}_wcentroides.png', transparent=True)
+        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}_.png', transparent=True)
     plt.close()
 
 
 
-    fig, ax = plt.subplots(figsize=(9, 9))
+    # fig, ax = plt.subplots(figsize=(9, 9))
 
     # load and show map image
-    map = plt.imread(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/CW_{world}.png')
-    plt.imshow(map)
-    h,w,c = map.shape
+    # map = plt.imread(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/CW_{world}.png')
+    # plt.imshow(map)
+    # h,w,c = map.shape
 
-    # insert centroides points
-    centroides['x'] = (centroides['x'] + 50)*(1/100)*h
-    centroides['z'] = (centroides['z'] + 50)*(1/100)*w
+    # # insert centroides points
+    # centroides['x'] = h - (centroides['x'] + 50)*(1/100)*h
+    # centroides['z'] = w - (centroides['z'] + 50)*(1/100)*w
 
-    sns.scatterplot(x="z", y="x", hue="index",
-                    palette=palette, data=centroides, s=120)
+    # sns.scatterplot(x="z", y="x", hue="index",
+    #                 palette=palette, data=centroides, s=120)
 
-    ax.get_legend().remove()
-    ax.axis('off')
-    plt.tight_layout()
+    # ax.set_xlim(0, h)
+    # ax.set_ylim(0, w)
+
+    # ax.get_legend().remove()
+    # ax.axis('off')
+    # plt.tight_layout()
     
-    # store image
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/centroides_{experiment}.png', transparent=True)
-    plt.close()
+    # # store image
+    # plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/centroides_{experiment}_{param}.png', transparent=True)
+    # plt.close()
     
 
 
@@ -92,7 +97,7 @@ def plot_idx_maps(data, palette, experiment, world, param):
 Given a list of dataframes, plot index map for each goal state where the instead
 of index we have a reward for each point.
 '''
-def plot_reward_maps(data_list, id="0", alg="curl", is_return=False):
+def plot_reward_maps(data_list, experiment, world, is_return=False):
 
     num_plots = len(data_list)
     if num_plots == 8:
@@ -117,7 +122,8 @@ def plot_reward_maps(data_list, id="0", alg="curl", is_return=False):
             g = ax.scatter(data_list[i]['x'],data_list[i]['y'], c=data_list[i]['reward'], marker='.')
         # ax.axis('off')
     fig.colorbar(g, ax=axn[:,-1])
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW_{id}_{alg}_rewardmaps_alternative_{is_return}.png', transparent=True)
+    plt.savefig(
+        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/rewardmap_{experiment}_.png', transparent=True)
 
 '''
 Given a list of dataframes, plot return values for each timestep
