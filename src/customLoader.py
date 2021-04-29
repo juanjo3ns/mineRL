@@ -24,6 +24,7 @@ class CustomMinecraftData(Dataset):
         self.transform = transform
         self.k_std = kwargs['k_std']
         self.k_mean = kwargs['k_mean']
+        self.data_type = kwargs['data_type']
         self.loadData()
 
     """
@@ -109,22 +110,36 @@ class CustomMinecraftData(Dataset):
     def loadData(self) -> list:
         print('Loading data...')
         if 'Custom' in str(self.traj_list[0]):
-            self.customLoad()
-            self.load_trajectories()
+            if self.data_type == "pixel":
+                self.customLoad()
+            elif self.data_type == "coord":
+                self.load_trajectories()
+            elif self.data_type == "pixelcoord":
+                self.customLoad()
+                self.load_trajectories()
         else:
             self.expertLoad()
             self.coords = None
 
     def getCoords(self, idx, key_idx):
-        return self.coords[idx], self.coords[key_idx]
+        return torch.from_numpy(self.coords[idx]), torch.from_numpy(self.coords[key_idx])
 
+    def getImages(self, idx, key_idx):
+        query = self.data[idx]
+        key = self.data[key_idx]
+        if self.transform is not None:
+            key = self.transform(key)
+            query = self.transform(query)
+        return key, query
 
     def __len__(self) -> int:
-        return len(self.data)
+        if self.data_type == "coord":
+            return len(self.coords)
+        else:
+            return len(self.data)
 
     def __getitem__(self, index):
         # Get query obs
-        query = self.data[index]
         if self.delay:
             # Make sure that we pick a frame from the same trajectory
             fin_idx = self.getTrajLastIdx(index)
@@ -135,23 +150,19 @@ class CustomMinecraftData(Dataset):
         else:
             key_idx = index
 
-        key = self.data[key_idx]
+        if self.data_type == "pixel":
+            key, query = self.getImages(index, key_idx)
+            return torch.stack((key, query))
 
+        elif self.data_type == "coord":
+            coord_query, coord_key = self.getCoords(index, key_idx)
+            return torch.stack((coord_query, coord_key))
 
-        if self.transform is not None:
-            key = self.transform(key)
-            query = self.transform(query)
-
-        if self.coords is not None:
-            coord_key, coord_query = self.getCoords(index, key_idx)
-
-            coord_query = torch.from_numpy(coord_query)
-            coord_key = torch.from_numpy(coord_key)
-
-            # Stack query and key to return [2,3,64,64]
+        elif self.data_type == "pixelcoord":
+            key, query = self.getImages(index, key_idx)
+            coord_query, coord_key = self.getCoords(index, key_idx)
             return torch.stack((query, key)), torch.stack((coord_query, coord_key))
-        else:
-            return torch.stack((query, key))
+
 
 
 class LatentDataset(Dataset):

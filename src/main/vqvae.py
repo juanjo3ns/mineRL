@@ -8,7 +8,6 @@ import seaborn as sns
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
 
-from plot import *
 from os.path import join
 from pathlib import Path
 from pprint import pprint
@@ -26,7 +25,7 @@ from torchvision.utils import make_grid
 from customLoader import *
 from torchvision.transforms import transforms
 
-from models.CoordVQVAE import VQVAE_PL
+from models.CustomVQVAE import VQVAE_PL
 
 from pytorch_lightning.loggers import WandbLogger
 
@@ -35,21 +34,23 @@ from sklearn.cluster import KMeans
 
 class VQVAE(VQVAE_PL):
     def __init__(self, conf):
-        super(VQVAE, self).__init__(**conf['vqvae'])
+        super(VQVAE, self).__init__(conf['data_type'], **conf['vqvae'])
 
         self.experiment = conf['experiment']
         self.batch_size = conf['batch_size']
         self.lr = conf['lr']
         self.split = conf['split']
         self.num_clusters = conf['vqvae']['num_embeddings']
-        self.coord_cost = conf['coord_cost']
 
         self.delay = conf['delay']
         self.trajectories = conf['trajectories']
         self.trajectories_train, self.trajectories_val = get_train_val_split(self.trajectories, self.split)
 
-        img_size = conf['img_size']
-        self.conf = {'k_std': conf['k_std'], 'k_mean': conf['k_mean']}
+        self.conf = {
+            'k_std': conf['k_std'], 
+            'k_mean': conf['k_mean'],
+            'data_type': conf['data_type']
+            }
 
         self.transform = transforms.Compose([
                                   transforms.ToTensor(),
@@ -66,12 +67,8 @@ class VQVAE(VQVAE_PL):
         embeddings = []
 
         print("Computing embeddings...")
-        for imgs, coords in self.trainer.train_dataloader:
-            imgs = imgs.to(self.device)
-            coords = coords.to(self.device)
-            z_1 = self.encode(imgs[:,0], coords[:,0])
-            z_1_shape = z_1.shape
-            z_1 = z_1.view(z_1_shape[0], -1)
+        for batch in self.trainer.train_dataloader:
+            z_1 = self.model.compute_embedding(batch, self.device)
             embeddings.append(z_1.detach().cpu().numpy())
 
         e = np.concatenate(np.array(embeddings))
@@ -80,101 +77,24 @@ class VQVAE(VQVAE_PL):
         kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(e)
 
         kmeans_tensor = torch.from_numpy(kmeans.cluster_centers_).to(self.device)
-        self._vq_vae._embedding.weight = nn.Parameter(kmeans_tensor)
-        self._vq_vae._ema_w = nn.Parameter(kmeans_tensor)
+        self.model._vq_vae._embedding.weight = nn.Parameter(kmeans_tensor)
+        self.model._vq_vae._ema_w = nn.Parameter(kmeans_tensor)
         
-    # def on_train_epoch_start(self):
-
-
     def training_step(self, batch, batch_idx):
-        img, coords = batch
-        # img = batch
-        
-        i1, i2 = img[:, 0], img[:, 1]
-        c1, c2 = coords[:, 0], coords[:, 1]
 
-        # vq_loss, img_recon, coord_recon, perplexity = self(i1, c1)
-        # vq_loss, img_recon, perplexity = self(i1)
-        vq_loss, coord_recon, perplexity = self(c1)
-            
-        # img_recon_error = F.mse_loss(img_recon, i2)
-        coord_recon_error = F.mse_loss(coord_recon, c2)
-
-        # coord_recon_error = self.coord_cost*coord_recon_error
-
-        loss = coord_recon_error + vq_loss
-        # loss = img_recon_error + coord_recon_error + vq_loss
-        # loss = img_recon_error + vq_loss
-
-        self.logger.experiment.log({
-            'loss/train': loss,
-            'perplexity/train': perplexity,
-            # 'loss_img_recon/train': img_recon_error,
-            'loss_coord_recon/train': coord_recon_error,
-            'loss_vq_loss/train': vq_loss
-        })
+        loss = self.model(batch, batch_idx, self.logger, "train")
 
         return loss
 
-
     def validation_step(self, batch, batch_idx):
 
-        img, coords = batch
-        # img = batch
 
-        i1, i2 = img[:, 0], img[:, 1]
-        c1, c2 = coords[:, 0], coords[:, 1]
-
-        # vq_loss, img_recon, coord_recon, perplexity = self(i1, c1)
-        # vq_loss, img_recon, perplexity = self(i1)
-        vq_loss, coord_recon, perplexity = self(c1)
-        
-        # img_recon_error = F.mse_loss(img_recon, i2)
-        coord_recon_error = F.mse_loss(coord_recon, c2)
-
-        # coord_recon_error = self.coord_cost*coord_recon_error
-        
-        loss = coord_recon_error + vq_loss
-        # loss = img_recon_error + coord_recon_error + vq_loss
-        # loss = img_recon_error + vq_loss
-        # loss = self.coord_cost*coord_recon_error + vq_loss
-        
-        self.logger.experiment.log({
-            'loss/val': loss,
-            'perplexity/val': perplexity,
-            # 'loss_img_recon/val': img_recon_error,
-            'loss_coord_recon/val': coord_recon_error,
-            'loss_vq_loss/val': vq_loss
-        })
-
-        # if batch_idx == 0:
-        #     grid = make_grid(img_recon[:64].cpu().data)
-        #     grid = grid.permute(1,2,0)
-        #     self.logger.experiment.log({"Images": [wandb.Image(grid.numpy())]})
+        loss = self.model(batch, batch_idx, self.logger, "val")
 
         return loss
 
     def on_epoch_end(self):
-        _, coords = self.decode(img=False)
-
-
-        mu = self.trainer.train_dataloader.dataset.coord_mean
-        std = self.trainer.train_dataloader.dataset.coord_std
-        coords = np.array([x*std + mu for x in coords])
-
-        df = pd.DataFrame(coords, columns=['x', 'y', 'z'])
-
-        palette = sns.color_palette("Paired", n_colors=self.num_clusters)
-
-        df = df.reset_index()
-        fig, ax = plt.subplots(figsize=(7, 7))
-        sns.scatterplot(x="z", y="x", hue="index", palette=palette, data=df, s=120)
-        ax.set_xlim(-55, 55)
-        ax.set_ylim(-55, 55)
-        ax.get_legend().remove()
-
-        self.logger.experiment.log({'Centroides coordinates': fig})
-        plt.close()
+        self.model.log_reconstructions(self.trainer.train_dataloader, self.logger)
 
 
     def configure_optimizers(self):

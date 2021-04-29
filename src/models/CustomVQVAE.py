@@ -1,9 +1,19 @@
+import wandb
 import torch
+
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import torch.nn as nn
+
+import matplotlib.pyplot as plt
 import torch.nn.functional as F
-from scipy.signal import savgol_filter
 import pytorch_lightning as pl
+
+from plot import *
+from scipy.signal import savgol_filter
+from torchvision.utils import make_grid
+
 from IPython import embed
 
 class VectorQuantizerEMA(nn.Module):
@@ -226,16 +236,195 @@ class Decoder(nn.Module):
 
         return self._conv_trans_5(x)
 
-class VQVAE_PL(pl.LightningModule):
+
+class PixelVQVAE(pl.LightningModule):
     def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
-                 num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99, goals=[]):
-        super(VQVAE_PL, self).__init__()
+                 num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99,
+                 goals=[], img_size=64, coord_cost=0.05):
+        
+        super(PixelVQVAE, self).__init__()
+
+        self.img_size = img_size
+
+        self.n_h = num_hiddens
+        self.k = int(2 * (self.img_size / self.n_h))
+
         self._encoder = Encoder(3, num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
 
-        self.img_mlp = nn.Sequential(
+        self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
+                                            commitment_cost, decay)
+
+        self._decoder = Decoder(embedding_dim,
+                                num_hiddens,
+                                num_residual_layers,
+                                num_residual_hiddens)
+
+    def forward(self, batch, batch_idx, logger, set):
+        img = batch
+
+        i1, i2 = img[:, 0], img[:, 1]
+
+        z = self.encode(i1)
+
+        vq_loss, quantized, perplexity, _ = self._vq_vae(z)
+
+        img_recon = self.decode(quantized)
+
+        img_recon_error = F.mse_loss(img_recon, i2)
+
+        loss = img_recon_error + vq_loss
+
+        logs = {
+            f'loss/{set}': loss,
+            f'perplexity/{set}': perplexity,
+            f'loss_img_recon/{set}': img_recon_error,
+            f'loss_vq_loss/{set}': vq_loss
+        }
+
+        self.log_metrics(logger, logs, img_recon, batch_idx, set)
+
+        return loss
+
+    def encode(self, img):
+        z_1 = self._encoder(img)
+        z_1_shape = z_1.shape
+        return z_1.view(z_1_shape[0], -1)
+
+    def decode(self, z):
+        h_i = z.view(-1, self.n_h, self.k, self.k)
+        return self._decoder(h_i)
+
+    def compute_embedding(self, batch, device):
+        img = batch
+
+        i1, _ = img[:, 0], img[:, 1]
+
+        return self.encode(i1.to(device))
+
+    def log_metrics(self, logger, logs, img_recon, batch_idx, set='train'):
+        logger.experiment.log(logs)
+        if batch_idx == 0 and set == 'val':
+            grid = make_grid(img_recon[:64].cpu().data)
+            grid = grid.permute(1, 2, 0)
+            logger.experiment.log({"Images": [wandb.Image(grid.numpy())]})
+
+    def list_reconstructions(self):
+        with torch.no_grad():
+            img_list = []
+            for e in self._vq_vae._embedding.weight:
+                img_recon = self.decode(e)
+                img_recon = img_recon.squeeze().permute(1, 2, 0)
+                img_list.append(img_recon.detach().cpu().numpy())
+        return img_list, None
+
+    def log_reconstructions(self, loader, logger):
+
+        img_list, _ = self.list_reconstructions()
+        fig_img = plot_img_centroides(img_list)
+        logger.experiment.log({'Centroides images': fig_img})
+        plt.close()
+
+
+class CoordVQVAE(pl.LightningModule):
+    def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
+                 num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99,
+                 goals=[], img_size=64, coord_cost=0.05):
+        
+        super(CoordVQVAE, self).__init__()
+
+        self.coord_mlp = nn.Sequential(
+            nn.Linear(3, int(embedding_dim/2)),
+            nn.ReLU(),
+            nn.Linear(int(embedding_dim/2), embedding_dim)
+        )
+
+        self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
+                                          commitment_cost, decay)
+
+        self.coord_mlp_inv = nn.Sequential(
             nn.Linear(embedding_dim, int(embedding_dim/2)),
+            nn.ReLU(),
+            nn.Linear(int(embedding_dim/2), 3)
+        )
+
+    def forward(self, batch, batch_idx, logger, set):
+        coords = batch
+
+        c1, c2 = coords[:, 0], coords[:, 1]
+
+        z = self.encode(c1)
+
+        vq_loss, quantized, perplexity, _ = self._vq_vae(z)
+
+        coord_recon = self.decode(quantized)
+
+        coord_recon_error = F.mse_loss(coord_recon, c2)
+
+
+        loss = coord_recon_error + vq_loss
+
+        logs = {
+            f'loss/{set}': loss,
+            f'perplexity/{set}': perplexity,
+            f'loss_coord_recon/{set}': coord_recon_error,
+            f'loss_vq_loss/{set}': vq_loss
+        }
+
+        logger.experiment.log(logs)
+
+        return loss
+
+    def encode(self, coords):
+        return self.coord_mlp(coords)
+
+    def decode(self, z):
+        return self.coord_mlp_inv(z)
+
+    def compute_embedding(self, batch, device):
+        coords = batch
+
+        c1, _ = coords[:, 0], coords[:, 1]
+
+        return self.encode(c1.to(device))
+
+    def list_reconstructions(self):
+        with torch.no_grad():
+            coord_list = []
+            for e in self._vq_vae._embedding.weight:
+                coord_recon = self.decode(e)
+                coord_list.append(coord_recon.detach().cpu().numpy())
+        return None, coord_list
+
+    def log_reconstructions(self, loader, logger):
+
+        _, coord_list = self.list_reconstructions()
+        fig_coord = plot_coord_centroides(coord_list, loader)
+        logger.experiment.log({'Centroides coordinates': fig_coord})
+        plt.close()
+
+
+class PixelCoordVQVAE(pl.LightningModule):
+    def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
+                 num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99,
+                 goals=[], img_size=64, coord_cost=0.05):
+
+        super(PixelCoordVQVAE, self).__init__()
+
+        self.img_size = img_size
+        self.coord_cost = coord_cost
+        
+        self.n_h = num_hiddens
+        self.k = int(2 * (self.img_size / self.n_h))
+
+        self._encoder = Encoder(3, self.n_h,
+                        num_residual_layers,
+                        num_residual_hiddens)
+
+
+        self.img_mlp = nn.Sequential(
+            nn.Linear(self.n_h * self.k * self.k, int(embedding_dim)),
             nn.ReLU()
         )   
 
@@ -250,7 +439,7 @@ class VQVAE_PL(pl.LightningModule):
                                         commitment_cost, decay)
 
         self.img_mlp_inv = nn.Sequential(
-            nn.Linear(int(embedding_dim/2), embedding_dim),
+            nn.Linear(int(embedding_dim), self.n_h * self.k * self.k),
             nn.ReLU()
         )
 
@@ -260,97 +449,129 @@ class VQVAE_PL(pl.LightningModule):
             nn.Linear(int(embedding_dim/2), 3)
         )
         self._decoder = Decoder(embedding_dim,
-                                num_hiddens,
+                                self.n_h,
                                 num_residual_layers,
                                 num_residual_hiddens)
-        self.goals = goals
-        self.num_goal_states = len(goals)
 
-    def forward(self, img, coords):
-        z_1 = self._encoder(img)
-        z_1_shape = z_1.shape
-        z_1 = z_1.view(z_1_shape[0], -1)
-        #z_1 = self.img_mlp(z_1)
+    def forward(self, batch, batch_idx, logger, set):
+        img, coords = batch
 
-        z_2 = self.coord_mlp(coords)
-        #z = torch.cat((z_1, z_2), dim=1)
+        i1, i2 = img[:, 0], img[:, 1]
+        c1, c2 = coords[:, 0], coords[:, 1]
+
+        z = self.encode(i1, c1)
+
+        vq_loss, quantized, perplexity, _ = self._vq_vae(z)
+
+        img_recon, coord_recon = self.decode(quantized)
+
+        img_recon_error = F.mse_loss(img_recon, i2)
+        coord_recon_error = F.mse_loss(coord_recon, c2)
+
+        coord_recon_error = self.coord_cost*coord_recon_error
+
+        loss = img_recon_error + coord_recon_error + vq_loss
         
-        z = torch.add(z_1, z_2)
+        logs = {
+            f'loss/{set}': loss,
+            f'perplexity/{set}': perplexity,
+            f'loss_img_recon/{set}': img_recon_error,
+            f'loss_coord_recon/{set}': coord_recon_error,
+            f'loss_vq_loss/{set}': vq_loss
+        }
 
-        
-        loss, quantized, perplexity, _ = self._vq_vae(z)
-        #h_i, h_c = torch.chunk(quantized, 2, dim=1)
+        self.log_metrics(logger, logs, img_recon, batch_idx, set)
 
-        #h_i = self.img_mlp_inv(quantized)
+        return loss
 
 
-        h_i = quantized.view(z_1_shape)
-
-        img_recon = self._decoder(h_i)
-        coord_recon = self.coord_mlp_inv(quantized)
-
-        return loss, img_recon, coord_recon, perplexity
-
-    def get_centroids(self, idx):
-        z_idx = torch.tensor(idx).cuda()
-        embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
-        embeddings = embeddings.view((1,2,2,64))
-        embeddings = embeddings.permute(0, 3, 1, 2).contiguous()
-
-        return self._decoder(embeddings)
-
-    def save_encoding_indices(self, x):
-        z = self._encoder(x)
-        z = self._pre_vq_conv(z)
-        _, _, _, encoding_indices = self._vq_vae(z)
-        return encoding_indices
 
     def encode(self, img, coords):
         z_1 = self._encoder(img)
         z_1_shape = z_1.shape
         z_1 = z_1.view(z_1_shape[0], -1)
-
         z_2 = self.coord_mlp(coords)
-
         return torch.add(z_1, z_2)
 
-    def decode(self, img=True, coords=True):
-        img_list = []
-        coord_list = []
-        for e in self._vq_vae._embedding.weight:
-            if img:
-                h_i = e.view(1,64,2,2)
-                img_list.append(self._decoder(h_i).detach().cpu().numpy())
-            if coords:
-                coord_list.append(self.coord_mlp_inv(e).detach().cpu().numpy())
+    def decode(self, z):
+        h_i = z.view(-1, self.n_h, self.k, self.k)
+        img = self._decoder(h_i)
+        coord = self.coord_mlp_inv(z)
+        return img, coord
+
+    def compute_embedding(self, batch, device):
+        img, coords = batch
+
+        i1, _ = img[:, 0], img[:, 1]
+        c1, _ = coords[:, 0], coords[:, 1]
+
+        return self.encode(i1.to(device), c1.to(device))
+
+    def log_metrics(self, logger, logs, img_recon, batch_idx, set='train'):
+        logger.experiment.log(logs)
+
+        if batch_idx == 0 and set == 'val':
+            grid = make_grid(img_recon[:64].cpu().data)
+            grid = grid.permute(1,2,0)
+            logger.experiment.log({"Images": [wandb.Image(grid.numpy())]})
+
+
+    def list_reconstructions(self):
+        with torch.no_grad():
+            img_list = []
+            coord_list = []
+            for e in self._vq_vae._embedding.weight:
+                img_recon, coord_recon = self.decode(e)
+                img_recon = img_recon.squeeze().permute(1, 2, 0)
+                img_list.append(img_recon.detach().cpu().numpy())
+                coord_list.append(coord_recon.detach().cpu().numpy())
         return img_list, coord_list
+
+    def log_reconstructions(self, loader, logger):
+
+        img_list, coord_list = self.list_reconstructions()
+
+        fig_coord = plot_coord_centroides(coord_list, loader)
+        logger.experiment.log({'Centroides coordinates': fig_coord})
+        plt.close()
+
+        fig_img = plot_img_centroides(img_list)
+        logger.experiment.log({'Centroides images': fig_img})
+        plt.close()
+
+
+
+class VQVAE_PL(pl.LightningModule):
+    def __init__(self, input, **kwargs):
+        super(VQVAE_PL, self).__init__()
+
+        self.num_goal_states = kwargs["num_embeddings"]
+
+        if input == "pixel":
+            self.model = PixelVQVAE(**kwargs)
+        elif input == "coord":
+            self.model = CoordVQVAE(**kwargs)
+        elif input == "pixelcoord":
+            self.model = PixelCoordVQVAE(**kwargs)
+        else:
+            self.model = None
 
 
     def compute_logits_(self, z_a, z_pos):
-        distances = self._vq_vae.compute_distances(z_a)
+        distances = self.model._vq_vae.compute_distances(z_a)
         return -distances.squeeze()[z_pos].detach().cpu().item()
 
     def compute_argmax(self, z_a):
-        distances = self._vq_vae.compute_distances(z_a)
+        distances = self.model._vq_vae.compute_distances(z_a)
         # it's the same as argmax of (-distances)
-        return torch.argmin(distances).cpu().item()
-
-    def compute_second_argmax(self, z_a):
-        distances = self._vq_vae.compute_distances(z_a)
-        # it's the same as argmax of (-distances)
-        first = torch.argmin(distances).cpu().item()
-        distances[0][first] = 100
         return torch.argmin(distances).cpu().item()
 
     def compute_reward(self, z_a, goal):
-        distances = self._vq_vae.compute_distances(z_a).squeeze()
+        distances = self.model._vq_vae.compute_distances(z_a).squeeze()
         return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
-
-
 
     def get_goal_state(self, idx):
         z_idx = torch.tensor(idx).cuda()
-        embeddings = torch.index_select(self._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
+        embeddings = torch.index_select(
+            self.model._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
         return embeddings.squeeze().detach().cpu().numpy()
-
-

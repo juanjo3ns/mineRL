@@ -14,12 +14,22 @@ matplotlib.rcParams['ytick.color'] = COLOR
 # plt.rcParams['axes.facecolor'] = '#303030'
 
 
-def show_centroides_inmap(centroides, data, palette, experiment, world):
-    centroides = centroides.reset_index()
+def show_centroides(coord_list, loader, palette):
+    mu = loader.dataset.coord_mean
+    std = loader.dataset.coord_std
+    coords = np.array([x*std + mu for x in coord_list])
+
+    df = pd.DataFrame(coords, columns=['x', 'y', 'z'])
+
+    df = df.reset_index()
+    sns.scatterplot(x="z", y="x", hue="index",
+                    palette=palette, data=df, s=130)
+
+def centroides_indexmap(coord_list, data, palette, experiment, world, loader):
 
     fig, ax = plt.subplots(figsize=(9, 9))
     sns.scatterplot(x="x", y="y", hue="Code:", palette=palette, data=data)
-    sns.scatterplot(x="z", y="x", hue="index", palette=palette, data=centroides, s=130)
+    show_centroides(coord_list, loader, palette)
     ax.set_xlim(-50, 50)
     ax.set_ylim(-50, 50)
 
@@ -27,36 +37,10 @@ def show_centroides_inmap(centroides, data, palette, experiment, world):
     ax.axis('off')
     plt.tight_layout()
     plt.savefig(
-        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}_.png', transparent=True)
+        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}.png', transparent=True)
     plt.close()
 
 
-
-    # fig, ax = plt.subplots(figsize=(9, 9))
-
-    # load and show map image
-    # map = plt.imread(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/CW_{world}.png')
-    # plt.imshow(map)
-    # h,w,c = map.shape
-
-    # # insert centroides points
-    # centroides['x'] = h - (centroides['x'] + 50)*(1/100)*h
-    # centroides['z'] = w - (centroides['z'] + 50)*(1/100)*w
-
-    # sns.scatterplot(x="z", y="x", hue="index",
-    #                 palette=palette, data=centroides, s=120)
-
-    # ax.set_xlim(0, h)
-    # ax.set_ylim(0, w)
-
-    # ax.get_legend().remove()
-    # ax.axis('off')
-    # plt.tight_layout()
-    
-    # # store image
-    # plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/centroides_{experiment}_{param}.png', transparent=True)
-    # plt.close()
-    
 
 
 def compute_entropy(c):
@@ -201,3 +185,24 @@ def compare_func():
 #     plt.savefig('skills_histogram.png', transparent=True)
 
 # skill_appearance()
+
+
+def plot_coord_centroides(coord_list, loader):
+    palette = sns.color_palette("Paired", n_colors=len(coord_list))
+    fig, ax = plt.subplots(figsize=(9, 9))
+    show_centroides(coord_list, loader, palette)
+    ax.set_xlim(-50, 50)
+    ax.set_ylim(-50, 50)
+    ax.get_legend().remove()
+    return fig
+
+
+def plot_img_centroides(imgs):
+    fig, axes = plt.subplots(ncols=len(imgs), figsize=(18, 10))
+    for i, ax in enumerate(axes):
+        img = imgs[i] + 0.5
+        img[img > 1] = 1
+        ax.imshow(img)
+        ax.axis('off')
+
+    return fig

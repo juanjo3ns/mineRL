@@ -30,10 +30,9 @@ def get_loader(trajectories, transform, conf, shuffle=False, limit=None):
 def compute_kmeans(embeddings, num_clusters):
     return KMeans(n_clusters=num_clusters, random_state=0).fit(embeddings)
 
-def compute_embeddings(loader, encode):
-    # return np.array([encode(data[:, 0].cuda()).detach().cpu().numpy() for data, coord in loader]).squeeze()
-    return np.array([encode(data[:, 0].cuda(), coord[:, 0].cuda()).detach().cpu().numpy() for data, coord in loader]).squeeze()
-    # return np.array([encode(coord[:, 0].cuda()).detach().cpu().numpy() for data, coord in loader]).squeeze()
+def compute_embeddings(loader, model):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return np.array([model.compute_embedding(batch, device).detach().cpu().numpy() for batch in loader]).squeeze()
 
 def get_images(loader):
     return torch.cat([data[:,0] for data, coord in loader])
@@ -65,7 +64,7 @@ def construct_map(enc):
     if 'Custom' in enc.trajectories[0]:
         trajectories = load_trajectories(enc.trajectories[0])
 
-    embeddings = compute_embeddings(loader, enc.encode)
+    embeddings = compute_embeddings(loader, enc.model)
 
     if enc.type == "index":
         indexes = get_indexes(trajectories, embeddings, enc)
@@ -98,20 +97,13 @@ def get_indexes(trajectories, embeddings, enc):
 
 def centroides_map(encoder, loader, indexes):
     experiment = encoder.experiment
-    _, coords = encoder.decode(img=False)
 
-    # unnormalize coordinates
-    mu = loader.dataset.coord_mean
-    std = loader.dataset.coord_std
-    coords = np.array([ x*std + mu for x in coords])
-    
-    df = pd.DataFrame(coords, columns=['x', 'y', 'z'])
-
+    _, coord_list = encoder.model.list_reconstructions()
     world = getWorld(encoder.trajectories[0])
     palette = sns.color_palette("Paired", n_colors=encoder.num_clusters)
 
     experiment = encoder.test['path_weights'].split('/')[0]
-    show_centroides_inmap(df, indexes, palette, experiment, world)
+    centroides_indexmap(coord_list, indexes, palette, experiment, world, loader)
 
 def index_map(enc, indexes):
     code_list = indexes['Code:'].tolist()
@@ -132,29 +124,9 @@ def reward_map(trajectories, embeddings, enc):
         print(f"Comparing data points with goal state {g}", end="\r")
         values = pd.DataFrame(columns=['x', 'y', 'reward'])
         for i, (e, p) in enumerate(zip(embeddings, trajectories)):
-            # if i > 71:
-            #     break
             x = float(p[2])
             y = float(p[0])
             e = torch.from_numpy(e).cuda()
-
-            # normal approach
-            # k = enc.compute_argmax(e.unsqueeze(dim=0))
-            # r = 0
-            # if k == g:
-            #     r = enc.compute_reward(e.unsqueeze(dim=0))
-
-            # second approach
-            # r = enc.compute_reward_mod(e.unsqueeze(dim=0), g)
-            # if not (i+1) % 71 == 0:
-            #     e2 = torch.from_numpy(embeddings[i+1]).cuda()
-            #     r_next_state = enc.compute_reward_mod(e2.unsqueeze(dim=0), g)
-            #     r -= r_next_state
-            #     values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
-
-            # G (return) approach
-            # if i>71:
-
 
             r = enc.compute_reward(e.unsqueeze(dim=0), g)
 

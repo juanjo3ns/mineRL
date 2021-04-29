@@ -6,7 +6,7 @@ from logging import getLogger
 
 from models.PixelEncoder import PixelEncoder
 from models.CURL import CURL_PL
-from models.VQVAE import VQVAE_PL
+from models.CustomVQVAE import VQVAE_PL
 from IPython import embed
 
 logger = getLogger(__name__)
@@ -20,9 +20,9 @@ def load_encoder(conf, path_weights):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     enc_type = conf['type']
     img_size = conf['img_size']
+    data_type = conf['data_type']
 
     conf = conf[enc_type]
-
     encoder_version = conf['encoder_version']
     load_epoch = conf['load_epoch']
     embedding_dim = conf['embedding_dim']
@@ -42,15 +42,14 @@ def load_encoder(conf, path_weights):
 
 
     elif enc_type == 'vqvae':
-        model = VQVAE_PL(
-            conf['num_hiddens'],
-            conf['num_residual_layers'],
-            conf['num_residual_hiddens'],
-            conf['num_embeddings'],
-            embedding_dim,
-            conf['commitment_cost'],
-            goals=conf['goals']
-        )
+        model = VQVAE_PL(data_type, 
+                         num_hiddens=conf['num_hiddens'],
+                         num_residual_layers=conf['num_residual_layers'],
+                         num_residual_hiddens=conf['num_residual_hiddens'],
+                         num_embeddings=conf['num_embeddings'],
+                         embedding_dim=conf['embedding_dim'],
+                         commitment_cost=conf['commitment_cost'],
+                         goals=conf['goals'])
     else:
         raise NotImplementedException()
 

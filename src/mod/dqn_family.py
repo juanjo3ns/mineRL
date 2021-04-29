@@ -102,6 +102,7 @@ def dqn_family(conf, outdir):
     target_update_interval = conf['target_update_interval']
 
     enc_conf = conf['encoder']
+    data_type = enc_conf['data_type']
 
     world_conf = getConfig('CustomWorlds/' + world)
     world_conf['downstream_task'] = downstream_task
@@ -145,7 +146,7 @@ def dqn_family(conf, outdir):
         wrapped_env = wrap_env(
             env=env, test=test,
             monitor=monitor, outdir=outdir,
-            frame_skip=frame_skip,
+            frame_skip=frame_skip, data_type=data_type,
             gray_scale=gray_scale, frame_stack=frame_stack,
             randomize_action=randomize_action, eval_epsilon=eval_epsilon,
             encoder=encoder, device=device, sampling=sampling,
