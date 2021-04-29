@@ -244,6 +244,8 @@ class PixelVQVAE(pl.LightningModule):
         
         super(PixelVQVAE, self).__init__()
 
+        self.goals = goals
+
         self.img_size = img_size
 
         self.n_h = num_hiddens
@@ -334,6 +336,8 @@ class CoordVQVAE(pl.LightningModule):
         
         super(CoordVQVAE, self).__init__()
 
+        self.goals = goals
+
         self.coord_mlp = nn.Sequential(
             nn.Linear(3, int(embedding_dim/2)),
             nn.ReLU(),
@@ -417,6 +421,7 @@ class PixelCoordVQVAE(pl.LightningModule):
         
         self.n_h = num_hiddens
         self.k = int(2 * (self.img_size / self.n_h))
+        self.goals = goals
 
         self._encoder = Encoder(3, self.n_h,
                         num_residual_layers,

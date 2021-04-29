@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from logging import getLogger
 from random import randint, choice
 from collections import deque, Counter
-from torchvision.transforms import Normalize
+from torchvision import transforms
 from pfrl.wrappers.atari_wrappers import ScaledFloatFrame, LazyFrames
 from pfrl.wrappers import ContinuingTimeLimit, RandomizeAction, Monitor
 
@@ -230,7 +230,7 @@ class ObtainPoVWrapper(gym.ObservationWrapper):
         self.observation_space = self.env.observation_space.spaces['pov']
 
     def observation(self, observation):
-        return observation['pov'], observation['coord']
+        return observation['pov'], observation['coords']
 
 class ObtainCoordWrapper(gym.ObservationWrapper):
     """Obtain 'coord' value (coordinate values) of the original observation."""
@@ -257,10 +257,10 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         self.data_type = data_type
         self.device = device
         self.test = test
-        self.transform = Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))
-        self.transform_coord = Normalize(
-            (-1.008789, 68.02647, -4.984553),
-            (21.146933, 3.8185706, 20.964117))
+        self.transform = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))])
+        self.coord_mean = np.array([-1.008789, 68.02647, -4.984553])
+        self.coord_std = np.array([21.146933, 3.8185706, 20.964117])
 
     def store_idx(self, idx):
         ibs = self.env.idx_buffer_size
@@ -283,22 +283,23 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
 
         goal_state = self.env.goal_state
 
-        obs_anchor = torch.from_numpy(observation[0]).float()
-        coord = torch.from_numpy(observation[1]).float()
+        coord = np.array(observation[1])
+        coord = (coord-self.coord_mean)/self.coord_std
+
+        coord = torch.from_numpy(coord).float()
         # We don't need .ToTensor since shape already 3,64,64 but we need to divide by 255
         # Then, we substract the mean 0.5 and divide by 1 like in the encoder training
-        obs_norm = self.transform(obs_anchor/255)
-        coord_norm = self.transform_coord(coord)
+        obs = self.transform(observation[0])
 
-        obs = obs_norm.unsqueeze(dim=0).to(self.device)
-        coord = coord_norm.unsqueeze(dim=0).to(self.device)
+        obs = obs.unsqueeze(dim=0).to(self.device)
+        coord = coord.unsqueeze(dim=0).to(self.device)
 
         if self.data_type == "pixel":
             z_a = self.model.model.encode(obs)
         elif self.data_type == "coord":
-            z_a = self.model.model.encode(coord_norm)
+            z_a = self.model.model.encode(coord)
         elif self.data_type == "pixelcoord":
-            z_a = self.model.model.encode(obs, coord_norm)
+            z_a = self.model.model.encode(obs, coord)
         else: z_a = None
 
         g = self.model.compute_argmax(z_a)
