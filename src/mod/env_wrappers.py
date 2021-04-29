@@ -577,9 +577,9 @@ class TransformReward(gym.RewardWrapper):
 
         elif not self.train_encoder and not self.downstream_task:
             reward = self.model.reward
-            if not self.env.prev_reward == None:
-                reward -= self.env.prev_reward
-            self.env.prev_reward = self.model.reward
+            #if not self.env.prev_reward == None:
+            #    reward -= self.env.prev_reward
+            #self.env.prev_reward = self.model.reward
             return reward
 
         elif not self.train_encoder and self.downstream_task:
