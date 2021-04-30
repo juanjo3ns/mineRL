@@ -301,9 +301,9 @@ class PixelVQVAE(pl.LightningModule):
 
     def encode(self, img):
         z_1 = self._encoder(img)
-        z_1 = self.img_mlp(z_1)
         z_1_shape = z_1.shape
-        return z_1.view(z_1_shape[0], -1)
+        z_1 = z_1.view(z_1_shape[0], -1)
+        return self.img_mlp(z_1)
 
     def decode(self, z):
         z = self.img_mlp_inv(z)
@@ -500,7 +500,6 @@ class PixelCoordVQVAE(pl.LightningModule):
         self.log_metrics(logger, logs, img_recon, batch_idx, set)
 
         return loss
-
 
 
     def encode(self, img, coords):

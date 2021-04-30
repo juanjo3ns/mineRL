@@ -1,7 +1,7 @@
 experiment: 'test_pixelcoord'
 environment: 'MineRLNavigate-v0'
 trajectories: ['CustomTrajectories8']
-data_type: 'pixelcoord' # pixel / coord / pixelcoord
+data_type: 'pixel' # pixel / coord / pixelcoord
 epochs: 15
 delay: no
 split: 0.90
