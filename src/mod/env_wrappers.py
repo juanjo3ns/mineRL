@@ -283,10 +283,10 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
 
         goal_state = self.env.goal_state
 
-        coord = np.array(observation[1])
-        coord = (coord-self.coord_mean)/self.coord_std
+        coord = np.array(observation[1], dtype=np.float32)
+        coord_np = (coord-self.coord_mean)/self.coord_std
 
-        coord = torch.from_numpy(coord).float()
+        coord = torch.from_numpy(coord_np).float()
         # We don't need .ToTensor since shape already 3,64,64 but we need to divide by 255
         # Then, we substract the mean 0.5 and divide by 1 like in the encoder training
         obs = self.transform(observation[0])
@@ -309,7 +309,7 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
 
         # Compute reward as a classification problem. If the goal state with highest similarity
         # is the current selected, give reward of 1.
-        self.model.reward = self.model.compute_reward(z_a, goal_state, coord)
+        self.model.reward = self.model.compute_reward(z_a, goal_state, coord_np)
 
         self.store_idx(g)
 
