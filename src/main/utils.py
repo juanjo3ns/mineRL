@@ -70,7 +70,7 @@ def construct_map(enc):
         indexes = get_indexes(trajectories, embeddings, enc)
         index_map(enc, indexes)
     elif enc.type == "reward":
-        reward_map(trajectories, embeddings, enc)
+        reward_map(trajectories, embeddings, enc, loader)
     elif enc.type == "embed":
         images = get_images(loader) + 0.5
         embed_map(embeddings, images, enc.experiment)
@@ -117,7 +117,7 @@ def index_map(enc, indexes):
     skill_appearance(codes_count, palette, experiment, world)
 
 
-def reward_map(trajectories, embeddings, enc):
+def reward_map(trajectories, embeddings, enc, loader):
     print("Get index from all data points...")
     data_list = []
     for g in range(enc.num_clusters):
@@ -128,7 +128,11 @@ def reward_map(trajectories, embeddings, enc):
             y = float(p[0])
             e = torch.from_numpy(e).cuda()
 
-            r = enc.compute_reward(e.unsqueeze(dim=0), g)
+            coord = np.array(p, dtype=np.float32)
+            mu = loader.dataset.coord_mean
+            std = loader.dataset.coord_std
+            coord = (coord-mu)/std
+            r = enc.compute_reward(e.unsqueeze(dim=0), g, coord)
 
             values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
 

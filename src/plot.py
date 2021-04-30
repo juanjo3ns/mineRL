@@ -107,7 +107,7 @@ def plot_reward_maps(data_list, experiment, world, is_return=False):
         # ax.axis('off')
     fig.colorbar(g, ax=axn[:,-1])
     plt.savefig(
-        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/rewardmap_{experiment}_.png', transparent=True)
+        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/rewardmap_{experiment}_comb.png', transparent=True)
 
 '''
 Given a list of dataframes, plot return values for each timestep

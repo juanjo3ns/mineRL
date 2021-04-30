@@ -255,8 +255,18 @@ class PixelVQVAE(pl.LightningModule):
                                 num_residual_layers,
                                 num_residual_hiddens)
 
+        self.img_mlp = nn.Sequential(
+            nn.Linear(self.n_h * self.k * self.k, int(embedding_dim)),
+            nn.ReLU()
+        )
+
         self._vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim,
-                                            commitment_cost, decay)
+                                          commitment_cost, decay)
+
+        self.img_mlp_inv = nn.Sequential(
+            nn.Linear(int(embedding_dim), self.n_h * self.k * self.k),
+            nn.ReLU()
+        )
 
         self._decoder = Decoder(embedding_dim,
                                 num_hiddens,
@@ -291,10 +301,12 @@ class PixelVQVAE(pl.LightningModule):
 
     def encode(self, img):
         z_1 = self._encoder(img)
+        z_1 = self.img_mlp(z_1)
         z_1_shape = z_1.shape
         return z_1.view(z_1_shape[0], -1)
 
     def decode(self, z):
+        z = self.img_mlp_inv(z)
         h_i = z.view(-1, self.n_h, self.k, self.k)
         return self._decoder(h_i)
 
@@ -495,10 +507,12 @@ class PixelCoordVQVAE(pl.LightningModule):
         z_1 = self._encoder(img)
         z_1_shape = z_1.shape
         z_1 = z_1.view(z_1_shape[0], -1)
+        z_1 = self.img_mlp(z_1)
         z_2 = self.coord_mlp(coords)
         return torch.add(z_1, z_2)
 
     def decode(self, z):
+        z = self.img_mlp_inv(z)
         h_i = z.view(-1, self.n_h, self.k, self.k)
         img = self._decoder(h_i)
         coord = self.coord_mlp_inv(z)
@@ -551,7 +565,7 @@ class VQVAE_PL(pl.LightningModule):
         super(VQVAE_PL, self).__init__()
 
         self.num_goal_states = kwargs["num_embeddings"]
-
+        self.input = input
         if input == "pixel":
             self.model = PixelVQVAE(**kwargs)
         elif input == "coord":
@@ -571,14 +585,27 @@ class VQVAE_PL(pl.LightningModule):
         # it's the same as argmax of (-distances)
         return torch.argmin(distances).cpu().item()
 
-    def compute_reward(self, z_a, goal):
+    def compute_reward(self, z_a, goal, coord):
         distances = self.model._vq_vae.compute_distances(z_a).squeeze()
         k = torch.argmin(distances).cpu().item()
+        # return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
+
+        # if k == goal:
+        #     return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
+        # else:
+        #     return -0.5
         if k == goal:
             return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
         else:
+            if not self.input == "pixel":
+                with torch.no_grad():
+                    z_idx = torch.tensor(goal).cuda()
+                    goal_embedding = torch.index_select(self.model._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
+                    _, coord_goal = self.model.decode(goal_embedding)
+                    coord_goal = coord_goal.detach().cpu().numpy()
+                return - np.linalg.norm(coord-coord_goal)
             return -0.5
-            
+
 
     def get_goal_state(self, idx):
         z_idx = torch.tensor(idx).cuda()
