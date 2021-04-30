@@ -309,7 +309,7 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
 
         # Compute reward as a classification problem. If the goal state with highest similarity
         # is the current selected, give reward of 1.
-        self.model.reward = self.model.compute_reward(z_a, goal_state)
+        self.model.reward = self.model.compute_reward(z_a, goal_state, coord)
 
         self.store_idx(g)
 
