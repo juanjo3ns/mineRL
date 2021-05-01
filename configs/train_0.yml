@@ -1,4 +1,4 @@
-outdir: 'rl.20.0.1'
+outdir: 'rl.20.0.0_sparse'
 env: 'MineRLNavigate-v0'
 world: 'CustomWorld_0'
 logging_level: 20
@@ -45,8 +45,9 @@ encoder:
   img_size: 64
   data_type: 'pixelcoord' # pixel / coord / pixelcoord
   vqvae:
-    encoder_version: 'test'
-    load_epoch: 'mineRL/3sb3dcz3/checkpoints/epoch=16-step=2072.ckpt'
+    encoder_version: 'vqvae_pixelcoord_official'
+    reward_type: 'sparse' # sparse / dense / comb
+    load_epoch: 'mineRL/27gmv5df/checkpoints/epoch=24-step=3124.ckpt'
     num_hiddens: 64
     num_residual_hiddens: 32
     num_residual_layers: 2

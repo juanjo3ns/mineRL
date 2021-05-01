@@ -1,8 +1,8 @@
-experiment: 'test_pixelcoord'
+experiment: 'vqvae_pixelcoord_official'
 environment: 'MineRLNavigate-v0'
 trajectories: ['CustomTrajectories8']
-data_type: 'pixel' # pixel / coord / pixelcoord
-epochs: 15
+data_type: 'pixelcoord' # pixel / coord / pixelcoord
+epochs: 25
 delay: no
 split: 0.90
 lr: 0.001
@@ -19,8 +19,9 @@ vqvae:
   num_embeddings: 10
   commitment_cost: 0.25
   decay: 0.99
+  reward_type: 'sparse' # sparse / dense / comb
 test:
-  type: 'centroides'  # index / reward / embed / centroides
+  type: 'reward'  # index / reward / embed / centroides
   shuffle: no
   limit: null
   # path_weights: './vqvae_0.3/mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'
@@ -53,4 +54,4 @@ test:
   # path_weights: 'vqvae_CW4_pixels_coords.sweep/mineRL/qj2oy801/checkpoints/epoch=24-step=3124.ckpt'
   # path_weights: 'vqvae_CW4_pixels_coords.sweep/mineRL/cb42ynnd/checkpoints/epoch=24-step=3124.ckpt'
 
-  path_weights: 'test/mineRL/3sb3dcz3/checkpoints/epoch=16-step=2072.ckpt'
+  path_weights: 'vqvae_pixelcoord_official/mineRL/27gmv5df/checkpoints/epoch=24-step=3124.ckpt'

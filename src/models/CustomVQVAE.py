@@ -240,7 +240,7 @@ class Decoder(nn.Module):
 class PixelVQVAE(pl.LightningModule):
     def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
                  num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99,
-                 goals=[], img_size=64, coord_cost=0.05):
+                 goals=[], img_size=64, coord_cost=0.05, reward_type="sparse"):
         
         super(PixelVQVAE, self).__init__()
 
@@ -344,7 +344,7 @@ class PixelVQVAE(pl.LightningModule):
 class CoordVQVAE(pl.LightningModule):
     def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
                  num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99,
-                 goals=[], img_size=64, coord_cost=0.05):
+                 goals=[], img_size=64, coord_cost=0.05, reward_type="sparse"):
         
         super(CoordVQVAE, self).__init__()
 
@@ -424,7 +424,7 @@ class CoordVQVAE(pl.LightningModule):
 class PixelCoordVQVAE(pl.LightningModule):
     def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
                  num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99,
-                 goals=[], img_size=64, coord_cost=0.05):
+                 goals=[], img_size=64, coord_cost=0.05, reward_type="sparse"):
 
         super(PixelCoordVQVAE, self).__init__()
 
@@ -564,7 +564,9 @@ class VQVAE_PL(pl.LightningModule):
         super(VQVAE_PL, self).__init__()
 
         self.num_goal_states = kwargs["num_embeddings"]
+        self.reward_type = kwargs["reward_type"]
         self.input = input
+        
         if input == "pixel":
             self.model = PixelVQVAE(**kwargs)
         elif input == "coord":
@@ -587,24 +589,27 @@ class VQVAE_PL(pl.LightningModule):
     def compute_reward(self, z_a, goal, coord):
         distances = self.model._vq_vae.compute_distances(z_a).squeeze()
         k = torch.argmin(distances).cpu().item()
-        # return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
-
-        # if k == goal:
-        #     return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
-        # else:
-        #     return -0.5
-        if k == goal:
+        if self.reward_type == "dense":
             return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
+        elif self.reward_type == "sparse":
+            if k == goal:
+                return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
+            else:
+                return -0.5
+        elif self.reward_type == "comb":
+            if k == goal:
+                return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
+            else:
+                if not self.input == "pixel":
+                    with torch.no_grad():
+                        z_idx = torch.tensor(goal).cuda()
+                        goal_embedding = torch.index_select(self.model._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
+                        _, coord_goal = self.model.decode(goal_embedding)
+                        coord_goal = coord_goal.detach().cpu().numpy()
+                    return - np.linalg.norm(coord-coord_goal)
+                return -0.5
         else:
-            if not self.input == "pixel":
-                with torch.no_grad():
-                    z_idx = torch.tensor(goal).cuda()
-                    goal_embedding = torch.index_select(self.model._vq_vae._embedding.weight.detach(), dim=0, index=z_idx)
-                    _, coord_goal = self.model.decode(goal_embedding)
-                    coord_goal = coord_goal.detach().cpu().numpy()
-                return - np.linalg.norm(coord-coord_goal)
-            return -0.5
-
+            raise NotImplementedError()
 
     def get_goal_state(self, idx):
         z_idx = torch.tensor(idx).cuda()

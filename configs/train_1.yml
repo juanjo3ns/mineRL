@@ -1,6 +1,6 @@
-outdir: 'rl.12.1.0'
+outdir: 'rl.20.0.1_dense'
 env: 'MineRLNavigate-v0'
-world: 'CustomWorld_1'
+world: 'CustomWorld_0'
 logging_level: 20
 interactor: no
 downstream_task: no
@@ -12,12 +12,12 @@ demo: no
 monitor: no
 load: null
 eval_n_runs: 10
-sampling: 'weighted'
+sampling: 'uniform'
 
 agent: 'CategoricalDoubleDQN'
 arch: 'distributed_dueling'
 
-max_episode_steps: 700
+max_episode_steps: 500
 batch_size: 64
 update_interval: 4
 frame_skip: 10
@@ -43,9 +43,11 @@ target_update_interval: 2.e+4
 encoder:
   type: 'vqvae'
   img_size: 64
+  data_type: 'pixelcoord' # pixel / coord / pixelcoord
   vqvae:
-    encoder_version: 'vqvae_exp_1'
-    load_epoch: 'mineRL/mlq3n3be/checkpoints/epoch=39-step=11679.ckpt'
+    encoder_version: 'vqvae_pixelcoord_official'
+    reward_type: 'dense' # sparse / dense / comb
+    load_epoch: 'mineRL/27gmv5df/checkpoints/epoch=24-step=3124.ckpt'
     num_hiddens: 64
     num_residual_hiddens: 32
     num_residual_layers: 2
