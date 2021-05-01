@@ -1,4 +1,4 @@
-outdir: 'rl.20.0.1_comb'
+outdir: 'rl.20.0.2_comb'
 env: 'MineRLNavigate-v0'
 world: 'CustomWorld_0'
 logging_level: 20
@@ -31,7 +31,7 @@ batch_accumulator: 'sum'
 gray_scale: no
 frame_stack: no
 
-final_exploration_frames: 10.e+6
+final_exploration_frames: 1.e+5
 final_epsilon: 0.01
 eval_epsilon: 0.001
 noisy_net_sigma: null
