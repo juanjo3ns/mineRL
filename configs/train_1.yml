@@ -1,4 +1,4 @@
-outdir: 'rl.20.0.1_dense'
+outdir: 'rl.20.1.1_dense'
 env: 'MineRLNavigate-v0'
 world: 'CustomWorld_0'
 logging_level: 20
