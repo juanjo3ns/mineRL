@@ -538,7 +538,7 @@ class ClusteredActionWrapper(gym.ActionWrapper):
     def __init__(self, env, frame_skip):
         super().__init__(env)
         self.env = env
-        self.delta_degree = 15
+        self.delta_degree = 45
         if not frame_skip == None:
             self.delta_degree /= frame_skip
 

@@ -1,4 +1,4 @@
-outdir: 'rl.toy.0.0'
+outdir: 'rl.toy.vqvae.0.0'
 env: 'MineRLNavigate-v0'
 world: 'CustomWorld_Simple'
 logging_level: 20
@@ -31,7 +31,7 @@ batch_accumulator: 'sum'
 gray_scale: no
 frame_stack: no
 
-final_exploration_frames: 2.5e+5
+final_exploration_frames: 3.e+5
 final_epsilon: 0.01
 eval_epsilon: 0.001
 noisy_net_sigma: null
@@ -41,13 +41,13 @@ prioritized: yes
 target_update_interval: 2.e+4
 
 encoder:
-  type: 'curl'
+  type: 'vqvae'
   img_size: 64
   data_type: 'pixel' # pixel / coord / pixelcoord
   vqvae:
-    encoder_version: 'vqvae_pixelcoord_official_CW0'
+    encoder_version: 'vqvae_official_simple_0'
     reward_type: 'sparse' # sparse / dense / comb
-    load_epoch: 'mineRL/27gmv5df/checkpoints/epoch=24-step=3124.ckpt'
+    load_epoch: 'mineRL/10uhi71y/checkpoints/epoch=7-step=5639.ckpt'
     num_hiddens: 64
     num_residual_hiddens: 32
     num_residual_layers: 2
