@@ -107,6 +107,8 @@ def dqn_family(conf, outdir):
     world_conf = getConfig('CustomWorlds/' + world)
     world_conf['downstream_task'] = downstream_task
 
+    coords = world_conf['coords']
+
     os.environ['MALMO_MINECRAFT_OUTPUT_LOGDIR'] = outdir
 
     # Set a random seed used in PFRL.
@@ -150,7 +152,7 @@ def dqn_family(conf, outdir):
             gray_scale=gray_scale, frame_stack=frame_stack,
             randomize_action=randomize_action, eval_epsilon=eval_epsilon,
             encoder=encoder, device=device, sampling=sampling,
-            train_encoder=train_encoder, downstream_task=downstream_task)
+            train_encoder=train_encoder, downstream_task=downstream_task, coords=coords)
         return wrapped_env
     logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
     core_env = gym.make(env_id)

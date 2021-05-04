@@ -31,19 +31,19 @@ setSeed(0)
 
 episodes = 500
 steps = 400
-frame_skip = 10
+frame_skip = 1
 
 MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLNavigate-v0')
 env = gym.make('MineRLNavigate-v0')
 
 conf = getConfig(sys.argv[1])
-world_conf = getConfig('CustomWorlds/' + conf['world'])
+world_conf = getConfig('CustomWorlds/CustomWorld_Simple')
 world_conf['path_world'] = Path('/home/juanjo/Documents/minecraft/mineRL/src/minerl/env/Malmo/Minecraft/run/saves/')
 world_conf['downstream_task'] = conf['downstream_task']
 
 env.custom_update(world_conf)
 
-folder = 'CustomTrajectories13'
+folder = 'CustomTrajectories14'
 outdir = f"./results/{folder}"
 
 if not os.path.exists(outdir):
@@ -60,7 +60,9 @@ env = ClusteredActionWrapper(env, frame_skip)
 
 env.seed(0)
 
+print()
 for episode in range(episodes):
+    print(f"Generating episode {episode}..", end="\r")    
     obs = env.reset()
     trajectory = [obs['pov']]
     for step in range(steps // frame_skip):

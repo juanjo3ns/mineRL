@@ -64,7 +64,7 @@ def construct_map(enc):
     if 'Custom' in enc.trajectories[0]:
         trajectories = load_trajectories(enc.trajectories[0])
 
-    embeddings = compute_embeddings(loader, enc.model)
+    embeddings = compute_embeddings(loader, enc)
 
     if enc.type == "index":
         indexes = get_indexes(trajectories, embeddings, enc)
@@ -114,7 +114,7 @@ def index_map(enc, indexes):
     world = getWorld(enc.trajectories[0])
 
     plot_idx_maps(indexes, palette, experiment, world)
-    skill_appearance(codes_count, palette, experiment, world)
+    # skill_appearance(codes_count, palette, experiment, world)
 
 
 def reward_map(trajectories, embeddings, enc, loader):
@@ -128,10 +128,12 @@ def reward_map(trajectories, embeddings, enc, loader):
             y = float(p[0])
             e = torch.from_numpy(e).cuda()
 
-            coord = np.array(p, dtype=np.float32)
-            mu = loader.dataset.coord_mean
-            std = loader.dataset.coord_std
-            coord = (coord-mu)/std
+            coord = None
+            if not enc.conf["data_type"] == "pixel":
+                coord = np.array(p, dtype=np.float32)
+                mu = loader.dataset.coord_mean
+                std = loader.dataset.coord_std
+                coord = (coord-mu)/std
             r = enc.compute_reward(e.unsqueeze(dim=0), g, coord)
 
             values = values.append({'x': x, 'y': y, 'reward': r}, ignore_index=True)
@@ -191,5 +193,7 @@ def getWorld(t):
         return 2
     elif '12' in t:
         return 4
+    elif '13' in t:
+        return 'Simple'
     else:
         raise NotImplementedError()

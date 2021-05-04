@@ -23,13 +23,23 @@ logger = getLogger(__name__)
 
 
 def wrap_env(
-        env, test,
-        monitor, outdir,
-        frame_skip, data_type,
-        gray_scale, frame_stack,
-        randomize_action, eval_epsilon,
-        encoder, device, sampling,
-        train_encoder, downstream_task):
+        env, 
+        test,
+        monitor, 
+        outdir,
+        frame_skip, 
+        data_type,
+        gray_scale, 
+        frame_stack,
+        randomize_action, 
+        eval_epsilon,
+        encoder, 
+        device, 
+        sampling,
+        train_encoder, 
+        downstream_task, 
+        coords
+        ):
     # wrap env: time limit...
     # Don't use `ContinuingTimeLimit` for testing, in order to avoid unexpected behavior on submissions.
     # (Submission utility regards "done" as an episode end, which will result in endless evaluation)
@@ -60,7 +70,7 @@ def wrap_env(
 
     # NEW
     if not train_encoder:
-        env = ObtainEmbeddingWrapper(env, encoder, data_type, device, test)
+        env = ObtainEmbeddingWrapper(env, encoder, data_type, device, test, coords)
         env = ConcatenateWrapper(env, encoder)
         ngs = encoder.num_goal_states
         env.skill_probs = np.ones(ngs)/ngs
@@ -129,7 +139,7 @@ class ResetWrapper(gym.Wrapper):
         num_goal_states = self.model.num_goal_states
         # num_goal_states = 8
         if self.sampling == 'weighted':
-            goal_state = np.random.choice(self.model.model.goals, p=probs)
+            goal_state = np.random.choice(np.arange(num_goal_states), p=probs)
         elif self.sampling == 'uniform':
             if self.test:
                 goal_state = (self.env.resets - 1) % num_goal_states
@@ -137,7 +147,7 @@ class ResetWrapper(gym.Wrapper):
 
             else:
                 # goal_state = randint(0, num_goal_states-1)
-                goal_state = choice(self.model.model.goals)
+                goal_state = np.random.randint(num_goal_states)
         else:
             raise NotImplementedException()
 
@@ -250,7 +260,7 @@ class ObtainCoordWrapper(gym.ObservationWrapper):
 
 class ObtainEmbeddingWrapper(gym.ObservationWrapper):
     """Obtain embedding vector corresponding to current observation."""
-    def __init__(self, env, encoder, data_type, device, test):
+    def __init__(self, env, encoder, data_type, device, test, coords):
         super().__init__(env)
         self.env = env
         self.model = encoder
@@ -259,8 +269,8 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         self.test = test
         self.transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5,0.5,0.5), (1.0,1.0,1.0))])
-        self.coord_mean = np.array([-1.008789, 68.02647, -4.984553])
-        self.coord_std = np.array([21.146933, 3.8185706, 20.964117])
+        self.coord_mean = coords['mean']
+        self.coord_std = coords['std']
 
     def store_idx(self, idx):
         ibs = self.env.idx_buffer_size
@@ -295,11 +305,11 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         coord = coord.unsqueeze(dim=0).to(self.device)
 
         if self.data_type == "pixel":
-            z_a = self.model.model.encode(obs)
+            z_a = self.model.encode(obs)
         elif self.data_type == "coord":
-            z_a = self.model.model.encode(coord)
+            z_a = self.model.encode(coord)
         elif self.data_type == "pixelcoord":
-            z_a = self.model.model.encode(obs, coord)
+            z_a = self.model.encode(obs, coord)
         else: z_a = None
 
         g = self.model.compute_argmax(z_a)

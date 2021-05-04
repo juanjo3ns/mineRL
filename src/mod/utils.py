@@ -37,7 +37,6 @@ def load_encoder(conf, path_weights):
             load_goal_states=True,
             device=device,
             path_goal_states=conf['path_goal_states'],
-            goals=conf['goals']
         )
 
 
@@ -49,7 +48,6 @@ def load_encoder(conf, path_weights):
                          num_embeddings=conf['num_embeddings'],
                          embedding_dim=conf['embedding_dim'],
                          commitment_cost=conf['commitment_cost'],
-                         goals=conf['goals'],
                          reward_type=conf['reward_type'])
     else:
         raise NotImplementedException()

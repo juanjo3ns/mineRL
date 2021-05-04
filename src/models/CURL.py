@@ -20,7 +20,6 @@ class CURL_PL(pl.LightningModule):
             load_goal_states=False,
             device=None,
             path_goal_states=None,
-            goals=[],
             **kwargs
             ):
         super(CURL_PL, self).__init__()
@@ -35,9 +34,8 @@ class CURL_PL(pl.LightningModule):
         if load_goal_states:
             self.path_gs = path_goal_states
             self.dev = device
-            self.goals = goals
             self.goal_states = self.load_goal_states()
-            self.num_goal_states = len(goals)
+            self.num_goal_states = self.goal_states.shape[0]
 
 
     def encode(self, x, detach=False, ema=False):
@@ -56,6 +54,11 @@ class CURL_PL(pl.LightningModule):
             z_out = z_out.detach()
         return z_out
 
+    def compute_embedding(self, batch, device):
+        x = batch[:, 0]
+        x = x.to(device)
+        return self.encode(x)
+        
     def compute_logits(self, z_a, z_pos=None):
         if z_pos == None:
             z_pos = self.goal_states
@@ -100,7 +103,6 @@ class CURL_PL(pl.LightningModule):
     def get_goal_state(self, idx):
         return self.goal_states[idx].detach().cpu().numpy()
 
-    def compute_reward(self, z_a, goal):
-        logits = self.compute_logits(z_a).squeeze()
-        logits = logits/z_a.shape[1]
-        return logits[goal].detach().cpu().numpy()
+    def compute_reward(self, z_a, goal, coord=None):
+        k = self.compute_argmax(z_a)
+        return int(k==goal)

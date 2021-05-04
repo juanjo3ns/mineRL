@@ -68,7 +68,7 @@ def skill_appearance(codes, palette, experiment, world):
 Given a dataframe of x,y,index columns and a palette of colors,
 plot points in their coordinates x,y and distinguish them by index.
 '''
-def plot_idx_maps(data, palette, experiment, world, param):
+def plot_idx_maps(data, palette, experiment, world):
     fig, ax = plt.subplots(figsize=(9,9))
     sns.scatterplot(x="x", y="y", hue="Code:", palette=palette, data=data)
     # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')

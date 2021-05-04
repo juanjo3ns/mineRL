@@ -240,11 +240,9 @@ class Decoder(nn.Module):
 class PixelVQVAE(pl.LightningModule):
     def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
                  num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99,
-                 goals=[], img_size=64, coord_cost=0.05, reward_type="sparse"):
+                 img_size=64, coord_cost=0.05, reward_type="sparse"):
         
         super(PixelVQVAE, self).__init__()
-
-        self.goals = goals
 
         self.img_size = img_size
 
@@ -344,11 +342,9 @@ class PixelVQVAE(pl.LightningModule):
 class CoordVQVAE(pl.LightningModule):
     def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
                  num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99,
-                 goals=[], img_size=64, coord_cost=0.05, reward_type="sparse"):
+                 img_size=64, coord_cost=0.05, reward_type="sparse"):
         
         super(CoordVQVAE, self).__init__()
-
-        self.goals = goals
 
         self.coord_mlp = nn.Sequential(
             nn.Linear(3, int(embedding_dim/2)),
@@ -424,7 +420,7 @@ class CoordVQVAE(pl.LightningModule):
 class PixelCoordVQVAE(pl.LightningModule):
     def __init__(self, num_hiddens=64, num_residual_layers=2, num_residual_hiddens=32,
                  num_embeddings=10, embedding_dim=256, commitment_cost=0.25, decay=0.99,
-                 goals=[], img_size=64, coord_cost=0.05, reward_type="sparse"):
+                 img_size=64, coord_cost=0.05, reward_type="sparse"):
 
         super(PixelCoordVQVAE, self).__init__()
 
@@ -433,7 +429,6 @@ class PixelCoordVQVAE(pl.LightningModule):
         
         self.n_h = num_hiddens
         self.k = int(2 * (self.img_size / self.n_h))
-        self.goals = goals
 
         self._encoder = Encoder(3, self.n_h,
                         num_residual_layers,
@@ -476,7 +471,7 @@ class PixelCoordVQVAE(pl.LightningModule):
         i1, i2 = img[:, 0], img[:, 1]
         c1, c2 = coords[:, 0], coords[:, 1]
 
-        z = self.encode(i1, c1)
+        z = self.encode((i1, c1))
 
         vq_loss, quantized, perplexity, _ = self._vq_vae(z)
 
@@ -502,7 +497,8 @@ class PixelCoordVQVAE(pl.LightningModule):
         return loss
 
 
-    def encode(self, img, coords):
+    def encode(self, batch):
+        img, coords = batch
         z_1 = self._encoder(img)
         z_1_shape = z_1.shape
         z_1 = z_1.view(z_1_shape[0], -1)
@@ -523,7 +519,7 @@ class PixelCoordVQVAE(pl.LightningModule):
         i1, _ = img[:, 0], img[:, 1]
         c1, _ = coords[:, 0], coords[:, 1]
 
-        return self.encode(i1.to(device), c1.to(device))
+        return self.encode((i1.to(device), c1.to(device)))
 
     def log_metrics(self, logger, logs, img_recon, batch_idx, set='train'):
         logger.experiment.log(logs)
@@ -577,6 +573,12 @@ class VQVAE_PL(pl.LightningModule):
             self.model = None
 
 
+    def encode(self, batch):
+        return self.model.encode(batch)
+        
+    def compute_embedding(self, batch, device):
+        return self.model.compute_embedding(batch, device)
+
     def compute_logits_(self, z_a, z_pos):
         distances = self.model._vq_vae.compute_distances(z_a)
         return -distances.squeeze()[z_pos].detach().cpu().item()
@@ -586,7 +588,7 @@ class VQVAE_PL(pl.LightningModule):
         # it's the same as argmax of (-distances)
         return torch.argmin(distances).cpu().item()
 
-    def compute_reward(self, z_a, goal, coord):
+    def compute_reward(self, z_a, goal, coord=None):
         distances = self.model._vq_vae.compute_distances(z_a).squeeze()
         k = torch.argmin(distances).cpu().item()
         if self.reward_type == "dense":

@@ -131,7 +131,7 @@ class CURL(CURL_PL):
             self.transform,
             self.conf)
 
-        embeddings = compute_embeddings(loader, self.encode)
+        embeddings = compute_embeddings(loader, self)
 
         kmeans = compute_kmeans(embeddings, num_clusters)
         for i, k in enumerate(kmeans.cluster_centers_):
