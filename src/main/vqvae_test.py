@@ -28,5 +28,10 @@ else:
 
 vqvae = VQVAE(conf).cuda()
 checkpoint = torch.load(join(path_weights, conf['test']['path_weights']))
+
+# uncomment for compatibility with older models
+# for c in checkpoint['state_dict'].copy():
+#     checkpoint['state_dict']['model.' + c] = checkpoint['state_dict'].pop(c)
+
 vqvae.load_state_dict(checkpoint['state_dict'])
 vqvae._construct_map()

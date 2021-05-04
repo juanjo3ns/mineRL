@@ -23,7 +23,7 @@ def get_loader(trajectories, transform, conf, shuffle=False, limit=None):
     train_dataset = CustomMinecraftData(train, transform=transform, delay=False, **conf)
 
     if not limit == None:
-        train_dataset = Subset(train_dataset, list(range(limit)))
+        train_dataset = Subset(train_dataset, limit)
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=shuffle, num_workers=0)
     return train_dataloader
 
@@ -38,7 +38,7 @@ def get_images(loader):
     return torch.cat([data[:,0] for data, coord in loader])
 
 
-def load_trajectories(trajectories):
+def load_trajectories(trajectories, limit=None):
     print("Loading trajectories...")
 
     all_trajectories = []
@@ -51,18 +51,24 @@ def load_trajectories(trajectories):
             for i, row in enumerate(csv_reader):
                 trajectory.append(row)
             all_trajectories.append(trajectory)
-    return np.array(all_trajectories).reshape(-1, 3)
+    trajs = np.array(all_trajectories).reshape(-1, 3)
+    if not limit == None:
+        return trajs[limit]
+    return trajs
 
 
 def construct_map(enc):
+    if not enc.limit == None:
+        limit = [10*x for x in range(enc.limit)]
+    else: limit = None
     loader = get_loader(
         enc.trajectories,
         enc.transform,
         enc.conf,
         shuffle=enc.shuffle,
-        limit=enc.limit)
+        limit=limit)
     if 'Custom' in enc.trajectories[0]:
-        trajectories = load_trajectories(enc.trajectories[0])
+        trajectories = load_trajectories(enc.trajectories[0], limit)
 
     embeddings = compute_embeddings(loader, enc)
 
@@ -142,7 +148,8 @@ def reward_map(trajectories, embeddings, enc, loader):
         data_list.append(values)
     
     experiment = enc.test['path_weights'].split('/')[0]
-    plot_reward_maps(data_list, experiment, getWorld(enc.trajectories[0]))
+    
+    plot_reward_maps(data_list, experiment, getWorld(enc.trajectories[0]), enc.reward_type)
 
 def embed_map(embeddings, images, exp):
     import tensorflow
@@ -193,7 +200,7 @@ def getWorld(t):
         return 2
     elif '12' in t:
         return 4
-    elif '13' in t:
+    elif '13' in t or '14' in t:
         return 'Simple'
     else:
         raise NotImplementedError()

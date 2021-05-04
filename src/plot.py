@@ -81,7 +81,7 @@ def plot_idx_maps(data, palette, experiment, world):
 Given a list of dataframes, plot index map for each goal state where the instead
 of index we have a reward for each point.
 '''
-def plot_reward_maps(data_list, experiment, world, is_return=False):
+def plot_reward_maps(data_list, experiment, world, reward_type="sparse"):
 
     num_plots = len(data_list)
     if num_plots == 8:
@@ -95,19 +95,14 @@ def plot_reward_maps(data_list, experiment, world, is_return=False):
 
     fig, axn = plt.subplots(x,y, sharex=True, sharey=True, constrained_layout=True, figsize=(15,6))
 
-    is_return = 'return' if is_return else ''
-
     for i, ax in enumerate(axn.flat):
         if i < len(data_list):
-            if is_return=='return':
-                ax.set_title('$G(s, z=z_{' + str(i) + '})$') # do not use f-string here
-            else:
-                ax.set_title('$r(s, z=z_{' + str(i) + '})$') # do not use f-string here
+            ax.set_title('$r(s, z=z_{' + str(i) + '})$') # do not use f-string here
             g = ax.scatter(data_list[i]['x'],data_list[i]['y'], c=data_list[i]['reward'], marker='.')
         # ax.axis('off')
     fig.colorbar(g, ax=axn[:,-1])
     plt.savefig(
-        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/rewardmap_{experiment}_comb.png', transparent=True)
+        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/rewardmap_{experiment}_{reward_type}.png', transparent=True)
 
 '''
 Given a list of dataframes, plot return values for each timestep

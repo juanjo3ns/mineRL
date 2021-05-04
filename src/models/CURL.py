@@ -24,8 +24,9 @@ class CURL_PL(pl.LightningModule):
             ):
         super(CURL_PL, self).__init__()
 
+        self.reward_type = ""
+        
         self.encoder = PixelEncoder(obs_shape, z_dim)
-
         self.encoder_target = PixelEncoder(obs_shape, z_dim)
 
         self.W = nn.Parameter(torch.rand(z_dim, z_dim))
