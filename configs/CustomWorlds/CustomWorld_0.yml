@@ -4,9 +4,15 @@ y: 73
 z: 0
 barrier: 50
 
-#
+
+# Mean and variance for normalizing input coordinates
+coords:
+  mean: [-1.008789, 68.02647, -4.984553]
+  std: [21.146933, 3.8185706, 20.964117]
+
+
 # Diamond Block location. y coordinate will be overwrited by surface's y
-#
+
 dx: -16
 dy: 0
 dz: 14

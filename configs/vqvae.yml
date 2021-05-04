@@ -1,8 +1,8 @@
-experiment: 'vqvae_pixelcoord_official'
+experiment: 'test'
 environment: 'MineRLNavigate-v0'
-trajectories: ['CustomTrajectories8']
-data_type: 'pixelcoord' # pixel / coord / pixelcoord
-epochs: 25
+trajectories: ['CustomTrajectories13']
+data_type: 'coord' # pixel / coord / pixelcoord
+epochs: 20
 delay: no
 split: 0.90
 lr: 0.001
@@ -21,7 +21,7 @@ vqvae:
   decay: 0.99
   reward_type: 'sparse' # sparse / dense / comb
 test:
-  type: 'reward'  # index / reward / embed / centroides
+  type: 'index'  # index / reward / embed / centroides
   shuffle: no
   limit: null
   # path_weights: './vqvae_0.3/mineRL/1c4o6jgy/checkpoints/epoch=499-step=37999.ckpt'
@@ -40,6 +40,8 @@ test:
   # path_weights: 'vqvae_Expert_trajectories_kmeans.0/mineRL/awmhuqtd/checkpoints/epoch=13-step=3933.ckpt'
   
   # path_weights: 'vqvae_CW0_coords.0/mineRL/3kyxgwil/checkpoints/epoch=39-step=4999.ckpt'
+  # path_weights: 'vqvae_CW1_coords.0/mineRL/4zuudkn9/checkpoints/epoch=19-step=2499.ckpt'
+  # path_weights: 'vqvae_CW2_coords.0/mineRL/8qfsjqi8/checkpoints/epoch=19-step=2499.ckpt'
   # path_weights: 'vqvae_CW4_coords.0/mineRL/2w75hv6i/checkpoints/epoch=32-step=4124.ckpt'
   
   # path_weights: 'vqvae_CW0_pixels_coords.sweep/mineRL/bzcz2xgd/checkpoints/epoch=24-step=3124.ckpt'
@@ -54,4 +56,19 @@ test:
   # path_weights: 'vqvae_CW4_pixels_coords.sweep/mineRL/qj2oy801/checkpoints/epoch=24-step=3124.ckpt'
   # path_weights: 'vqvae_CW4_pixels_coords.sweep/mineRL/cb42ynnd/checkpoints/epoch=24-step=3124.ckpt'
 
-  path_weights: 'vqvae_pixelcoord_official/mineRL/27gmv5df/checkpoints/epoch=24-step=3124.ckpt'
+  # path_weights: 'vqvae_pixelcoord_official_CW0/mineRL/27gmv5df/checkpoints/epoch=24-step=3124.ckpt'
+  # path_weights: 'vqvae_pixelcoord_official_CW1/mineRL/puve8nd0/checkpoints/epoch=24-step=3124.ckpt'
+  # path_weights: 'vqvae_pixelcoord_official_CW2/mineRL/1dy6ypkx/checkpoints/epoch=24-step=3124.ckpt'
+  # path_weights: 'vqvae_pixelcoord_official_CW4/mineRL/1x6kitto/checkpoints/epoch=24-step=3124.ckpt'
+
+  # path_weights: 'vqvae_pixel_official_CW0/mineRL/1cvf2aey/checkpoints/epoch=19-step=2499.ckpt'
+  # path_weights: 'vqvae_pixel_official_CW0_delayed/mineRL/24h6dq37/checkpoints/epoch=19-step=2499.ckpt'
+  # path_weights: 'vqvae_pixel_official_CW1/mineRL/3mnegrc7/checkpoints/epoch=19-step=2499.ckpt'
+  # path_weights: 'vqvae_pixel_official_CW2/mineRL/2f0rqtby/checkpoints/epoch=19-step=2499.ckpt'
+  # path_weights: 'vqvae_pixel_official_CW4/mineRL/13brhsva/checkpoints/epoch=19-step=2499.ckpt'
+  # path_weights: 'vqvae_pixel_official_CW4_delayed/mineRL/af1izyzb/checkpoints/epoch=29-step=3749.ckpt'
+  # path_weights: 'vqvae_pixel_official_CW4.1/mineRL/2byzng8a/checkpoints/epoch=49-step=6249.ckpt'
+
+  # path_weights: 'vqvae_pixel_official_Simple/mineRL/3kg246la/checkpoints/epoch=19-step=1459.ckpt'
+  # path_weights: 'vqvae_pixel_official_Simple.1/mineRL/1ta746a3/checkpoints/epoch=49-step=3649.ckpt'
+  # path_weights: 'vqvae_pixel_official_Simple.2/mineRL/19299av9/checkpoints/epoch=49-step=3649.ckpt'

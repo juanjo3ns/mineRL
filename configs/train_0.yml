@@ -1,6 +1,6 @@
-outdir: 'rl.20.1.0_sparse'
+outdir: 'rl.toy.0.0'
 env: 'MineRLNavigate-v0'
-world: 'CustomWorld_0'
+world: 'CustomWorld_Simple'
 logging_level: 20
 interactor: no
 downstream_task: no
@@ -31,7 +31,7 @@ batch_accumulator: 'sum'
 gray_scale: no
 frame_stack: no
 
-final_exploration_frames: 1.e+5
+final_exploration_frames: 2.5e+5
 final_epsilon: 0.01
 eval_epsilon: 0.001
 noisy_net_sigma: null
@@ -41,11 +41,11 @@ prioritized: yes
 target_update_interval: 2.e+4
 
 encoder:
-  type: 'vqvae'
+  type: 'curl'
   img_size: 64
-  data_type: 'pixelcoord' # pixel / coord / pixelcoord
+  data_type: 'pixel' # pixel / coord / pixelcoord
   vqvae:
-    encoder_version: 'vqvae_pixelcoord_official'
+    encoder_version: 'vqvae_pixelcoord_official_CW0'
     reward_type: 'sparse' # sparse / dense / comb
     load_epoch: 'mineRL/27gmv5df/checkpoints/epoch=24-step=3124.ckpt'
     num_hiddens: 64
@@ -54,10 +54,8 @@ encoder:
     embedding_dim: 256
     num_embeddings: 10
     commitment_cost: 0.25
-    goals: [0,1,2,3,4,5,6,7,8,9]
   curl:
-    encoder_version: 'curl_exp_0'
-    load_epoch: 'mineRL/10d8jeqr/checkpoints/epoch=299-step=2099.ckpt'
+    encoder_version: 'curl_official_Simple.2'
+    load_epoch: 'mineRL/14rwbn7x/checkpoints/epoch=99-step=14499.ckpt'
     embedding_dim: 128
-    path_goal_states: './goal_states/CT8_real_biome_curl_kmeans_10'
-    goals: [0,1,2,3,4,5,6,7,8,9]
+    path_goal_states: './goal_states/curl_official_Simple.2'
