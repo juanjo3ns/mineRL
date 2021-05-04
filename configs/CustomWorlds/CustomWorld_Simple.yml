@@ -30,5 +30,5 @@ direction: 'random'  # random/single/discrete
 # random_position: True -> starts at random position in range: (x-range, z-range) to (x+range, z+range)
 # """
 
-random_position: True
+random_position: False
 range: 45

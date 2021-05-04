@@ -538,11 +538,11 @@ class ClusteredActionWrapper(gym.ActionWrapper):
     def __init__(self, env, frame_skip):
         super().__init__(env)
         self.env = env
-        self.delta_degree = 45
+        self.delta_degree = 15
         if not frame_skip == None:
             self.delta_degree /= frame_skip
 
-        self.action_space = gym.spaces.Discrete(5)
+        self.action_space = gym.spaces.Discrete(4)
 
         base = self.env.action_space.no_op()
 
@@ -559,7 +559,7 @@ class ClusteredActionWrapper(gym.ActionWrapper):
         jump_forward = forward.copy()
         jump_forward['jump'] = np.array(1)
 
-        self.actions = [base, forward, right, left, jump_forward]
+        self.actions = [base, forward, right, left]
 
     def action(self, action):
         return self.actions[action]

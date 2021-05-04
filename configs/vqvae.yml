@@ -1,9 +1,9 @@
-experiment: 'test'
+experiment: 'vqvae_official_simple_0'
 environment: 'MineRLNavigate-v0'
-trajectories: ['CustomTrajectories13']
-data_type: 'coord' # pixel / coord / pixelcoord
-epochs: 20
-delay: no
+trajectories: ['CustomTrajectories14']
+data_type: 'pixel' # pixel / coord / pixelcoord
+epochs: 100
+delay: yes
 split: 0.90
 lr: 0.001
 batch_size: 256
@@ -67,8 +67,4 @@ test:
   # path_weights: 'vqvae_pixel_official_CW2/mineRL/2f0rqtby/checkpoints/epoch=19-step=2499.ckpt'
   # path_weights: 'vqvae_pixel_official_CW4/mineRL/13brhsva/checkpoints/epoch=19-step=2499.ckpt'
   # path_weights: 'vqvae_pixel_official_CW4_delayed/mineRL/af1izyzb/checkpoints/epoch=29-step=3749.ckpt'
-  # path_weights: 'vqvae_pixel_official_CW4.1/mineRL/2byzng8a/checkpoints/epoch=49-step=6249.ckpt'
-
-  # path_weights: 'vqvae_pixel_official_Simple/mineRL/3kg246la/checkpoints/epoch=19-step=1459.ckpt'
-  # path_weights: 'vqvae_pixel_official_Simple.1/mineRL/1ta746a3/checkpoints/epoch=49-step=3649.ckpt'
-  # path_weights: 'vqvae_pixel_official_Simple.2/mineRL/19299av9/checkpoints/epoch=49-step=3649.ckpt'
+  path_weights: 'vqvae_pixel_official_CW4.1/mineRL/2byzng8a/checkpoints/epoch=49-step=6249.ckpt'

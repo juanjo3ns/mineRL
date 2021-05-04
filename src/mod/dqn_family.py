@@ -185,7 +185,7 @@ def dqn_family(conf, outdir):
 
 
     agent = get_agent(
-        n_actions=5, arch=arch, n_input_channels=env.observation_space.shape[0],
+        n_actions=4, arch=arch, n_input_channels=env.observation_space.shape[0],
         noisy_net_sigma=noisy_net_sigma, final_epsilon=final_epsilon,
         final_exploration_frames=final_exploration_frames, explorer_sample_func=env.action_space.sample,
         lr=lr, adam_eps=adam_eps,
