@@ -39,7 +39,7 @@ class TrajectoryDisplayController(object):
     """
 
     def __init__(self,
-        data_frames, rewards, goal_state, goal_state_pov, coords, header, subtext, instructions=DEFAULT_INSTRUCTIONS, cum_rewards=None,
+        data_frames, rewards, goal_state, goal_state_pov, coord_centroide, coords, header, subtext, instructions=DEFAULT_INSTRUCTIONS, cum_rewards=None,
         vector_display=False):
         assert len(data_frames) > 0, "Empty dataframes provided."
 
@@ -47,6 +47,7 @@ class TrajectoryDisplayController(object):
         self.rewards = rewards
         self.goal_state = goal_state
         self.goal_state_pov = goal_state_pov
+        self.coord_centroide = coord_centroide
         self.coords = coords
         self.position = 0
         self.speed = 1
@@ -64,7 +65,7 @@ class TrajectoryDisplayController(object):
 
         return TrajectoryDisplayBase(
             header, subtext, instructions=instructions,
-            rewards=self.rewards, coords=self.coords, goal_state=self.goal_state)
+            rewards=self.rewards, coords=self.coords, goal_state=self.goal_state, coord_centroide=self.coord_centroide)
 
         # if not vector_display:
         #     return HumanTrajectoryDisplay(

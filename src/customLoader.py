@@ -68,7 +68,8 @@ class CustomMinecraftData(Dataset):
             fc = 0
             while(frames.isOpened() and ret):
                 ret, frame = frames.read()
-                if ret and fc % 3 == 0:
+                # if ret and fc % 3 == 0:
+                if ret:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     video.append(frame)
                 fc += 1

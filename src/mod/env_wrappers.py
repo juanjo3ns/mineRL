@@ -5,10 +5,11 @@ import cv2
 import copy
 import wandb
 import torch
-
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+from plot import plot_positive_rewards
 from logging import getLogger
 from random import randint, choice
 from collections import deque, Counter
@@ -105,6 +106,18 @@ class ResetWrapper(gym.Wrapper):
         self.env.idx_buffer = []
         self.env.idx_buffer_size = 10000
 
+        self.log_interval = 500
+        self.initialize_dataframes()
+
+    def initialize_dataframes(self):
+        self.env.p_rewards = [pd.DataFrame(columns=['x', 'y']) for i in range(self.model.num_goal_states)]
+
+    def log_positive_rewards(self):
+        if self.env.resets % self.log_interval == 0:
+            fig = plot_positive_rewards(self.env.p_rewards)
+            wandb.log({'Positive rewards per goal state': fig})
+            self.initialize_dataframes()
+
     def update_probs(self):
 
         ngs = self.model.num_goal_states
@@ -134,6 +147,7 @@ class ResetWrapper(gym.Wrapper):
     def reset(self):
         ob = self.env.reset()
         probs = self.update_probs()
+        self.log_positive_rewards()
         self.plot_histogram(probs)
         # Sample goal state
         num_goal_states = self.model.num_goal_states
@@ -272,6 +286,8 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         self.coord_mean = coords['mean']
         self.coord_std = coords['std']
 
+        
+
     def store_idx(self, idx):
         ibs = self.env.idx_buffer_size
 
@@ -293,8 +309,8 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
 
         goal_state = self.env.goal_state
 
-        coord = np.array(observation[1], dtype=np.float32)
-        coord_np = (coord-self.coord_mean)/self.coord_std
+        coord_ori = np.array(observation[1], dtype=np.float32)
+        coord_np = (coord_ori-self.coord_mean)/self.coord_std
 
         coord = torch.from_numpy(coord_np).float()
         # We don't need .ToTensor since shape already 3,64,64 but we need to divide by 255
@@ -309,7 +325,7 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         elif self.data_type == "coord":
             z_a = self.model.encode(coord)
         elif self.data_type == "pixelcoord":
-            z_a = self.model.encode(obs, coord)
+            z_a = self.model.encode((obs, coord))
         else: z_a = None
 
         g = self.model.compute_argmax(z_a)
@@ -320,6 +336,9 @@ class ObtainEmbeddingWrapper(gym.ObservationWrapper):
         # Compute reward as a classification problem. If the goal state with highest similarity
         # is the current selected, give reward of 1.
         self.model.reward = self.model.compute_reward(z_a, goal_state, coord_np)
+
+        if self.model.reward:
+            self.env.p_rewards[g] = self.env.p_rewards[g].append({'x': coord_ori[2], 'y': coord_ori[0]}, ignore_index=True)
 
         self.store_idx(g)
 
@@ -559,7 +578,10 @@ class ClusteredActionWrapper(gym.ActionWrapper):
         jump_forward = forward.copy()
         jump_forward['jump'] = np.array(1)
 
-        self.actions = [base, forward, right, left]
+        if env.unwrapped.custom_config['num'] == 'Simple' or env.unwrapped.custom_config['num'] == 'ToyCool':
+            self.actions = [base, forward, right, left]
+        else:
+            self.actions = [forward, right, left, jump_forward]
 
     def action(self, action):
         return self.actions[action]

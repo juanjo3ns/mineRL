@@ -594,10 +594,11 @@ class VQVAE_PL(pl.LightningModule):
         if self.reward_type == "dense":
             return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
         elif self.reward_type == "sparse":
-            if k == goal:
-                return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
-            else:
-                return -0.5
+            return int(k==goal)
+            # if k == goal:
+            #     return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()
+            # else:
+            #     return -0.5
         elif self.reward_type == "comb":
             if k == goal:
                 return - (1/z_a.view(-1).shape[0]) * distances[goal].detach().cpu().item()

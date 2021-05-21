@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 
 from IPython import embed
 
-COLOR = 'gray'
-matplotlib.rcParams['text.color'] = COLOR
-matplotlib.rcParams['axes.labelcolor'] = COLOR
-matplotlib.rcParams['xtick.color'] = COLOR
-matplotlib.rcParams['ytick.color'] = COLOR
+# COLOR = 'gray'
+# matplotlib.rcParams['text.color'] = COLOR
+# matplotlib.rcParams['axes.labelcolor'] = COLOR
+# matplotlib.rcParams['xtick.color'] = COLOR
+# matplotlib.rcParams['ytick.color'] = COLOR
 # plt.rcParams['axes.facecolor'] = '#303030'
-
+plt.rcParams.update({'font.size': 15})
 
 def show_centroides(coord_list, loader, palette):
     mu = loader.dataset.coord_mean
@@ -23,7 +23,7 @@ def show_centroides(coord_list, loader, palette):
 
     df = df.reset_index()
     sns.scatterplot(x="z", y="x", hue="index",
-                    palette=palette, data=df, s=130)
+                    palette=palette, data=df, s=200)
 
 def centroides_indexmap(coord_list, data, palette, experiment, world, loader):
 
@@ -69,13 +69,16 @@ Given a dataframe of x,y,index columns and a palette of colors,
 plot points in their coordinates x,y and distinguish them by index.
 '''
 def plot_idx_maps(data, palette, experiment, world):
-    fig, ax = plt.subplots(figsize=(9,9))
+    fig, ax = plt.subplots(figsize=(8,8))
     sns.scatterplot(x="x", y="y", hue="Code:", palette=palette, data=data)
     # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     ax.get_legend().remove()
-    ax.axis('off')
+    # ax.set_title('$r(s, z=z_{' + str() + '})$')  # do not use f-string here
+    ax.set_xlim(-50, 50)
+    ax.set_ylim(-50, 50)
+    # ax.axis('off')
     plt.tight_layout()
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}.png', transparent=True)
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}_skill3.png', transparent=True)
 
 '''
 Given a list of dataframes, plot index map for each goal state where the instead
@@ -93,7 +96,7 @@ def plot_reward_maps(data_list, experiment, world, reward_type="sparse"):
     else:
         x,y = 3,5
 
-    fig, axn = plt.subplots(x,y, sharex=True, sharey=True, constrained_layout=True, figsize=(15,6))
+    fig, axn = plt.subplots(x,y, sharex=True, sharey=True, constrained_layout=True, figsize=(15,6), dpi=300)
 
     for i, ax in enumerate(axn.flat):
         if i < len(data_list):
@@ -102,7 +105,7 @@ def plot_reward_maps(data_list, experiment, world, reward_type="sparse"):
         # ax.axis('off')
     fig.colorbar(g, ax=axn[:,-1])
     plt.savefig(
-        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/rewardmap_{experiment}_{reward_type}.png', transparent=True)
+        f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/rewardmap_{experiment}_{reward_type}_.png', transparent=True)
 
 '''
 Given a list of dataframes, plot return values for each timestep
@@ -200,4 +203,19 @@ def plot_img_centroides(imgs):
         ax.imshow(img)
         ax.axis('off')
 
+    return fig
+
+
+def plot_positive_rewards(data_list):
+
+    x, y = 2, 5
+
+    fig, axn = plt.subplots(x, y, sharex=True, sharey=True,
+                            constrained_layout=True, figsize=(15, 6))
+
+    for i, ax in enumerate(axn.flat):
+        if i < len(data_list):
+            g = ax.scatter(data_list[i]['x'], data_list[i]['y'], marker='.')
+            ax.set_xlim(-50, 50)
+            ax.set_ylim(-50, 50)
     return fig

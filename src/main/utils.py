@@ -35,7 +35,7 @@ def compute_embeddings(loader, model):
     return np.array([model.compute_embedding(batch, device).detach().cpu().numpy() for batch in loader]).squeeze()
 
 def get_images(loader):
-    return torch.cat([data[:,0] for data, coord in loader])
+    return torch.cat([data[:,0] for data in loader])
 
 
 def load_trajectories(trajectories, limit=None):
@@ -59,7 +59,7 @@ def load_trajectories(trajectories, limit=None):
 
 def construct_map(enc):
     if not enc.limit == None:
-        limit = [10*x for x in range(enc.limit)]
+        limit = [x for x in range(enc.limit)]
     else: limit = None
     loader = get_loader(
         enc.trajectories,
@@ -120,7 +120,7 @@ def index_map(enc, indexes):
     world = getWorld(enc.trajectories[0])
 
     plot_idx_maps(indexes, palette, experiment, world)
-    # skill_appearance(codes_count, palette, experiment, world)
+    skill_appearance(codes_count, palette, experiment, world)
 
 
 def reward_map(trajectories, embeddings, enc, loader):
@@ -192,7 +192,13 @@ Mapping from Trajectories to Worlds.
 We can have multiple datasets of trajectories that belong to a unique world.
 '''
 def getWorld(t):
-    if '8' in t or '9' in t:
+    if '13' in t or '14' in t:
+        return 'Simple'
+    elif '15' in t or '16' in t:
+        return 'Toy'
+    elif '17' in t or '18' in t:
+        return '5Circles'
+    elif '8' in t or '9' in t:
         return 0
     elif '10' in t:
         return 1
@@ -200,7 +206,5 @@ def getWorld(t):
         return 2
     elif '12' in t:
         return 4
-    elif '13' in t or '14' in t:
-        return 'Simple'
     else:
         raise NotImplementedError()

@@ -25,7 +25,7 @@ CUM_SUM_SPACE  = .02
 
 class TrajectoryDisplayBase(ScaledImageDisplay):
 
-    def __init__(self, environment, stream_name="", instructions=None, rewards=None, coords=None, goal_state=None):
+    def __init__(self, environment, stream_name="", instructions=None, rewards=None, coords=None, goal_state=None, coord_centroide=None):
         super().__init__(SZ*28, SZ*14)
 
 
@@ -34,6 +34,8 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         self.window.set_caption("{}: {}".format('Validation trajectories', stream_name))
         self.rewards = rewards
         self.coords = coords
+        self.coord_centroide = coord_centroide
+
         self.reward_height = int(SZ*5*0.8)
 
         self.cum_rewards = np.cumsum([x for x in self.rewards])
@@ -127,8 +129,9 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
         #     plt.plot(x, y, marker='o', color='white', markersize=10)
         
         plt.plot(self.coords[0,0], self.coords[0,1], marker='o', markersize=10)
-        plt.plot(self.coords[:,0], self.coords[:,1], linewidth=4.0)
-        plt.plot(self.coords[step,0], self.coords[step,1],marker='o', markersize=5, color='red')
+        plt.plot(self.coords[:,1], self.coords[:,0], linewidth=4.0)
+        plt.plot(self.coords[step,1], self.coords[step,0],marker='o', markersize=5, color='red')
+        # plt.plot(self.coord_centroide[2], self.coord_centroide[0], marker='o', markersize=15, color='green')
         plt.xticks([])
         plt.yticks([])
 
@@ -284,7 +287,7 @@ class TrajectoryDisplayBase(ScaledImageDisplay):
 
 
         # GOAL STATES
-        # self.blit_texture(goal_state, self.cum_reward_rect.x+1, 40, self.cum_reward_rect.width-2, self.cum_reward_rect.width-2)
+        self.blit_texture(goal_state, self.cum_reward_rect.x+1, 260, self.cum_reward_rect.width-2, self.cum_reward_rect.width-2)
         # self.goal_state_label = pyglet.text.Label(
         #     'Goal State', font_size=SMALLER_FONT_SIZE, x=self.cum_reward_rect.x+60, y=50+self.cum_reward_rect.width,
         #     anchor_x='center', align='center')
