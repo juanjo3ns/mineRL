@@ -16,6 +16,9 @@ setSeed(0)
 assert len(sys.argv) == 2, "Indicate a configuration file like 'config_0.0'"
 conf = getConfig(sys.argv[1])
 
+if not os.path.exists('./results'):
+    os.mkdir('./results')
+
 wandb_logger = WandbLogger(
     project='mineRL',
     name=conf['experiment'],

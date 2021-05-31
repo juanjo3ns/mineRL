@@ -27,6 +27,9 @@ logger = logging.getLogger(__name__)
 
 
 def main():
+    if not os.path.exists('./results'):
+        os.mkdir('./results')
+        
     conf = getConfig(sys.argv[1])
 
     exp_id = 'eval_' if conf['demo'] else 'train_'

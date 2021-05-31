@@ -1,6 +1,6 @@
 experiment: 'vqvae_expert_embeddings_0_training'
 environment: 'MineRLNavigate-v0'
-trajectories: ['CustomTrajectories12']
+trajectories: ['CustomTrajectories18']
 data_type: 'pixel' # pixel / coord / pixelcoord
 epochs: 100
 delay: no
@@ -70,7 +70,7 @@ test:
 
   # path_weights: 'vqvae_official_simple_0/mineRL/10uhi71y/checkpoints/epoch=7-step=5639.ckpt'
 
-  # path_weights: 'vqvae_Expert_pixels_0/mineRL/3l23j1s9/checkpoints/epoch=8-step=7831.ckpt'
+  path_weights: 'vqvae_Expert_pixels_0/mineRL/3l23j1s9/checkpoints/epoch=8-step=7831.ckpt'
   # path_weights: 'vqvae_CW01_0/mineRL/m3gyl8fe/checkpoints/epoch=34-step=8749.ckpt'
   # path_weights: 'vqvae_CW02_0/mineRL/3jt30u3a/checkpoints/epoch=33-step=8499.ckpt'
   # path_weights: 'vqvae_CW04_0/mineRL/1w72u7wx/checkpoints/epoch=31-step=7999.ckpt'
@@ -80,6 +80,6 @@ test:
   # path_weights: 'vqvae_CW012_0/mineRL/3cygsbys/checkpoints/epoch=16-step=6374.ckpt'
   # path_weights: 'vqvae_CW014_0/mineRL/2o4t8vxf/checkpoints/epoch=14-step=5624.ckpt'
   # path_weights: 'vqvae_CW024_0/mineRL/2f1j34ed/checkpoints/epoch=17-step=6749.ckpt'
-  path_weights: 'vqvae_CW124_0/mineRL/3506qodw/checkpoints/epoch=44-step=16874.ckpt'
+  # path_weights: 'vqvae_CW124_0/mineRL/3506qodw/checkpoints/epoch=44-step=16874.ckpt'
   # path_weights: 'vqvae_CW0-4_realistic_pixels.0/mineRL/1bvif2wt/checkpoints/epoch=13-step=6839.ckpt'
   # path_weights: 'vqvae_CW0124_0/mineRL/31kqobuy/checkpoints/epoch=24-step=12499.ckpt'

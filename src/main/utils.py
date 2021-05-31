@@ -59,7 +59,7 @@ def load_trajectories(trajectories, limit=None):
 
 def construct_map(enc):
     if not enc.limit == None:
-        limit = [x for x in range(enc.limit)]
+        limit = [x*10 for x in range(enc.limit)]
     else: limit = None
     loader = get_loader(
         enc.trajectories,
@@ -95,8 +95,9 @@ def get_indexes(trajectories, embeddings, enc):
         y = float(p[0])
         e = torch.from_numpy(e).cuda()
         k = enc.compute_argmax(e.unsqueeze(dim=0))
-        values = values.append(
-            {'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
+        if k==3:
+            values = values.append(
+                {'x': x, 'y': y, 'Code:': int(k)}, ignore_index=True)
 
     values['Code:'] = values['Code:'].astype('int32')
     return values
@@ -206,5 +207,7 @@ def getWorld(t):
         return 2
     elif '12' in t:
         return 4
+    elif 'Test' in t:
+        return 'Test'
     else:
         raise NotImplementedError()

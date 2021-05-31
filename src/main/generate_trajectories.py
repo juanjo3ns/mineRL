@@ -33,19 +33,25 @@ episodes = 500
 steps = 400
 frame_skip = 10
 
-MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLNavigate-v0')
-env = gym.make('MineRLNavigate-v0')
 
 conf = getConfig(sys.argv[1])
-world_conf = getConfig('CustomWorlds/CustomWorld_5Circles')
-world_conf['path_world'] = Path('/home/juanjo/Documents/minecraft/mineRL/src/minerl/env/Malmo/Minecraft/run/saves/')
+world_conf = getConfig(f"CustomWorlds/{conf['world']}")
+
+ABSOLUTE_PATH = Path('/home/juanjo/Documents/minecraft/mineRL/src')
+
+world_conf['path_world'] = ABSOLUTE_PATH / './minerl/env/Malmo/Minecraft/run/saves/'
 world_conf['downstream_task'] = conf['downstream_task']
+
+MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', conf['env'])
+env = gym.make(conf['env'])
 
 env.custom_update(world_conf)
 
-folder = 'CustomTrajectories18'
+folder = 'CustomTrajectories_Test'
 outdir = f"./results/{folder}"
 
+if not os.path.exists('./results'):
+    os.mkdir('./results')
 if not os.path.exists(outdir):
     os.mkdir(outdir)
 if not os.path.exists(f"../data/{folder}"):

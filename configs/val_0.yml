@@ -1,6 +1,6 @@
-outdir: 'rl.5Circles.vqvae.0.0'
+outdir: 'rl.test.0.0'
 env: 'MineRLNavigate-v0'
-world: 'CustomWorld_5Circles'
+world: 'CustomWorld_Simple'
 logging_level: 20
 interactor: no
 downstream_task: no
@@ -10,7 +10,7 @@ gpu: 0
 
 demo: yes
 monitor: yes
-load: './results/train_rl.5Circles.vqvae.0.0/best'
+load: './results/train_rl.test.0.0/best'
 eval_n_runs: 100
 sampling: 'uniform'
 
@@ -45,7 +45,7 @@ encoder:
   img_size: 64
   data_type: 'pixel' # pixel / coord / pixelcoord
   vqvae:
-    encoder_version: 'vqvae_Expert_pixels_0'
+    encoder_version: 'vqvae_test'
     reward_type: 'sparse' # sparse / dense / comb
     load_epoch: 'mineRL/3l23j1s9/checkpoints/epoch=8-step=7831.ckpt'
     num_hiddens: 64

@@ -4,7 +4,7 @@ src/goal_states/
 src/wandb/
 weights/
 tensorboard/
-data/
+/data/
 shared/
 logs/
 .gradle/
@@ -14,7 +14,9 @@ logs/
 __pycache__/
 *.py[cod]
 *$py.class
-
+*.npy
+*.mp4
+*.npz
 # C extensions
 *.so
 

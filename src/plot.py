@@ -78,7 +78,7 @@ def plot_idx_maps(data, palette, experiment, world):
     ax.set_ylim(-50, 50)
     # ax.axis('off')
     plt.tight_layout()
-    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}_skill3.png', transparent=True)
+    plt.savefig(f'/home/juanjo/Pictures/Minecraft/CW/CW{world}/indexmap_{experiment}_skill3_.png', transparent=True)
 
 '''
 Given a list of dataframes, plot index map for each goal state where the instead
