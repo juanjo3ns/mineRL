@@ -1,6 +1,7 @@
 # Discovery and Learning of Navigation Goals from Pixels in Minecraft
 
 Website 1: https://imatge-upc.github.io/PiCoEDL/
+
 Website 2: https://imatge-upc.github.io/PixelEDL/
 
 ## Initial set up:
